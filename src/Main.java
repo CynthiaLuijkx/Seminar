@@ -2,7 +2,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -10,7 +9,7 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland";
+		String depot = "Heinenoord";
 		int dailyRestMin = 11 * 60;
 		int restDayMin = 32 * 60;
 		double violationBound = 0.9;
@@ -38,7 +37,6 @@ public class Main
 
 	public static Instance readInstance(File dutiesFile, File contractGroupsFile, File reserveDutiesFile, Set<String> dutyTypes, 
 			int dailyRestMin, int restDayMin, double violationBound) throws FileNotFoundException {
-		Set<Duty> duties = new HashSet<>();
 		Set<Duty> workingDays = new HashSet<>();
 		Set<Duty> saturday = new HashSet<>();
 		Set<Duty> sunday = new HashSet<>();

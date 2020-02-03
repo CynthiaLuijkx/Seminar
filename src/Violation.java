@@ -43,7 +43,7 @@ public class Violation
 
 	@Override
 	public String toString() {
-		return "Violation [dayTypeFrom=" + dayTypeFrom + ", typeFrom=" + typeFrom + ", dayTypeTo=" + dayTypeTo + ", typeFrom=" + typeFrom
-				+ ", typeTo=" + typeTo + "]";
+		return "Violation [dayTypeFrom=" + dayTypeFrom + ", dayTypeTo=" + dayTypeTo + ", typeFrom=" + typeFrom
+				+ ", typeTo=" + typeTo + ", reserveFrom=" + reserveFrom + ", reserveTo=" + reserveTo + "]";
 	}
 }
