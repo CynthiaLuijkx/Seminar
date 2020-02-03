@@ -25,14 +25,14 @@ public class Main
 		File contractGroupsFile = new File("Data/ContractGroups" + depot + ".txt");
 		File reserveDutyFile = new File("Data/ReserveDuties" + depot + ".txt");
 
-		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes);
+		//Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes);
 
 		System.out.println("Instance " + depot + " initialised");
 		
 		
 	}
 
-	public static Instance readInstance(File dutiesFile, File contractGroupsFile, File reserveDutiesFile, Set<String> dutyTypes) throws FileNotFoundException {
+	/*public static Instance readInstance(File dutiesFile, File contractGroupsFile, File reserveDutiesFile, Set<String> dutyTypes) throws FileNotFoundException {
 		Set<Duty> duties = new HashSet<>();
 		Set<Duty> workingDays = new HashSet<>();
 		Set<Duty> saturday = new HashSet<>();
@@ -82,5 +82,5 @@ public class Main
 		}
 
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, contractGroups, reserveDutyTypes);
-	}
+	}*/
 }

@@ -1,14 +1,16 @@
 import java.util.Set;
 
+//Class that uses a type Contract Group
 public class ContractGroup 
 {
-	private final int nr;
-	private final int avgDaysPerWeek;
-	private final double avgHoursPerDay;
-	private final int ATVPerYear;
-	private final double relativeGroupSize;
-	private final Set<String> dutyTypes;
+	private final int nr; //number of the contract group type
+	private final int avgDaysPerWeek; //the average number of days per week for the contract group
+	private final double avgHoursPerDay; //the average of hours per day for the contract group
+	private final int ATVPerYear; //the number of ATV days per year for the contract group
+	private final double relativeGroupSize; //the relative group size of the contract group
+	private final Set<String> dutyTypes; //duty types the contract group can execute
 	
+	//Constructor of the class
 	public ContractGroup(int nr, int avgDaysPerWeek, double avgHoursPerDay, int ATVPerYear, double relativeGroupSize, Set<String> dutyTypes) {
 		this.nr = nr;
 		this.avgDaysPerWeek = avgDaysPerWeek;
