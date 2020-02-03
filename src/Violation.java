@@ -1,4 +1,9 @@
 
+/**
+ * This class stores information on a violation of a constraint, i.e. it denotes which duties are included in this violation.
+ * @author Mette Wagenvoort
+ *
+ */
 public class Violation 
 {
 	private final String dayTypeFrom;
@@ -8,6 +13,15 @@ public class Violation
 	private final boolean reserveFrom;
 	private final boolean reserveTo;
 	
+	/**
+	 * Constructs a Violation.
+	 * @param typeFrom			duty type of the from duty
+	 * @param dayTypeFrom		day type of the from duty
+	 * @param reserveFrom		a boolean denoting whether the duty is a reserve duty or not
+	 * @param typeTo			duty type of the to duty
+	 * @param dayTypeTo			day type of the to duty
+	 * @param reserveTo			a boolean denoting whether the duty is a reserve duty or not
+	 */
 	public Violation(String typeFrom, String dayTypeFrom, boolean reserveFrom, String typeTo, String dayTypeTo, boolean reserveTo) {
 		this.dayTypeFrom = dayTypeFrom;
 		this.dayTypeTo = dayTypeTo;

@@ -1,5 +1,10 @@
 import java.util.Set;
 
+/**
+ * This class consists of information on a contract group.
+ * @author Mette Wagenvoort
+ *
+ */
 public class ContractGroup 
 {
 	private final int nr;
@@ -9,6 +14,15 @@ public class ContractGroup
 	private final double relativeGroupSize;
 	private final Set<String> dutyTypes;
 	
+	/**
+	 * Constructs a ContractGroup
+	 * @param nr						the contract group nr corresponding with the excel data sheet
+	 * @param avgDaysPerWeek			the average number of days per week someone from this contract group works
+	 * @param avgHoursPerDay			the average number of hours per week someone from this contract group works
+	 * @param ATVPerYear				the number of ATV days per year someone from this contract group should receive
+	 * @param relativeGroupSize			the relative group size of this contract group to all employees at this depot
+	 * @param dutyTypes					the duty types that someone from this contract group can serve
+	 */
 	public ContractGroup(int nr, int avgDaysPerWeek, double avgHoursPerDay, int ATVPerYear, double relativeGroupSize, Set<String> dutyTypes) {
 		this.nr = nr;
 		this.avgDaysPerWeek = avgDaysPerWeek;
