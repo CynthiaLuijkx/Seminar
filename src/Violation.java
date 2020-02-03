@@ -5,12 +5,16 @@ public class Violation
 	private final String dayTypeTo;
 	private final String typeFrom;
 	private final String typeTo;
+	private final boolean reserveFrom;
+	private final boolean reserveTo;
 	
-	public Violation(String typeFrom, String dayTypeFrom, String typeTo, String dayTypeTo) {
+	public Violation(String typeFrom, String dayTypeFrom, boolean reserveFrom, String typeTo, String dayTypeTo, boolean reserveTo) {
 		this.dayTypeFrom = dayTypeFrom;
 		this.dayTypeTo = dayTypeTo;
 		this.typeFrom = typeFrom;
 		this.typeTo = typeTo;
+		this.reserveFrom = reserveFrom;
+		this.reserveTo = reserveTo;
 	}
 
 	public String getDayTypeFrom() {
@@ -27,6 +31,14 @@ public class Violation
 
 	public String getTypeTo() {
 		return typeTo;
+	}
+
+	public boolean isReserveFrom() {
+		return reserveFrom;
+	}
+
+	public boolean isReserveTo() {
+		return reserveTo;
 	}
 
 	@Override

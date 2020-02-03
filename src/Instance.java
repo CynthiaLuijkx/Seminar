@@ -7,17 +7,24 @@ public class Instance
 	private final Set<Duty> saturday;
 	private final Set<Duty> sunday;
 	private final HashMap<String, Set<Duty>> dutiesPerType;
+	private final HashMap<String, Set<Duty>> dutiesPerTypeW;
+	private final HashMap<String, Set<Duty>> dutiesPerTypeSat;
+	private final HashMap<String, Set<Duty>> dutiesPerTypeSun;
 	private final Set<ContractGroup> contractGroups;
 	private final Set<ReserveDutyType> reserveDutyTypes;
 	private final Set<Violation> violations11;
 	private final Set<Violation> violations32;
 	
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
+			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
 			Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, Set<Violation> violations11, Set<Violation> violations32) {
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
 		this.dutiesPerType = dutiesPerType;
+		this.dutiesPerTypeW = dutiesPerTypeW;
+		this.dutiesPerTypeSat = dutiesPerTypeSat;
+		this.dutiesPerTypeSun = dutiesPerTypeSun;
 		this.contractGroups = contractGroups;
 		this.reserveDutyTypes = reserveDutyTypes;
 		this.violations11 = violations11;
@@ -38,6 +45,18 @@ public class Instance
 
 	public HashMap<String, Set<Duty>> getDutiesPerType() {
 		return dutiesPerType;
+	}
+
+	public HashMap<String, Set<Duty>> getDutiesPerTypeW() {
+		return dutiesPerTypeW;
+	}
+
+	public HashMap<String, Set<Duty>> getDutiesPerTypeSat() {
+		return dutiesPerTypeSat;
+	}
+
+	public HashMap<String, Set<Duty>> getDutiesPerTypeSun() {
+		return dutiesPerTypeSun;
 	}
 
 	public Set<ContractGroup> getContractGroups() {
