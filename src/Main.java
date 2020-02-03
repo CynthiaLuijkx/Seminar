@@ -28,6 +28,7 @@ public class Main
 		File dutiesFile = new File("Data/" + depot + ".txt");
 		File contractGroupsFile = new File("Data/ContractGroups" + depot + ".txt");
 		File reserveDutyFile = new File("Data/ReserveDuties" + depot + ".txt");
+		System.out.println("HELLO WORLD");
 
 		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound);
 
