@@ -1,5 +1,5 @@
 
-public class ReserveDuty 
+public class ReserveDutyType 
 {
 	private final String dayType;
 	private final String type;
@@ -7,7 +7,7 @@ public class ReserveDuty
 	private final int endTime;
 	private final double approximateSize;
 	
-	public ReserveDuty(String dayType, String type, int startTime, int endTime, double approximateSize) {
+	public ReserveDutyType(String dayType, String type, int startTime, int endTime, double approximateSize) {
 		this.dayType = dayType;
 		this.type = type;
 		this.startTime = startTime;

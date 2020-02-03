@@ -8,12 +8,12 @@ public class Instance
 	private final Set<Duty> sunday;
 	private final HashMap<String, Set<Duty>> dutiesPerType;
 	private final Set<ContractGroup> contractGroups;
-	private final Set<ReserveDuty> reserveDutyTypes;
+	private final Set<ReserveDutyType> reserveDutyTypes;
 	private final Set<Violation> violations11;
 	private final Set<Violation> violations32;
 	
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
-			Set<ContractGroup> contractGroups, Set<ReserveDuty> reserveDutyTypes, Set<Violation> violations11, Set<Violation> violations32) {
+			Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, Set<Violation> violations11, Set<Violation> violations32) {
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
@@ -44,7 +44,7 @@ public class Instance
 		return contractGroups;
 	}
 	
-	public Set<ReserveDuty> getReserveDutyTypes() {
+	public Set<ReserveDutyType> getReserveDutyTypes() {
 		return reserveDutyTypes;
 	}
 	
