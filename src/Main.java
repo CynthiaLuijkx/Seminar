@@ -13,6 +13,7 @@ public class Main
 		String depot = "Heinenoord";
 		int dailyRestMin = 11 * 60;
 		int restDayMin = 32 * 60;
+		double violationBound = 0.9;
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>();
 		dutyTypes.add("V");	dutyTypes.add("G");	dutyTypes.add("D");	dutyTypes.add("L");	dutyTypes.add("P");
@@ -28,7 +29,7 @@ public class Main
 		File contractGroupsFile = new File("Data/ContractGroups" + depot + ".txt");
 		File reserveDutyFile = new File("Data/ReserveDuties" + depot + ".txt");
 
-		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin);
+		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound);
 
 		System.out.println("Instance " + depot + " initialised");
 
@@ -36,7 +37,7 @@ public class Main
 	}
 
 	public static Instance readInstance(File dutiesFile, File contractGroupsFile, File reserveDutiesFile, Set<String> dutyTypes, 
-			int dailyRestMin, int restDayMin) throws FileNotFoundException {
+			int dailyRestMin, int restDayMin, double violationBound) throws FileNotFoundException {
 		Set<Duty> duties = new HashSet<>();
 		Set<Duty> workingDays = new HashSet<>();
 		Set<Duty> saturday = new HashSet<>();
@@ -46,7 +47,7 @@ public class Main
 			dutiesPerType.put(type, new HashSet<Duty>());
 		}
 		Set<ContractGroup> contractGroups = new HashSet<>();
-		Set<ReserveDuty> reserveDutyTypes = new HashSet<>();
+		Set<ReserveDutyType> reserveDutyTypes = new HashSet<>();
 		Set<Violation> violations11 = new HashSet<>();
 		Set<Violation> violations32 = new HashSet<>();
 
@@ -84,30 +85,61 @@ public class Main
 
 		Scanner scReserve = new Scanner(reserveDutiesFile);
 		while (scReserve.hasNext()) {
-			reserveDutyTypes.add(new ReserveDuty(scReserve.next(), scReserve.next(), scReserve.nextInt(), scReserve.nextInt(), scReserve.nextDouble()));
+			reserveDutyTypes.add(new ReserveDutyType(scReserve.next(), scReserve.next(), scReserve.nextInt(), scReserve.nextInt(), scReserve.nextDouble()));
 		}
 
 		// ---------------------------- Determine the violations --------------------------------------------------
-		for (Duty duty : workingDays) {
-			if (duty.getType().equals("L")) {
-				int[][] counts = getViolationsToNormal(duty, workingDays, dailyRestMin, restDayMin);
-			}
+	
+		// W - W
+		int[] counts = getViolationsNormalToNormal(workingDays, workingDays, dailyRestMin, restDayMin);
+		if (counts[0]/((double) counts[2]) >= violationBound) {
+			violations11.add(new Violation("L", "Workingday", false, "E", "Workingday", false));
 		}
+		if (counts[1]/((double) counts[2]) >= violationBound) {
+			violations32.add(new Violation("L", "Workingday", false, "E", "Workingday", false));
+		}
+		
+		// W - Sat
+		counts = getViolationsNormalToNormal(workingDays, saturday, dailyRestMin, restDayMin);
+		if (counts[0]/((double) counts[2]) >= violationBound) {
+			violations11.add(new Violation("L", "Workingday", "E", "Saturday"));
+		}
+		
+		// W - Sun
+		counts = getViolationsNormalToNormal(workingDays, sunday, dailyRestMin, restDayMin);
+		if (counts[1]/((double) counts[2]) >= violationBound) {
+			violations32.add(new Violation("N", "Workingday", "N", "Sunday"));
+		}
+		
 
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, contractGroups, reserveDutyTypes, violations11, violations32);
 	}
 
-	public static int[][] getViolationsToNormal(Duty from, Set<Duty> toDuties, int dailyRestMin, int restDayMin) {
-		int[][] counts = new int[2][2];
+	public static int[] getViolationsNormalToNormal(Set<Duty> fromDuties, Set<Duty> toDuties, int dailyRestMin, int restDayMin) {
+		int[] counts = new int[3];
 		Map<String, Set<Violation>> violations = new HashMap<>();
 		
-		for (Duty to : toDuties) {
-			if (to.getType().equals("V")) {
-				int gap = 0;
-				if (from.getEndTime() <= 24 * 60) {
-					gap += 24 * 60 - from.getEndTime();
-				} else {
-					gap -= from.getEndTime() - 24 * 60;
+		for (Duty from : fromDuties) {
+			if (from.getType().equals("L")) {
+				for (Duty to : toDuties) {
+					if (to.getType().equals("V")) {
+						int gap = 0;
+						if (from.getEndTime() <= 24 * 60) {
+							gap += 24 * 60 - from.getEndTime();
+						} else {
+							gap -= from.getEndTime() - 24 * 60;
+						}
+						
+						gap += to.getStartTime();
+						
+						if (gap < dailyRestMin) {
+							counts[0]++;
+						}
+						if (gap + 24 * 60 < restDayMin) {
+							counts[1]++;
+						}
+						counts[2]++;
+					}
 				}
 			}
 		}
@@ -115,8 +147,10 @@ public class Main
 		return counts;
 	}
 
-	public static Map<String, Set<Violation>> getViolationsToReserve() {
+	public static Map<String, Set<Violation>> getViolationsNormalToReserve(Set<Duty> fromDuties, ReserveDutyType late, int dailyRestMin, int restDayMin) {
 		Map<String, Set<Violation>> violations = new HashMap<>();
+		
+		for (Duty from : )
 
 		return violations;
 	}
