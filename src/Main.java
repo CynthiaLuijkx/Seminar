@@ -2,14 +2,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Scanner;
 import java.util.Set;
 
+import ilog.concert.IloException;
+
 public class Main 
 {
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Heinenoord";
+		String depot = "Dirksland";
 		int dailyRestMin = 11 * 60;
 		int restDayMin = 32 * 60;
 		double violationBound = 0.9;
@@ -32,7 +35,7 @@ public class Main
 
 		System.out.println("Instance " + depot + " initialised");
 
-
+		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
 	}
 
 	public static Instance readInstance(File dutiesFile, File contractGroupsFile, File reserveDutiesFile, Set<String> dutyTypes, 
@@ -96,6 +99,7 @@ public class Main
 		scGroups.close();
 
 		Scanner scReserve = new Scanner(reserveDutiesFile);
+		scReserve.useLocale(Locale.ENGLISH);
 		while (scReserve.hasNext()) {
 			reserveDutyTypes.add(new ReserveDutyType(scReserve.next(), scReserve.next(), scReserve.nextInt(), scReserve.nextInt(), scReserve.nextDouble()));
 		}
