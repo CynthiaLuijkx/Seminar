@@ -3,21 +3,25 @@ import java.util.Set;
 
 public class Instance 
 {
-	private Set<Duty> workingDays;
-	private Set<Duty> saturday;
-	private Set<Duty> sunday;
-	private HashMap<String, Set<Duty>> dutiesPerType;
-	private Set<ContractGroup> contractGroups;
-	private Set<ReserveDuty> reserveDutyTypes;
+	private final Set<Duty> workingDays;
+	private final Set<Duty> saturday;
+	private final Set<Duty> sunday;
+	private final HashMap<String, Set<Duty>> dutiesPerType;
+	private final Set<ContractGroup> contractGroups;
+	private final Set<ReserveDuty> reserveDutyTypes;
+	private final Set<Violation> violations11;
+	private final Set<Violation> violations32;
 	
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
-			Set<ContractGroup> contractGroups, Set<ReserveDuty> reserveDutyTypes) {
+			Set<ContractGroup> contractGroups, Set<ReserveDuty> reserveDutyTypes, Set<Violation> violations11, Set<Violation> violations32) {
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
 		this.dutiesPerType = dutiesPerType;
 		this.contractGroups = contractGroups;
 		this.reserveDutyTypes = reserveDutyTypes;
+		this.violations11 = violations11;
+		this.violations32 = violations32;
 	}
 
 	public Set<Duty> getWorkingDays() {
@@ -42,5 +46,13 @@ public class Instance
 	
 	public Set<ReserveDuty> getReserveDutyTypes() {
 		return reserveDutyTypes;
+	}
+	
+	public Set<Violation> getViolations11() {
+		return violations11;
+	}
+	
+	public Set<Violation> getViolations32() {
+		return violations32;
 	}
 }
