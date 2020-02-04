@@ -10,7 +10,7 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		double violationBound = 0.9; 
@@ -107,9 +107,10 @@ public class Main
 		//Read the reserve duties
 		Scanner scReserve = new Scanner(reserveDutiesFile);
 		scReserve.useLocale(Locale.ENGLISH); 
+		int reserveCounter = 100;
 		while (scReserve.hasNext()) { //continue till you have no more input
 			//add for every reserve duty type it's features
-			reserveDutyTypes.add(new ReserveDutyType(scReserve.next(), scReserve.next(), scReserve.nextInt(), scReserve.nextInt(), scReserve.nextDouble()));
+			reserveDutyTypes.add(new ReserveDutyType(scReserve.next(), scReserve.next(), scReserve.nextInt(), scReserve.nextInt(), scReserve.nextDouble(), 100));
 		} 
 		scReserve.close();
 
