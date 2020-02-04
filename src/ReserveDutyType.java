@@ -11,6 +11,7 @@ public class ReserveDutyType
 	private final int startTime;
 	private final int endTime;
 	private final double approximateSize;
+	private final int nr;
 	
 	/**
 	 * Constructs a reserve duty type.
@@ -20,12 +21,13 @@ public class ReserveDutyType
 	 * @param endTime				the end time of the reserve duty in minutes (NOTE: a duty can end after midnight so this can exceed 24 * 60)
 	 * @param approximateSize		the approximate size of the reserve duty group of this type relative to the 
 	 */
-	public ReserveDutyType(String dayType, String type, int startTime, int endTime, double approximateSize) {
+	public ReserveDutyType(String dayType, String type, int startTime, int endTime, double approximateSize, int nr) {
 		this.dayType = dayType;
 		this.type = type;
 		this.startTime = startTime;
 		this.endTime = endTime;
 		this.approximateSize = approximateSize;
+		this.nr = nr;
 	}
 
 	public String getDayType() {
@@ -47,10 +49,14 @@ public class ReserveDutyType
 	public double getApproximateSize() {
 		return approximateSize;
 	}
+	
+	public int getNr() {
+		return nr;
+	}
 
 	@Override
 	public String toString() {
-		return "ReserveDuty [dayType=" + dayType + ", type=" + type + ", startTime=" + startTime + ", endTime="
-				+ endTime + ", approximateSize=" + approximateSize + "]";
+		return "ReserveDutyType [dayType=" + dayType + ", type=" + type + ", startTime=" + startTime + ", endTime="
+				+ endTime + ", approximateSize=" + approximateSize + ", nr=" + nr + "]";
 	}
 }
