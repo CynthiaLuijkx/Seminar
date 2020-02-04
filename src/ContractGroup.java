@@ -15,6 +15,7 @@ public class ContractGroup
 	private final Set<String> dutyTypes;
 	
 	private int ATVc;								// Number of ATV days required for the planning horizon
+	private int Tc;
 	
 	/**
 	 * Constructs a ContractGroup
@@ -64,6 +65,14 @@ public class ContractGroup
 	
 	public void setATVc(int ATVc) {
 		this.ATVc = ATVc;
+	}
+	
+	public int getTc() {
+		return Tc;
+	}
+	
+	public void setTc(int Tc) {
+		this.Tc = Tc;
 	}
 
 	@Override
