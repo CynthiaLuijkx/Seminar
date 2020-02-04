@@ -14,6 +14,9 @@ public class ContractGroup
 	private final double relativeGroupSize;
 	private final Set<String> dutyTypes;
 	
+	private int ATVc;								// Number of ATV days required for the planning horizon
+	private int Tc;
+	
 	/**
 	 * Constructs a ContractGroup
 	 * @param nr						the contract group nr corresponding with the excel data sheet
@@ -55,6 +58,22 @@ public class ContractGroup
 	public Set<String> getDutyTypes() {
 		return dutyTypes;
 	}
+	
+	public int getATVc() {
+		return ATVc;
+	}
+	
+	public void setATVc(int ATVc) {
+		this.ATVc = ATVc;
+	}
+	
+	public int getTc() {
+		return Tc;
+	}
+	
+	public void setTc(int Tc) {
+		this.Tc = Tc;
+	}
 
 	@Override
 	public String toString() {
@@ -63,6 +82,6 @@ public class ContractGroup
 	}
 	
 	public String groupNumberToString() {
-		return "Contract Group nr = " + nr;
+		return "ContractGroup" + nr;
 	}
 }
