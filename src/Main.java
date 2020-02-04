@@ -4,13 +4,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
+
+import ilog.concert.IloException;
+
 import java.util.Locale;
 
 public class Main 
 {
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		double violationBound = 0.9; 
@@ -18,7 +21,8 @@ public class Main
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
 		//add the duty types
-		dutyTypes.add("V");	dutyTypes.add("G");	dutyTypes.add("D");	dutyTypes.add("L");	dutyTypes.add("P"); 
+		dutyTypes.add("V");	dutyTypes.add("G");	dutyTypes.add("D");	dutyTypes.add("L");	dutyTypes.add("P"); dutyTypes.add("ATV"); 
+		dutyTypes.add("RV"); dutyTypes.add("RG"); dutyTypes.add("RD"); dutyTypes.add("RL");
 		if (depot.equals("Dirksland")) {
 			dutyTypes.add("M");	dutyTypes.add("GM"); 
 		} else if (depot.equals("Heinenoord")) {

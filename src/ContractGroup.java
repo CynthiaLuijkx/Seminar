@@ -80,4 +80,8 @@ public class ContractGroup
 		return "ContractGroup [nr=" + nr + ", avgDaysPerWeek=" + avgDaysPerWeek + ", avgHoursPerDay=" + avgHoursPerDay
 				+ ", ATVPerYear=" + ATVPerYear + ", dutyTypes=" + dutyTypes + "]";
 	}
+	
+	public String groupNumberToString() {
+		return "ContractGroup" + nr;
+	}
 }

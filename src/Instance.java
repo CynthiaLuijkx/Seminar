@@ -166,7 +166,7 @@ public class Instance
 		
 		int totalnDuties = nDutiesW*5 + nDutiesSat + nDutiesSun + nReserveDuties; 
 		this.UB =  (int) Math.ceil(totalnDuties/3.0); 
-		this.LB = (int) Math.ceil(totalnDuties/5.0); 
+		this.LB = (int) Math.ceil(totalnDuties/6); 
 	}
 	
 	public int getUB() {
@@ -195,6 +195,7 @@ public class Instance
 		this.nDrivers = nDrivers;
 		
 		for (ContractGroup c : this.contractGroups) {
+			
 			c.setTc((int) Math.ceil(nDrivers * c.getRelativeGroupSize()) * 7);
 			c.setATVc((int) Math.floor(c.getATVPerYear() / 365.0 * c.getTc()));
 		}
