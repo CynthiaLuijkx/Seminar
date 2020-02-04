@@ -57,18 +57,21 @@ public class Instance
 		this.violations32 = violations32;
 		
 		this.M = new HashSet<>();
-		String[] workDays = new String[] {"Monday", "Tuesday", "Wednesday", "Thurday", "Friday"};
+		String[] workDays = new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 		for (String day : workDays) {
 			for (String dutyType : this.dutiesPerTypeW.keySet()) {
 				M.add(new Combination(day, dutyType, this.dutiesPerTypeW.get(dutyType).size()));
 			}
+			M.add(new Combination(day, "ATV", 0));
 		}
 		for (String dutyType : this.dutiesPerTypeSat.keySet()) {
 			M.add(new Combination("Saturday", dutyType, this.dutiesPerTypeSat.get(dutyType).size()));
 		}
+		M.add(new Combination("Saturday", "ATV", 0));
 		for (String dutyType : this.dutiesPerTypeSun.keySet()) {
 			M.add(new Combination("Sunday", dutyType, this.dutiesPerTypeSun.get(dutyType).size()));
-		}		
+		}
+		M.add(new Combination("Sunday", "ATV", 0));
 	}
 
 	public Set<Duty> getWorkingDays() {
