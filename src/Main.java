@@ -110,7 +110,9 @@ public class Main
 		int reserveCounter = 100;
 		while (scReserve.hasNext()) { //continue till you have no more input
 			//add for every reserve duty type it's features
-			reserveDutyTypes.add(new ReserveDutyType(scReserve.next(), scReserve.next(), scReserve.nextInt(), scReserve.nextInt(), scReserve.nextDouble(), 100));
+			reserveDutyTypes.add(new ReserveDutyType(scReserve.next(), scReserve.next(), scReserve.nextInt(), scReserve.nextInt(), scReserve.nextDouble(), 
+					reserveCounter));
+			reserveCounter++;
 		} 
 		scReserve.close();
 

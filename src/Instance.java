@@ -1,5 +1,6 @@
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -31,6 +32,8 @@ public class Instance
 	private int LB = 0;
 	
 	private int nDrivers;
+	
+	private Map<ContractGroup, String[]> basicSchedules;
 	
 	/**
 	 * Constructs an Instance.
@@ -146,15 +149,18 @@ public class Instance
 				String[] workDays = new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 				for (String day : workDays) {
 					M.add(new Combination(day, "R" + duty.getType(), temp));
+					duty.setAmount(temp);
 				}
 			} else if(duty.getDayType().equals("Saturday")){
 				int temp = (int) Math.ceil(scale* duty.getApproximateSize()*nDutiesSat);
 				nReserveDuties += temp;
 				M.add(new Combination("Saturday", "R" + duty.getType(), temp));
+				duty.setAmount(temp);
 			}else {
 				int temp = (int) Math.ceil(scale* duty.getApproximateSize()*nDutiesSun);
 				nReserveDuties +=  temp;
 				M.add(new Combination("Sunday", "R" + duty.getType(), temp));
+				duty.setAmount(temp);
 			}
 		}
 		
@@ -169,6 +175,14 @@ public class Instance
 	
 	public int getLB() {
 		return this.LB; 
+	}
+	
+	public Map<ContractGroup, String[]> getBasicSchedules() {
+		return this.basicSchedules;
+	}
+	
+	public void setBasicSchedules(Map<ContractGroup, String[]> basicSchedules) {
+		this.basicSchedules = basicSchedules;
 	}
 	
 	/**

@@ -13,6 +13,8 @@ public class ReserveDutyType
 	private final double approximateSize;
 	private final int nr;
 	
+	private int amount;
+	
 	/**
 	 * Constructs a reserve duty type.
 	 * @param dayType				the day type of the reserve duty : "Workingday", "Saturday", "Sunday"
@@ -52,6 +54,14 @@ public class ReserveDutyType
 	
 	public int getNr() {
 		return nr;
+	}
+	
+	public int getAmount() {
+		return amount;
+	}
+	
+	public void setAmount(int amount) {
+		this.amount = amount;
 	}
 
 	@Override
