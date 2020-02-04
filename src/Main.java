@@ -37,7 +37,7 @@ public class Main
 
 		System.out.println("Instance " + depot + " initialised");
 
-
+		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
