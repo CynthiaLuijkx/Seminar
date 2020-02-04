@@ -126,7 +126,7 @@ public class Main
 		ReserveDutyType[] late = new ReserveDutyType[3]; 
 		ReserveDutyType[] early = new ReserveDutyType[3];
 		ReserveDutyType[] split = new ReserveDutyType[3]; 
-		//for every reserve possible reserve duty type, check which duty type it is and on which day type
+		//for every possible reserve duty type, check which duty type it is and on which day type
 		for (ReserveDutyType duty : reserveDutyTypes) {
 			if (duty.getDayType().equals("Workingday")) {
 				if (duty.getType().equals("V")) {
@@ -155,7 +155,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: W - W
+		// for the combination: W - W
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeW.containsKey("L") && dutiesPerTypeW.containsKey("V")) {
 			counts = getViolations(dutiesPerTypeW.get("L"), dutiesPerTypeW.get("V"), dailyRestMin, restDayMin);
@@ -184,12 +184,15 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: W - Sat
+		// for the combination: W - Sat
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeW.containsKey("L") && dutiesPerTypeSat.containsKey("V")) {
 			counts = getViolations(dutiesPerTypeW.get("L"), dutiesPerTypeSat.get("V"), dailyRestMin, restDayMin);
 			if (counts[0]/((double) counts[2]) >= violationBound) {
 				violations11.add(new Violation("L", "Workingday", false, "V", "Saturday", false));
+			}
+			if (counts[1]/((double) counts[2]) >= violationBound) {
+				violations32.add(new Violation("L", "Workingday", false, "V", "Saturday", false));
 			}
 		}
 		if (dutiesPerTypeW.containsKey("L") && (dutiesPerTypeSat.containsKey("G") || dutiesPerTypeSat.containsKey("GM"))) {
@@ -210,7 +213,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: W - Sun
+		// for the combination: W - Sun
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeW.containsKey("L") && dutiesPerTypeSun.containsKey("V")) {
 			counts = getViolations(dutiesPerTypeW.get("L"), dutiesPerTypeSun.get("V"), dailyRestMin, restDayMin);
@@ -233,7 +236,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: W - RW
+		// for the combination: W - RW
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeW.containsKey("L") && early[0] != null) {
 			counts = getViolations(dutiesPerTypeW.get("L"), early[0], dailyRestMin, restDayMin);
@@ -254,7 +257,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: W - RSat
+		// for the combination: W - RSat
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeW.containsKey("L") && early[1] != null) {
 			counts = getViolations(dutiesPerTypeW.get("L"), early[1], dailyRestMin, restDayMin);
@@ -275,7 +278,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: W - RSun
+		// for the combination: W - RSun
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeW.containsKey("L") && early[2] != null) {
 			counts = getViolations(dutiesPerTypeW.get("L"), early[2], dailyRestMin, restDayMin);
@@ -290,7 +293,7 @@ public class Main
 			}
 		}
 
-		//// for the combination working day to working day: Sat - Sun
+		//for the combination: Sat - Sun
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeSat.containsKey("L") && dutiesPerTypeSun.containsKey("V")) {
 			counts = getViolations(dutiesPerTypeSat.get("L"), dutiesPerTypeSun.get("V"), dailyRestMin, restDayMin);
@@ -313,7 +316,7 @@ public class Main
 			}
 		}
 
-		//// for the combination working day to working day: Sat - W
+		//for the combination: Sat - W
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeSat.containsKey("L") && dutiesPerTypeW.containsKey("V")) {
 			counts = getViolations(dutiesPerTypeSat.get("L"), dutiesPerTypeW.get("V"), dailyRestMin, restDayMin);
@@ -336,7 +339,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: Sat - RSun
+		// for the combination: Sat - RSun
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeSat.containsKey("L") && early[2] != null) {
 			counts = getViolations(dutiesPerTypeSat.get("L"), early[2], dailyRestMin, restDayMin);
@@ -351,7 +354,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: Sat - RW
+		// for the combination: Sat - RW
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeSat.containsKey("L") && early[0] != null) {
 			counts = getViolations(dutiesPerTypeSat.get("L"), early[0], dailyRestMin, restDayMin);
@@ -366,7 +369,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: Sun - W
+		// for the combination: Sun - W
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeSun.containsKey("L") && dutiesPerTypeW.containsKey("V")) {
 			counts = getViolations(dutiesPerTypeSun.get("L"), dutiesPerTypeW.get("V"), dailyRestMin, restDayMin);
@@ -395,7 +398,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: Sun - RW
+		// for the combination: Sun - RW
 		//if we exceed the violation bound then we add it to the set of violations
 		if (dutiesPerTypeSun.containsKey("L") && early[0] != null) {
 			counts = getViolations(dutiesPerTypeSun.get("L"), early[0], dailyRestMin, restDayMin);
@@ -406,8 +409,8 @@ public class Main
 				violations32.add(new Violation("L", "Sunday", false, "V", "Workingday", true));
 			}
 		}
-		if (dutiesPerTypeW.containsKey("L") && split[0] != null) {
-			counts = getViolations(dutiesPerTypeW.get("L"), split[0], dailyRestMin, restDayMin);
+		if (dutiesPerTypeSun.containsKey("L") && split[0] != null) {
+			counts = getViolations(dutiesPerTypeSun.get("L"), split[0], dailyRestMin, restDayMin);
 			if (counts[0]/((double) counts[2]) >= violationBound) {
 				violations11.add(new Violation("L", "Sunday", false, "G", "Workingday", true));
 			}
@@ -416,7 +419,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: RW - W
+		//for the combination: RW - W
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[0] != null && dutiesPerTypeW.containsKey("V")) {
 			counts = getViolations(late[0], dutiesPerTypeW.get("V"), dailyRestMin, restDayMin);
@@ -445,7 +448,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: RW - Sat
+		// for the combination: RW - Sat
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[0] != null && dutiesPerTypeSat.containsKey("V")) {
 			counts = getViolations(late[0], dutiesPerTypeSat.get("V"), dailyRestMin, restDayMin);
@@ -474,7 +477,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: RW - Sun
+		// for the combination: RW - Sun
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[0] != null && dutiesPerTypeSun.containsKey("V")) {
 			counts = getViolations(late[0], dutiesPerTypeSun.get("V"), dailyRestMin, restDayMin);
@@ -496,7 +499,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: RW - RW
+		// for the combination: RW - RW
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[0] != null && early[0] != null) {
 			counts = getViolations(late[0], early[0], dailyRestMin, restDayMin);
@@ -517,7 +520,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: RW - RSat
+		// for the combination: RW - RSat
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[0] != null && early[1] != null) {
 			counts = getViolations(late[0], early[1], dailyRestMin, restDayMin);
@@ -538,7 +541,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: RW - RSun
+		// for the combination: RW - RSun
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[0] != null && early[2] != null) {
 			counts = getViolations(late[0], early[2], dailyRestMin, restDayMin);
@@ -553,7 +556,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: RSat - Sun
+		// for the combination: RSat - Sun
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[1] != null && dutiesPerTypeSun.containsKey("V")) {
 			counts = getViolations(late[1], dutiesPerTypeSun.get("V"), dailyRestMin, restDayMin);
@@ -576,7 +579,7 @@ public class Main
 			}
 		}
 
-		//// for the combination working day to working day: RSat - W
+		//// for the combination: RSat - W
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[1] != null && dutiesPerTypeW.containsKey("V")) {
 			counts = getViolations(late[1], dutiesPerTypeW.get("V"), dailyRestMin, restDayMin);
@@ -599,7 +602,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: RSat - Sun
+		// for the combination: RSat - Sun
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[1] != null && early[2] != null) {
 			counts = getViolations(late[1], early[2], dailyRestMin, restDayMin);
@@ -614,7 +617,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: RSat - RW
+		// for the combination: RSat - RW
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[1] != null && early[0] != null) {
 			counts = getViolations(late[1], early[0], dailyRestMin, restDayMin);
@@ -629,7 +632,7 @@ public class Main
 			}
 		}
 
-		// for the combination working day to working day: RSun - W 
+		// for the combination: RSun - W 
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[2] != null && dutiesPerTypeW.containsKey("V")) {
 			counts = getViolations(late[2], dutiesPerTypeW.get("V"), dailyRestMin, restDayMin);
@@ -658,7 +661,7 @@ public class Main
 			}
 		}
 
-		//for the combination working day to working day: RSun - RW 
+		//for the combination: RSun - RW 
 		//if we exceed the violation bound then we add it to the set of violations
 		if (late[2] != null && early[0] != null) {
 			counts = getViolations(late[2], early[0], dailyRestMin, restDayMin);
