@@ -10,6 +10,7 @@ import ilog.concert.IloNumVarType;
 import ilog.concert.*;
 import ilog.cplex.*;
 import ilog.cplex.IloCplex;
+import ilog.cplex.IloCplex.UnknownObjectException;
 
 public class MIP_Phase1 
 {
@@ -28,6 +29,9 @@ public class MIP_Phase1
 	private HashMap<ContractGroup, ArrayList<Set<IloNumVar>>> daysPerGroup;
 
 	private HashMap<IloNumVar, Combination> decVarToCombination;
+	
+	//Output
+	private final HashMap<ContractGroup, String[]> solution;
 	
 	public MIP_Phase1(Instance instance, Set<String> dutyTypes) throws IloException {
 		this.cplex = new IloCplex();
@@ -52,6 +56,8 @@ public class MIP_Phase1
 		}
 		
 		initVars(); //Initialize variables
+		
+		//Hard constraints
 		initConstraint1(); //Max one duty per day
 		initConstraint2(); //All combinations ticked off IS CURRENTLY THE CONSTRAINT THAT MAKES IT INFEASIBLE 
 		initConstraint3(); //Max one meal duty per two weeks
@@ -60,6 +66,11 @@ public class MIP_Phase1
 		initConstraint6(); //Minimum of one rest day per two weeks
 		initConstraint7(); //Rest of 32 hours
 		initConstraint8(); //Sunday maximum 
+		
+		//Soft constraints 
+		initSoft1();
+		
+		
 		initObjective();
 		
 		//System.out.println(this.cplex.getModel());
@@ -67,6 +78,9 @@ public class MIP_Phase1
 		this.cplex.exportModel("MIP_Phase1.lp");
 		solve();
 		System.out.println("Objective Value: " + this.cplex.getObjValue());
+		
+		this.solution = new HashMap<>();
+		getSolution();
 	}
 	
 	public void clearModel() throws IloException {
@@ -83,6 +97,31 @@ public class MIP_Phase1
 		return this.cplex.isPrimalFeasible();
 	}
 	
+	public void getSolution() throws UnknownObjectException, IloException {
+		Set<String[]> solutionPerGroup = new HashSet<>();
+		for(ContractGroup group : this.instance.getContractGroups()) {
+			String[] solutionArray = new String[group.getTc()];
+			for(int t = 0; t < solutionArray.length; t++) {
+				if(t % 7 == 0) {
+					System.out.println(" ");
+				}
+				for(IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {
+					if(this.cplex.getValue(decVar) > 0) {
+						solutionArray[t] = this.decVarToCombination.get(decVar).getType();
+						System.out.print(solutionArray[t] + " ");
+					}
+				}
+				if(this.cplex.getValue(this.restDaysPerGroup.get(group)[t]) > 0) {
+					solutionArray[t] = "Rest";
+					System.out.print(solutionArray[t] + " ");
+				}
+			}
+			System.out.println("");
+			System.out.println("--------------");
+			this.solution.put(group, solutionArray);
+		}
+	}
+	
 	public void initVars() throws IloException { //Initializing the variables
 		//Create new Hashmaps
 		this.dutyAssignmentCombis = new HashMap<>();
@@ -92,9 +131,8 @@ public class MIP_Phase1
 		for(Combination combination : this.instance.getM()) {
 			this.dutyAssignmentCombis.put(combination, new HashSet<>());
 			for(ContractGroup group : this.instance.getContractGroups()) { //For every contract group 
-				
+				System.out.println(combination.getType());
 				if(group.getDutyTypes().contains(combination.getType())) { //If this contract group can work this duty type 
-					
 					for(int i = 0; i < this.weeksPerGroup.get(group); i++) { //For every week the group can do it
 						
 						IloNumVar newOption = this.cplex.boolVar(); //0, 1 boolean variable
@@ -142,18 +180,21 @@ public class MIP_Phase1
 				String name = "Day" + t + group.groupNumberToString();
 				
 				//Add it
-				this.cplex.addLe(constraint, 1, name);
+				this.cplex.addEq(constraint, 1, name);
 			}			
 		}
 	}
 	
-	public void initConstraint2() throws IloException { //All combinations should be included the right number of times 
-		for(Combination combination : this.instance.getM()) { //For all combinations
-			IloLinearNumExpr constraint = this.cplex.linearNumExpr(); 
-			for(IloNumVar decisionVar : this.dutyAssignmentCombis.get(combination)) { //All decision variables for that combination
-				constraint.addTerm(decisionVar, 1);
+	public void initConstraint2() throws IloException { // All combinations should be included the right number of times
+		for (Combination combination : this.instance.getM()) { // For all combinations
+			if (!combination.getType().equals("ATV")) { //Exclude ATV 
+				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+				for (IloNumVar decisionVar : this.dutyAssignmentCombis.get(combination)) { // All decision variables for
+																							// that combination
+					constraint.addTerm(decisionVar, 1);
+				}
+				this.cplex.addEq(constraint, combination.getN(), combination.toString());
 			}
-			this.cplex.addGe(constraint, combination.getN(), combination.toString());
 		}
 	}
 	
@@ -191,7 +232,7 @@ public class MIP_Phase1
 						constraint.addTerm(decVar, 1); //Add it 
 					}
 				}
-				this.cplex.addGe(constraint, group.getATVc(), "ATV" + group.groupNumberToString());
+				this.cplex.addEq(constraint, group.getATVc(), "ATV" + group.groupNumberToString());
 			}			
 		}
 	}
@@ -250,42 +291,42 @@ public class MIP_Phase1
 	}
 	
 	public void initConstraint7() throws IloException { // Rest of 32 hours
-		for (Violation violation : this.instance.getViolations32()) {//For all violations
+		for (Violation violation : this.instance.getViolations32()) {// For all violations
 			for (ContractGroup group : this.instance.getContractGroups()) { // For all contract groups
-				
+
 				// Get a set of all the days in this contract group the violation can apply to
 				Set<Integer> daysToCover = this.daysToCover(violation.getDayTypeFrom(), this.weeksPerGroup.get(group));
-				
+
 				for (Integer t : daysToCover) { // Go over all days
-					
-					//Find a decVar with this type 
-					IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(t),
-							violation.getTypeFrom());
-					
+					if ((t + 2) < this.daysPerGroup.get(group).size()) {// So we don't go out of bounds on a Friday -> Sunday transition
+						// Find a decVar with this type
+						IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(t),
+								violation.getTypeFrom());
+
 						// If we found one
 						if (decVar != null) {
 							// Look for the right dutyTo type in two days from now
-							if ((t + 2) < this.daysPerGroup.get(group).size()) { //So we don't go out of bounds on a Friday -> Sunday transition
-								for (IloNumVar decVarNext : this.daysPerGroup.get(group).get(t + 2)) {
-									if (this.decVarToCombination.get(decVarNext).getType()
-											.equals(violation.getTypeTo())) {
-										// If we have found it, add a constraint
-										IloLinearNumExpr constraint = this.cplex.linearNumExpr();
-										constraint.addTerm(decVar, 1); // The current day
-										constraint.addTerm(this.restDaysPerGroup.get(group)[t + 1], 1); // The rest day
-										// Find an ATV day, if there is one
-										for (IloNumVar decVarATV : this.daysPerGroup.get(group).get(t + 1)) {
-											if (this.decVarToCombination.get(decVarATV).getType().equals("ATV")) {
-												constraint.addTerm(decVar, 1);
-											}
+							
+							IloNumVar decVarNext = this.decVarOfThisType(this.daysPerGroup.get(group).get(t+2), violation.getTypeTo());
+								if (decVarNext != null) {
+									// If we have found it, add a constraint
+									IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+									constraint.addTerm(decVar, 1); // The current day
+									constraint.addTerm(this.restDaysPerGroup.get(group)[t + 1], 1); // The rest day
+									
+									// Find an ATV day, if there is one
+									if(group.getDutyTypes().contains("ATV")) {
+										IloNumVar decVarATV = this.decVarOfThisType(this.daysPerGroup.get(group).get(t+1), "ATV");
+										if (decVarATV != null) { //Should be redundant
+											constraint.addTerm(decVarATV, 1);
 										}
-										constraint.addTerm(decVarNext, 1); // The day two days from now
-										this.cplex.addLe(constraint, 2); // Add the constraint
 									}
+									constraint.addTerm(decVarNext, 1); // The day two days from now
+									// Add the constraint
+									this.cplex.addLe(constraint, 2, group.groupNumberToString() + " " + violation.toString()); 
 								}
-							}
-							// continue;
 						}
+					}
 				}
 			}
 		}
@@ -294,22 +335,23 @@ public class MIP_Phase1
 	public void initConstraint8() throws IloException { //Maximum of sundays (3/4 of the time)
 		for(ContractGroup group : this.instance.getContractGroups()) { //For every contract group
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
-			for(int w = 0; w < this.weeksPerGroup.get(group); w++) { //Summing all groups
-				for(IloNumVar decVar : this.daysPerGroup.get(group).get(w*7)) {
+			for(int w = 0; w < this.weeksPerGroup.get(group); w++) { //Summing all weeks
+				for(IloNumVar decVar : this.daysPerGroup.get(group).get(w*7)) {//All decision variables on sunday
 					constraint.addTerm(decVar, 1);
 				}				
 			}
-			int numberOfSundays = (int) (Math.floor((this.weeksPerGroup.get(group) * 3/4)));
-			this.cplex.addLe(constraint, numberOfSundays);
+			int numberOfSundays = (int) (Math.floor((this.weeksPerGroup.get(group) * 3/4))); //Rounding down 
+			this.cplex.addLe(constraint, numberOfSundays, "Sundays" + group.groupNumberToString());
 		}
+	}
+	
+	public void initSoft1() throws IloException {
 		
 	}
 	
-	public void initConstraintX() throws IloException {
-		
+	public void initSoftX() throws IloException {
 		
 	}
-	
 	
 	public void initObjective() throws IloException {
 		//Edit this later 
@@ -323,6 +365,7 @@ public class MIP_Phase1
 		this.cplex.addMinimize(objective);
 	}
 	
+	//Method that returns the number of a day in a week 
 	public Integer dayNumber(String string) {
 		if(string.equals("Monday")) {
 			return 1;
@@ -345,6 +388,7 @@ public class MIP_Phase1
 		return 0;
 	}
 	
+	//Method that returns all the day numbers of that type 
 	public Set<Integer> daysToCover(String string, int weeks) {
 		Set<Integer> daysToCover = new HashSet<>();
 		if(string.equals("Workingday")){
@@ -369,14 +413,13 @@ public class MIP_Phase1
 		return daysToCover;
 	}
 	
+	//Method that returns an IloNumVar out of a set if it the duty type matches
 	public IloNumVar decVarOfThisType(Set<IloNumVar> set, String string) {
-		IloNumVar returnVar = null;
 		for(IloNumVar decVar : set) {
 			if(this.decVarToCombination.get(decVar).getType().equals(string)) {
-				returnVar = decVar;
-				break;
+				return decVar;
 			}
 		}
-		return returnVar;
+		return null;
 	}
 }

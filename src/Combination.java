@@ -19,12 +19,7 @@ public class Combination
 	public Combination(String dayType, String type, int n) {
 		this.dayType = dayType;
 		this.type = type;
-		//if(dayType.equals("Saturday") || dayType.equals("Sunday")) {
-			this.n = n;
-		//}
-		//else {
-		//	this.n = (int) Math.ceil(n/5);
-		//}
+		this.n = n;
 	}
 
 	public String getDayType() {
