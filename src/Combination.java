@@ -12,7 +12,7 @@ public class Combination
 	
 	/**
 	 * Constructs a Combination.
-	 * @param dayType		the day type : "Workingday", "Saturday", "Sunday"
+	 * @param dayType		the day type : "Workingday" (all working days separately) , "Saturday", "Sunday"
 	 * @param type			the duty type : "V", "D", "L", "P", "G", "M", "GM", "W"
 	 * @param n				the number of times this dayType - dutyType combination should be in the basic schedule
 	 */

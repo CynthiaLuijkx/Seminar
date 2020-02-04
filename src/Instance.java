@@ -133,7 +133,7 @@ public class Instance
 	 * Calculates the lower and upper bound for the number of drivers
 	 */
 	public void calculateBounds() {
-		int nDutiesW = 5*this.workingDays.size(); 
+		int nDutiesW = this.workingDays.size(); 
 		int nDutiesSat = this.saturday.size(); 
 		int nDutiesSun = this.sunday.size(); 
 		int nReserveDuties =0; 
@@ -142,7 +142,7 @@ public class Instance
 		for(ReserveDutyType duty: this.reserveDutyTypes) {
 			if(duty.getDayType().equals("Workingday")) {
 				int temp = (int) Math.ceil(scale*duty.getApproximateSize()*nDutiesW);
-				nReserveDuties += temp;
+				nReserveDuties += temp*5;
 				String[] workDays = new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 				for (String day : workDays) {
 					M.add(new Combination(day, "R" + duty.getType(), temp));
@@ -158,9 +158,9 @@ public class Instance
 			}
 		}
 		
-		int totalnDuties = nDutiesW + nDutiesSat +nDutiesSun + nReserveDuties; 
+		int totalnDuties = nDutiesW*5 + nDutiesSat + nDutiesSun + nReserveDuties; 
 		this.UB =  (int) Math.ceil(totalnDuties/3.0); 
-		this.LB = (int) Math.ceil(totalnDuties/5.0); 
+		this.LB = (int) Math.ceil(totalnDuties/6); 
 	}
 	
 	public int getUB() {
@@ -181,6 +181,7 @@ public class Instance
 		this.nDrivers = nDrivers;
 		
 		for (ContractGroup c : this.contractGroups) {
+			
 			c.setTc((int) Math.ceil(nDrivers * c.getRelativeGroupSize()) * 7);
 			c.setATVc((int) Math.floor(c.getATVPerYear() / 365.0 * c.getTc()));
 		}

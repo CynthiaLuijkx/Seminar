@@ -4,11 +4,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
+
+import ilog.concert.IloException;
+
 import java.util.Locale;
 
 public class Main 
 {
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
@@ -18,7 +21,8 @@ public class Main
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
 		//add the duty types
-		dutyTypes.add("V");	dutyTypes.add("G");	dutyTypes.add("D");	dutyTypes.add("L");	dutyTypes.add("P"); 
+		dutyTypes.add("V");	dutyTypes.add("G");	dutyTypes.add("D");	dutyTypes.add("L");	dutyTypes.add("P"); dutyTypes.add("ATV"); 
+		dutyTypes.add("RV"); dutyTypes.add("RG"); dutyTypes.add("RD"); dutyTypes.add("RL");
 		if (depot.equals("Dirksland")) {
 			dutyTypes.add("M");	dutyTypes.add("GM"); 
 		} else if (depot.equals("Heinenoord")) {
@@ -107,9 +111,10 @@ public class Main
 		//Read the reserve duties
 		Scanner scReserve = new Scanner(reserveDutiesFile);
 		scReserve.useLocale(Locale.ENGLISH); 
+		int reserveCounter = 100;
 		while (scReserve.hasNext()) { //continue till you have no more input
 			//add for every reserve duty type it's features
-			reserveDutyTypes.add(new ReserveDutyType(scReserve.next(), scReserve.next(), scReserve.nextInt(), scReserve.nextInt(), scReserve.nextDouble()));
+			reserveDutyTypes.add(new ReserveDutyType(scReserve.next(), scReserve.next(), scReserve.nextInt(), scReserve.nextInt(), scReserve.nextDouble(), 100));
 		} 
 		scReserve.close();
 
