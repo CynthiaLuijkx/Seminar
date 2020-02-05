@@ -40,8 +40,14 @@ public class Main
 		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound);
 
 		System.out.println("Instance " + depot + " initialised");
+		
+		instance.setNrDrivers(instance.getLB() + 10);
 
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
+		instance.setBasicSchedules(mip.getSolution());
+		
+		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance);
+		pricing.initGraphs();
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
