@@ -108,6 +108,10 @@ public class MIP_Phase1
 		return this.cplex.isPrimalFeasible();
 	}
 	
+	public HashMap<ContractGroup, String[]> getSolution() {
+		return this.solution;
+	}
+	
 	public void makeSolution() throws UnknownObjectException, IloException {
 		Set<String[]> solutionPerGroup = new HashSet<>();
 		for(ContractGroup group : this.instance.getContractGroups()) {
@@ -131,11 +135,6 @@ public class MIP_Phase1
 			System.out.println("--------------");
 			this.solution.put(group, solutionArray);
 		}
-	}
-	
-	//Getter for the solution
-	public HashMap<ContractGroup, String[]> getSolution() {
-		return this.solution;
 	}
 	
 	public void initVars() throws IloException { //Initializing the variables
