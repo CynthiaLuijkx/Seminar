@@ -296,12 +296,12 @@ public class MIP_Phase1
 		}
 	}
 	
-	public void initConstraint6() throws IloException { //At least one rest or ATV day per week
+	public void initConstraint6() throws IloException { //At least one rest or ATV day per 7*24 hours
 		for(ContractGroup group : this.instance.getContractGroups()) {// For all contract groups
-			for(int w = 0; w <= group.getTc()/7 - 1 ; w++) { //For every week
+			for(int i = 0; i < group.getTc()- 6; i++) { //For every period of 7 days
 				
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
-				for(int t = 7*w; t <= (7*(w+1))-1; t++) {//Sum all days of the week
+				for(int t = i; t <= i+6; t++) {//Sum all days of the week
 					constraint.addTerm(this.restDaysPerGroup.get(group)[t],1); //Add the rest day 
 					
 					
@@ -312,7 +312,7 @@ public class MIP_Phase1
 						}
 					}
 				}
-				this.cplex.addGe(constraint,1, "Rest per week" + w + "," + group.groupNumberToString());
+				this.cplex.addGe(constraint,1, "Rest per week" + i + "," + group.groupNumberToString());
 			}
 		}
 	}
