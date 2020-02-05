@@ -68,7 +68,7 @@ public class DirectedGraph<V,A>
 		}
 	}
 	
-	public void removeArc(DirectedGraphArc<Integer, ArcData> curArc) throws IllegalArgumentException {
+	public void removeArc(DirectedGraphArc<V, A> curArc) throws IllegalArgumentException {
 		if (curArc == null) {
 			throw new IllegalArgumentException("Unable to remove null fromt the graph");
 		} else if (!arcs.contains(curArc)) {
