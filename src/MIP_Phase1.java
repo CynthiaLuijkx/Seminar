@@ -93,7 +93,7 @@ public class MIP_Phase1
 		System.out.println("Objective Value: " + this.cplex.getObjValue());
 		
 		this.solution = new HashMap<>();
-		getSolution();
+		makeSolution();
 	}
 	
 	public void clearModel() throws IloException {
@@ -110,7 +110,11 @@ public class MIP_Phase1
 		return this.cplex.isPrimalFeasible();
 	}
 	
-	public void getSolution() throws UnknownObjectException, IloException {
+	public HashMap<ContractGroup, String[]> getSolution() {
+		return this.solution;
+	}
+	
+	public void makeSolution() throws UnknownObjectException, IloException {
 		Set<String[]> solutionPerGroup = new HashSet<>();
 		for(ContractGroup group : this.instance.getContractGroups()) {
 			String[] solutionArray = new String[group.getTc()];
