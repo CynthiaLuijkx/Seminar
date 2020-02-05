@@ -1,9 +1,16 @@
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import ilog.concert.IloException;
 
@@ -17,7 +24,7 @@ public class Main
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		double violationBound = 0.9; 
-				
+
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
 		//add the duty types
@@ -42,6 +49,12 @@ public class Main
 		System.out.println("Instance " + depot + " initialised");
 
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
+		HashMap<ContractGroup, String[]> solution = mip.getSolutionMap(); 
+
+		for(ContractGroup group: solution.keySet()) {
+			String[] duties = solution.get(group); 
+			new ScheduleVis(duties, Integer.toString(group.getNr())); 
+		}
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
@@ -60,7 +73,7 @@ public class Main
 		Set<ReserveDutyType> reserveDutyTypes = new HashSet<>();
 		Set<Violation> violations11 = new HashSet<>();
 		Set<Violation> violations32 = new HashSet<>();
-		
+
 		Scanner scDuties = new Scanner(dutiesFile); //Read the file dutiesFile
 		while (scDuties.hasNext()) { //till all information from the file is read
 			Duty newDuty = new Duty(scDuties.nextInt(), scDuties.next(), scDuties.nextInt(), scDuties.nextInt(), scDuties.nextInt(), 
