@@ -660,7 +660,7 @@ public class MIP_Phase1
 								daysToCover.add(t);
 							}
 						}
-						boolean feasible = true;
+
 						for(Integer day : daysToCover) {//Sum over these elements
 							constraint.addTerm(this.restDaysPerGroup.get(group)[day], 1); //Add the rest day
 							//Add an ATV day if we have one
