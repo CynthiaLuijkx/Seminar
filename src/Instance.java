@@ -19,9 +19,11 @@ public class Instance
 	private final HashMap<String, Set<Duty>> dutiesPerTypeW;
 	private final HashMap<String, Set<Duty>> dutiesPerTypeSat;
 	private final HashMap<String, Set<Duty>> dutiesPerTypeSun;
+	private final HashMap<Integer, Duty> fromDutyNrToDuty;
 	
 	private final Set<ContractGroup> contractGroups;
 	private final Set<ReserveDutyType> reserveDutyTypes;
+	private final HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty;
 	
 	private final Set<Violation> violations11;
 	private final Set<Violation> violations32;
@@ -51,7 +53,7 @@ public class Instance
 	 */
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
 			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
-			Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, Set<Violation> violations11, Set<Violation> violations32) {
+			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32) {
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
@@ -59,6 +61,8 @@ public class Instance
 		this.dutiesPerTypeW = dutiesPerTypeW;
 		this.dutiesPerTypeSat = dutiesPerTypeSat;
 		this.dutiesPerTypeSun = dutiesPerTypeSun;
+		this.fromDutyNrToDuty = fromDutyNrToDuty;
+		this.fromRDutyNrToRDuty = fromRDutyNrToRDuty;
 		this.contractGroups = contractGroups;
 		this.reserveDutyTypes = reserveDutyTypes;
 		this.violations11 = violations11;
@@ -111,10 +115,16 @@ public class Instance
 	public HashMap<String, Set<Duty>> getDutiesPerTypeSun() {
 		return dutiesPerTypeSun;
 	}
-
+	public HashMap<Integer, Duty> getFromDutyNrToDuty(){
+		return fromDutyNrToDuty;
+	}
+	public HashMap<Integer, ReserveDutyType> getFromRDutyNrToRDuty(){
+		return fromRDutyNrToRDuty;
+	}
 	public Set<ContractGroup> getContractGroups() {
 		return contractGroups;
 	}
+	
 	
 	public Set<ReserveDutyType> getReserveDutyTypes() {
 		return reserveDutyTypes;

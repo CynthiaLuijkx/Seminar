@@ -13,7 +13,7 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		double violationBound = 0.9; 
@@ -43,11 +43,14 @@ public class Main
 		
 		instance.setNrDrivers(instance.getLB() + 10);
 
-		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
-		instance.setBasicSchedules(mip.getSolution());
+		//MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
+		//instance.setBasicSchedules(mip.getSolution());
 		
-		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance);
-		pricing.initGraphs();
+		//RMP_Phase3 RMP = new RMP_Phase3(instance);
+		//RMP.solve();
+		
+		//PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance);
+		//pricing.initGraphs();
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
@@ -62,8 +65,10 @@ public class Main
 		HashMap<String, Set<Duty>> dutiesPerTypeW = new HashMap<>();
 		HashMap<String, Set<Duty>> dutiesPerTypeSat = new HashMap<>();
 		HashMap<String, Set<Duty>> dutiesPerTypeSun = new HashMap<>();
+		HashMap<Integer, Duty> fromDutyNrToDuty = new HashMap<>();
 		Set<ContractGroup> contractGroups = new HashSet<>();
 		Set<ReserveDutyType> reserveDutyTypes = new HashSet<>();
+		HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty = new HashMap<>();
 		Set<Violation> violations11 = new HashSet<>();
 		Set<Violation> violations32 = new HashSet<>();
 		
@@ -71,6 +76,7 @@ public class Main
 		while (scDuties.hasNext()) { //till all information from the file is read
 			Duty newDuty = new Duty(scDuties.nextInt(), scDuties.next(), scDuties.nextInt(), scDuties.nextInt(), scDuties.nextInt(), 
 					scDuties.nextInt(), scDuties.next(), scDuties.nextInt()); //Create a new duty with the corresponding information
+			fromDutyNrToDuty.put(newDuty.getNr(),newDuty);
 			if (newDuty.getDayType().equals("Workingday")) { //add all possible duty types that can be executed on a working day 
 				workingDays.add(newDuty);
 				if (!dutiesPerTypeW.containsKey(newDuty.getType())) {
@@ -124,6 +130,9 @@ public class Main
 					reserveCounter));
 			reserveCounter++;
 		} 
+		for(ReserveDutyType reserveDuties: reserveDutyTypes) {
+			fromRDutyNrToRDuty.put(reserveDuties.getNr(), reserveDuties);
+		}
 		scReserve.close();
 
 		// ---------------------------- Determine the violations --------------------------------------------------
@@ -694,9 +703,10 @@ public class Main
 				violations32.add(new Violation("L", "Sunday", true, "G", "Workingday", true));
 			}
 		}
-
-		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, contractGroups, 
-				reserveDutyTypes, violations11, violations32);
+		
+		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, fromDutyNrToDuty, contractGroups, 
+				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32);
+		
 	}
 
 	/**
