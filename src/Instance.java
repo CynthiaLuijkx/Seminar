@@ -118,6 +118,9 @@ public class Instance
 	public HashMap<Integer, Duty> getFromDutyNrToDuty(){
 		return fromDutyNrToDuty;
 	}
+	public HashMap<Integer, ReserveDutyType> getFromRDutyNrToRDuty(){
+		return fromRDutyNrToRDuty;
+	}
 	public Set<ContractGroup> getContractGroups() {
 		return contractGroups;
 	}
