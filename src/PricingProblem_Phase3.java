@@ -6,6 +6,9 @@ import java.util.Set;
 
 public class PricingProblem_Phase3 
 {
+	private final int consecFreeWeekly = 32 * 60;
+	private final int freeTwoWeeks = 72 * 60;
+	
 	/*
 	 * 1: ATV
 	 * 2: Rest
@@ -21,6 +24,9 @@ public class PricingProblem_Phase3
 		this.instance = instance;
 	}
 	
+	/**
+	 * This method intialises the directed graph for each contract group.
+	 */
 	public void initGraphs() {
 		this.graphs = new HashMap<ContractGroup, DirectedGraph<Node, Double>>();
 		int minPerDay = 24 * 60;
@@ -63,7 +69,9 @@ public class PricingProblem_Phase3
 					
 					for (Node prevNode : newGraph.getNodes().get(t-1)) {
 						// All nodes from ATV or rest day should get an arc as always feasible
-						if (prevNode.getDutyNr() == 1 || prevNode.getDutyNr() == 2) {
+						if (t== 0) {
+							newGraph.addArc(source, newNode, 0.0);
+						} else if (prevNode.getDutyNr() == 1 || prevNode.getDutyNr() == 2) {
 							newGraph.addArc(prevNode, newNode, 0.0);
 						} else if (instance.getFromRDutyNrToRDuty().containsKey(prevNode.getDutyNr())) {
 							// Check the 11 hour constraint
@@ -97,7 +105,9 @@ public class PricingProblem_Phase3
 						
 						for (Node prevNode : newGraph.getNodes().get(t-1)) {
 							// All nodes from ATV or rest day should get an arc as always feasible
-							if (prevNode.getDutyNr() == 1 || prevNode.getDutyNr() == 2) {
+							if (t == 0) {
+								newGraph.addArc(source, newNode, 0.0);
+							} else if (prevNode.getDutyNr() == 1 || prevNode.getDutyNr() == 2) {
 								newGraph.addArc(prevNode, newNode, 0.0);
 							} else if (instance.getFromRDutyNrToRDuty().containsKey(prevNode.getDutyNr())) {
 								// Check the 11 hour constraint
@@ -138,6 +148,11 @@ public class PricingProblem_Phase3
 		}
 	}
 
+	/**
+	 * This method removes the nodes from the directed graph that do not have any in or outgoing arcs.
+	 * @param graph			the graph for which the node removal has to be executed
+	 * @param c				the contract group of consideration
+	 */
 	public void removeNodes(DirectedGraph<Node, Double> graph, ContractGroup c) {
 		boolean check = true;
 		while (check) {
@@ -160,8 +175,12 @@ public class PricingProblem_Phase3
 		}
 	}
 
-	public Map<ContractGroup, ArrayList<Schedule>> executeLabelling() {
-		Map<ContractGroup, ArrayList<Schedule>> negRedCostSchedules = new HashMap<ContractGroup, ArrayList<Schedule>>();
+	/**
+	 * This method executes the labelling algorithm.
+	 * @return				a set with schedules with negative reduced costs
+	 */
+	public Map<ContractGroup, Set<Schedule>> executeLabelling() {
+		Map<ContractGroup, Set<Schedule>> negRedCostSchedules = new HashMap<ContractGroup, Set<Schedule>>();
 
 		for (ContractGroup c : instance.getContractGroups()) {
 			Map<Node, Set<Label>> labelMap = new HashMap<Node, Set<Label>>();
@@ -180,26 +199,217 @@ public class PricingProblem_Phase3
 					for (DirectedGraphArc<Node, Double> curArc : graphs.get(c).getInArcs(curNode)) {
 						for (Label prevLabel : labelMap.get(curArc.getFrom())) {
 							// Construct the label if it is feasible
-//							Label newLabel = this.getLabel(curNode.getDutyNr(), prevLabel, curArc, t);
-//							if (newLabel != null) {
-//								
-//							}
+							Label newLabel = this.getLabel(prevLabel, curArc, t, curNode.getDutyNr(), c);
+							if (newLabel != null) {
+								labels.add(newLabel);
+							}
 						}
+					}
+					labelMap.put(curNode, labels);
+				}
+			}
+			
+			// For all labels at the sink with negative reduced costs, check 7x24 and 14x24 constraints from end to start
+			Set<Schedule> schedules = new HashSet<>();
+			for (Label curLabel : labelMap.get(graphs.get(c).getNodes().get(instance.getBasicSchedules().get(c).length))) {
+				if (curLabel.getRedCosts() < 0) {
+					if (this.isFeasibleSchedule(curLabel)) {
+						schedules.add(new Schedule(c, curLabel.getTotMinus(), curLabel.getTotOvertime(), curLabel.getSchedule()));
 					}
 				}
 			}
+			negRedCostSchedules.put(c, schedules);
 		}
 
 		return negRedCostSchedules;
 	}
 	
-	public Label getLabel(Label prevLabel, DirectedGraphArc<Node, Double> curArc, int t, int dutyNr) {		
+	/**
+	 * This method decides whether feasibility constraints are met at this point and if so, returns the label.
+	 * @param prevLabel				the previous label
+	 * @param curArc				the arc to be traversed
+	 * @param t						the day number
+	 * @param dutyNr				the duty number
+	 * @param c						the contract group of consideration
+	 * @return						null if the schedule is not feasible or the new label
+	 */
+	public Label getLabel(Label prevLabel, DirectedGraphArc<Node, Double> curArc, int t, int dutyNr, ContractGroup c) {		
 		int[] schedule = this.copyIntArray(prevLabel.getSchedule());
 		schedule[t] = dutyNr;
 		
+		/*
+		 * For a schedule to be feasible:
+		 * 		- at least one period of 32 hours free in the past 7X24 hours
+		 * 		- at least 72 hours free in the past 14x24 hours of which at least 32 hours per period free
+		 */
+		
+		// 7 x 14
+		boolean feas7 = this.isFeasible7(schedule, t - 6);
+		
+		if (!feas7) {
+			return null;
+		}
+		
+		boolean feas14 = this.isFeasible14(schedule, t - 13);
+		
+		if (feas7 && feas14) {
+			if (t % 7 == 6) {
+				int totHours = 0;
+				for (int i = 0; i < 7; i++) {
+					if (instance.getFromDutyNrToDuty().containsKey(schedule[t-i])) {
+						totHours += instance.getFromDutyNrToDuty().get(schedule[t-i]).getPaidMin();
+					} else if (instance.getFromRDutyNrToRDuty().containsKey(schedule[t-i])) {
+						totHours += c.getAvgHoursPerDay() * 60;
+					}
+				}
+				return new Label(prevLabel.getRedCosts() + curArc.getData(), prevLabel.getTotOvertime() + 
+						Math.max(0, (int) (totHours - (c.getAvgDaysPerWeek() * c.getAvgHoursPerDay()))), prevLabel.getTotMinus() + 
+						Math.min(0, (int) (c.getAvgDaysPerWeek() * c.getAvgHoursPerDay() - totHours)), schedule);
+			} else {
+				return new Label(prevLabel.getRedCosts() + curArc.getData(), prevLabel.getTotOvertime(), prevLabel.getTotMinus(), schedule);
+			}
+		}
+		
 		return null;
 	}
+	
+	/**
+	 * This method returns whether a schedule is feasible from the end to the start of the schedule.
+	 * @param label					the label of the schedule of consideration
+	 * @return						true if the 7x24 and 14x24 constraints are met from the end to the start of the schedule
+	 */
+	public boolean isFeasibleSchedule(Label label) {		
+		for (int t = label.getSchedule().length - 6; t < label.getSchedule().length; t++) {
+			if (!this.isFeasible7(label.getSchedule(), t)) {
+				return false;
+			} else if (!this.isFeasible14(label.getSchedule(), t)) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * This method tests whether the 7x24 hour constraint is satisfied starting at day t
+	 * @param schedule			the schedule
+	 * @param t					the starting day to check the 7x24 constraint
+	 * @return					whether the 7x24 hour constraint is satisfied or not
+	 */
+	public boolean isFeasible7(int[] schedule, int t) {
+		// The constraint has to be tested from the start of a duty, so ATV and rest days can be skipped
+		if (schedule[t] != 1 || schedule[t] != 2) {
+			int start = 0;
+			if (instance.getFromDutyNrToDuty().containsKey(schedule[t])) {
+				start = instance.getFromDutyNrToDuty().get(schedule[t]).getStartTime();
+			} else {
+				start = instance.getFromRDutyNrToRDuty().get(schedule[t]).getStartTime();
+			}
+			
+			for (int i = 1; i < 7; i++) {
+				if (schedule[(t+i)%schedule.length] == 1 || schedule[(t+i)%schedule.length] == 2) {
+					int consec = 24 * 60;
+					
+					if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i-1)%schedule.length])) {
+						consec += instance.getFromDutyNrToDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
+					} else {
+						consec += instance.getFromRDutyNrToRDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
+					}
+					
+					if (i == 6) {
+						if (schedule[(t+7)%schedule.length] == 1 || schedule[(t+7)%schedule.length] == 2) {
+							consec += start;
+						} else if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+7)%schedule.length])) {
+							consec += Math.min(start, instance.getFromDutyNrToDuty().get(schedule[(t+7)%schedule.length]).getStartTime());
+						} else {
+							consec += Math.min(start, instance.getFromRDutyNrToRDuty().get(schedule[(t+7)%schedule.length]).getStartTime());
+						}
+					} else {
+						if (schedule[(t+i+1)%schedule.length] == 1 || schedule[(t+i+1)%schedule.length] == 2) {
+							consec += 24 * 60;
+						} else if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i+1)%schedule.length])) {
+							consec += instance.getFromDutyNrToDuty().get(schedule[(t+i+1)%schedule.length]).getStartTime();
+						} else {
+							consec += instance.getFromRDutyNrToRDuty().get(schedule[(t+i+1)%schedule.length]).getStartTime();
+						}
+					}
+					
+					if (consec >= 32 * 24) {
+						return true;
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * This method tests whether the 14x24 hour constraint is satisfied starting at day t
+	 * @param schedule			the schedule
+	 * @param t					the starting day to check the 14x24 constraint
+	 * @return					whether the 14x24 hour constraint is satisfied or not
+	 */
+	public boolean isFeasible14(int[] schedule, int t) {
+		// The constraint has to be tested from the start of a duty, so ATV and rest days can be skipped
+		if (schedule[t] != 1 || schedule[t] != 2) {
+			int start = 0;
+			if (instance.getFromDutyNrToDuty().containsKey(schedule[t])) {
+				start = instance.getFromDutyNrToDuty().get(schedule[t]).getStartTime();
+			} else {
+				start = instance.getFromRDutyNrToRDuty().get(schedule[t]).getStartTime();
+			}
+			
+			int consec14 = 0;
+			
+			for (int i = 1; i < 14; i++) {
+				if (schedule[(t+i)%schedule.length] == 1 || schedule[(t+i)%schedule.length] == 2) {
+					int consec = 24 * 60;
+					
+					if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i-1)%schedule.length])) {
+						consec += instance.getFromDutyNrToDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
+					} else {
+						consec += instance.getFromRDutyNrToRDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
+					}
+					
+					if (i == 13) {
+						if (schedule[(t+14)%schedule.length] == 1 || schedule[(t+14)%schedule.length] == 2) {
+							consec += start;
+						} else if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+14)%schedule.length])) {
+							consec += Math.min(start, instance.getFromDutyNrToDuty().get(schedule[(t+14)%schedule.length]).getStartTime());
+						} else {
+							consec += Math.min(start, instance.getFromRDutyNrToRDuty().get(schedule[(t+14)%schedule.length]).getStartTime());
+						}
+					} else {
+						if (schedule[(t+i+1)%schedule.length] == 1 || schedule[(t+i+1)%schedule.length] == 2) {
+							consec += 24 * 60;
+						} else if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i+1)%schedule.length])) {
+							consec += instance.getFromDutyNrToDuty().get(schedule[(t+i+1)%schedule.length]).getStartTime();
+						} else {
+							consec += instance.getFromRDutyNrToRDuty().get(schedule[(t+i+1)%schedule.length]).getStartTime();
+						}
+					}
+					
+					if (consec >= 32 * 24) {
+						consec14 += consec;
+					}
+					
+					if (consec14 >= 72 * 24) {
+						return true;
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
 
+	/**
+	 * This method returns the reserve duty type to be considered for a certain day number and duty type
+	 * @param type				the duty type
+	 * @param t					the day number
+	 * @return					the reserve duty type to be scheduled on that day
+	 */
 	public ReserveDutyType getReserveDutyType(String type, int t) {
 		// First, obtain the day type from the day number
 		int weekdayNr = t % 7;
@@ -222,10 +432,15 @@ public class PricingProblem_Phase3
 		throw new IllegalArgumentException("There is no reserve duty type " + type + " on day type " + dayType);
 	}
 
-	public void updateDualCosts() {
-
+	public void updateDualCosts(double[] dualsContractgroup) {
+		
 	}
 	
+	/**
+	 * This method creates a deep copy of an array.
+	 * @param toCopy			the array to be copied
+	 * @return					the copy of the array
+	 */
 	public int[] copyIntArray(int[] toCopy) {
 		int[] copy = new int[toCopy.length];
 		for (int i = 0; i < toCopy.length; i++) {
@@ -234,6 +449,11 @@ public class PricingProblem_Phase3
 		return copy;
 	}
 
+	/**
+	 * This method creates a deep copy of a map
+	 * @param toCopy			the map to be copied
+	 * @return					the copy of the map
+	 */
 	public HashMap<Integer, Integer> copyMap(HashMap<Integer, Integer> toCopy) {
 		HashMap<Integer, Integer> copy = new HashMap<>();
 

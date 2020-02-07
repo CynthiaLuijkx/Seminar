@@ -1,4 +1,3 @@
-
 /**
  * This class stores information on a violation of a constraint, i.e. it denotes which duties are included in this violation.
  * @author Mette Wagenvoort
@@ -25,21 +24,10 @@ public class Violation
 	public Violation(String typeFrom, String dayTypeFrom, boolean reserveFrom, String typeTo, String dayTypeTo, boolean reserveTo) {
 		this.dayTypeFrom = dayTypeFrom;
 		this.dayTypeTo = dayTypeTo;
+		this.typeFrom = typeFrom;
+		this.typeTo = typeTo;
 		this.reserveFrom = reserveFrom;
 		this.reserveTo = reserveTo;
-		if(this.reserveFrom) {
-			String newTypeFrom = "R" + typeFrom;
-			this.typeFrom = newTypeFrom;
-		}
-		else {
-			this.typeFrom = typeFrom;
-		}
-		if(this.reserveTo) {
-			this.typeTo = "R" + typeTo;
-		}
-		else {
-			this.typeTo = typeTo;
-		}
 	}
 
 	public String getDayTypeFrom() {

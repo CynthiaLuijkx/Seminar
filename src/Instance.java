@@ -25,8 +25,8 @@ public class Instance
 	private final Set<ReserveDutyType> reserveDutyTypes;
 	private final HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty;
 	
-	private final Set<Violation> violations11;
-	private final Set<Violation> violations32;
+	private Set<Violation> violations11;
+	private Set<Violation> violations32;
 	
 	private Set<Combination> M;					// A Set with combinations of day type, duty type and the number of times this shift should be added
 	
@@ -209,5 +209,10 @@ public class Instance
 			c.setTc((int) Math.ceil(nDrivers * c.getRelativeGroupSize()) * 7);
 			c.setATVc((int) Math.floor(c.getATVPerYear() / 365.0 * c.getTc()));
 		}
+	}
+	
+	public void setViol(Set<Violation> violations11, Set<Violation> violations32) {
+		this.violations11 = violations11; 
+		this.violations32 = violations32; 
 	}
 }
