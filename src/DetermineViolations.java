@@ -60,13 +60,19 @@ public class DetermineViolations {
 		violations32 = getViolations(combDayType32, 1);
 	}
 
+	
 	public Set<Violation> get11Violations(){
 		return this.violations11; 
 	}
 
+	/**
+	 * Return a set of violations of the 32 hours rest 
+	 * @return
+	 */
 	public Set<Violation> get32Violations(){
 		return this.violations32; 
 	}
+	
 	/**
 	 * Returns a set of all combinations that have a high chance of violating the 11 hours constraint
 	 * @return
