@@ -1,5 +1,6 @@
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -19,11 +20,12 @@ public class Instance
 	private final HashMap<String, Set<Duty>> dutiesPerTypeSat;
 	private final HashMap<String, Set<Duty>> dutiesPerTypeSun;
 	
+	
 	private final Set<ContractGroup> contractGroups;
 	private final Set<ReserveDutyType> reserveDutyTypes;
 	
-	private final Set<Violation> violations11;
-	private final Set<Violation> violations32;
+	private Set<Violation> violations11;
+	private Set<Violation> violations32;
 	
 	private Set<Combination> M;					// A Set with combinations of day type, duty type and the number of times this shift should be added
 	
@@ -31,6 +33,8 @@ public class Instance
 	private int LB = 0;
 	
 	private int nDrivers;
+	
+	private Map<ContractGroup, String[]> basicSchedules;
 	
 	/**
 	 * Constructs an Instance.
@@ -48,7 +52,7 @@ public class Instance
 	 */
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
 			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
-			Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, Set<Violation> violations11, Set<Violation> violations32) {
+			Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes) {
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
@@ -58,8 +62,6 @@ public class Instance
 		this.dutiesPerTypeSun = dutiesPerTypeSun;
 		this.contractGroups = contractGroups;
 		this.reserveDutyTypes = reserveDutyTypes;
-		this.violations11 = violations11;
-		this.violations32 = violations32;
 		
 		this.M = new HashSet<>();
 		String[] workDays = new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
@@ -133,7 +135,7 @@ public class Instance
 	 * Calculates the lower and upper bound for the number of drivers
 	 */
 	public void calculateBounds() {
-		int nDutiesW = 5*this.workingDays.size(); 
+		int nDutiesW = this.workingDays.size(); 
 		int nDutiesSat = this.saturday.size(); 
 		int nDutiesSun = this.sunday.size(); 
 		int nReserveDuties =0; 
@@ -142,25 +144,28 @@ public class Instance
 		for(ReserveDutyType duty: this.reserveDutyTypes) {
 			if(duty.getDayType().equals("Workingday")) {
 				int temp = (int) Math.ceil(scale*duty.getApproximateSize()*nDutiesW);
-				nReserveDuties += temp;
+				nReserveDuties += temp*5;
 				String[] workDays = new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 				for (String day : workDays) {
 					M.add(new Combination(day, "R" + duty.getType(), temp));
+					duty.setAmount(temp);
 				}
 			} else if(duty.getDayType().equals("Saturday")){
 				int temp = (int) Math.ceil(scale* duty.getApproximateSize()*nDutiesSat);
 				nReserveDuties += temp;
 				M.add(new Combination("Saturday", "R" + duty.getType(), temp));
+				duty.setAmount(temp);
 			}else {
 				int temp = (int) Math.ceil(scale* duty.getApproximateSize()*nDutiesSun);
 				nReserveDuties +=  temp;
 				M.add(new Combination("Sunday", "R" + duty.getType(), temp));
+				duty.setAmount(temp);
 			}
 		}
 		
-		int totalnDuties = nDutiesW + nDutiesSat +nDutiesSun + nReserveDuties; 
+		int totalnDuties = nDutiesW*5 + nDutiesSat + nDutiesSun + nReserveDuties; 
 		this.UB =  (int) Math.ceil(totalnDuties/3.0); 
-		this.LB = (int) Math.ceil(totalnDuties/5.0); 
+		this.LB = (int) Math.ceil(totalnDuties/6); 
 	}
 	
 	public int getUB() {
@@ -169,6 +174,14 @@ public class Instance
 	
 	public int getLB() {
 		return this.LB; 
+	}
+	
+	public Map<ContractGroup, String[]> getBasicSchedules() {
+		return this.basicSchedules;
+	}
+	
+	public void setBasicSchedules(Map<ContractGroup, String[]> basicSchedules) {
+		this.basicSchedules = basicSchedules;
 	}
 	
 	/**
@@ -181,8 +194,14 @@ public class Instance
 		this.nDrivers = nDrivers;
 		
 		for (ContractGroup c : this.contractGroups) {
+			
 			c.setTc((int) Math.ceil(nDrivers * c.getRelativeGroupSize()) * 7);
 			c.setATVc((int) Math.floor(c.getATVPerYear() / 365.0 * c.getTc()));
 		}
+	}
+	
+	public void setViol(Set<Violation> violations11, Set<Violation> violations32) {
+		this.violations11 = violations11; 
+		this.violations32 = violations32; 
 	}
 }
