@@ -60,7 +60,10 @@ public class DetermineViolations {
 		violations32 = getViolations(combDayType32, 1);
 	}
 
-	
+	/**
+	 * Return a set of violations for the 11 hour break
+	 * @return
+	 */
 	public Set<Violation> get11Violations(){
 		return this.violations11; 
 	}
