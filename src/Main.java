@@ -41,9 +41,11 @@ public class Main
 
 		System.out.println("Instance " + depot + " initialised");
 		
-		instance.setNrDrivers(instance.getLB() + 10);
+			int numberOfDrivers = instance.getLB()+5;
+			instance.setNrDrivers(numberOfDrivers);
 
-		//MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
+			Phase1_Penalties penalties = new Phase1_Penalties();
+			MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		//instance.setBasicSchedules(mip.getSolution());
 		
 		//RMP_Phase3 RMP = new RMP_Phase3(instance);
