@@ -10,7 +10,7 @@ public class DirectedGraphArc<V,A>
 {
 	private final V from;
 	private final V to;
-	private final A data;
+	private A data;
 	
 	/**
 	 * Construct an arc of the graph
@@ -50,6 +50,10 @@ public class DirectedGraphArc<V,A>
 	public A getData()
 	{
 		return data;
+	}
+	
+	public void setData(A newData) {
+		data = newData;
 	}
 
 	@Override

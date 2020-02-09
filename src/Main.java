@@ -17,7 +17,7 @@ public class Main
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		double violationBound = 0.9; 
-				
+
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
 		//add the duty types
@@ -40,19 +40,25 @@ public class Main
 		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound);
 
 		System.out.println("Instance " + depot + " initialised");
-		
-			int numberOfDrivers = instance.getLB()+5;
-			instance.setNrDrivers(numberOfDrivers);
 
-			Phase1_Penalties penalties = new Phase1_Penalties();
-			MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
-		//instance.setBasicSchedules(mip.getSolution());
+		DetermineViolations temp = new DetermineViolations(instance, dutyTypes); 
+		System.out.println("Violations Determined"); 
+
+		System.out.println(temp.get11Violations().size()); 
+		System.out.println(temp.get32Violations().size()); 
+
+		instance.setViol(temp.get11Violations(), temp.get32Violations());
+		System.out.println("Instance " + depot + " initialised");
 		
-		//RMP_Phase3 RMP = new RMP_Phase3(instance);
-		//RMP.solve();
+		int numberOfDrivers = instance.getLB()+5;
+		instance.setNrDrivers(numberOfDrivers);
+
+		Phase1_Penalties penalties = new Phase1_Penalties();
+		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
+		instance.setBasicSchedules(mip.getSolution());
 		
-		//PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance);
-		//pricing.initGraphs();
+		Phase3 colGen = new Phase3(instance);
+		colGen.executeColumnGeneration();
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
@@ -73,7 +79,7 @@ public class Main
 		HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty = new HashMap<>();
 		Set<Violation> violations11 = new HashSet<>();
 		Set<Violation> violations32 = new HashSet<>();
-		
+
 		Scanner scDuties = new Scanner(dutiesFile); //Read the file dutiesFile
 		while (scDuties.hasNext()) { //till all information from the file is read
 			Duty newDuty = new Duty(scDuties.nextInt(), scDuties.next(), scDuties.nextInt(), scDuties.nextInt(), scDuties.nextInt(), 
@@ -705,10 +711,10 @@ public class Main
 				violations32.add(new Violation("L", "Sunday", true, "G", "Workingday", true));
 			}
 		}
-		
+
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, fromDutyNrToDuty, contractGroups, 
 				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32);
-		
+
 	}
 
 	/**
