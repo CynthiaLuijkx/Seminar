@@ -13,14 +13,14 @@ import ilog.cplex.IloCplex;
 
 public class RMP_Phase3 {
 
-	private IloCplex cplex; //Start cplex
+	public IloCplex cplex; //Start cplex
 	private List<HashMap<Integer, IloRange>> constraints1 = new ArrayList<HashMap<Integer, IloRange>>(); //constraints such that we need to have all duties of a certain day type scheduled
 	private IloRange[] constraints2; //constraints such that each duty need to be rostered onces
 
 	private IloObjective obj; //objective 
 	private List<IloNumVar> variables; //variables that are schedules
-	private List<HashMap<Integer, IloNumVar>> dummiesDuties = new ArrayList<HashMap<Integer,IloNumVar>>(); //dummy variables for the duties
-	private IloNumVar[] dummies2; //set of dummies for constraint 2
+	public List<HashMap<Integer, IloNumVar>> dummiesDuties = new ArrayList<HashMap<Integer,IloNumVar>>(); //dummy variables for the duties
+	public IloNumVar[] dummies2; //set of dummies for constraint 2
 	private final Instance instance; //use the instance
 	private final int penaltyOver; //penalty for overtime
 	private final int penaltyMinus; //penalty for minus hours
@@ -51,6 +51,7 @@ public class RMP_Phase3 {
 
 		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0); //the gap should be closed till it is 0%
 		this.cplex.setOut(null);
+		this.cplex.setWarning(null);
 		//this.cplex.exportModel("model.lp");
 	}
 
@@ -59,7 +60,7 @@ public class RMP_Phase3 {
 		//this.cplex.exportModel("model.lp");
 		this.cplex.solve();
 		//Some printing
-		System.out.println(cplex.getModel());
+		//System.out.println(cplex.getModel());
 		System.out.println(cplex.getObjValue());
 		/*ArrayList<ArrayList<Double>> solution = getSolutionDummiesDuties();
 		ArrayList<ArrayList<Double>> solutionReserve = getSolutionDummiesReserve();
@@ -183,55 +184,25 @@ public class RMP_Phase3 {
 	public void addSchedule(Schedule schedule) throws IloException {
 		//add to the objective the cost corresponding to the schedule
 		//we add cost of overtime + minus time + contract time
-		IloColumn column = this.cplex.column(this.obj,  this.penaltyOver*schedule.getPlusMin() + this.penaltyMinus*schedule.getMinMin() + schedule.getC().getAvgDaysPerWeek()*schedule.getC().getAvgHoursPerDay());
+		//System.out.println(schedule.toString());
+		IloColumn column = this.cplex.column(this.obj,  this.penaltyOver*schedule.getPlusMin()/60  + (schedule.getC().getTc()/7 * schedule.getC().getAvgDaysPerWeek()*schedule.getC().getAvgHoursPerDay())); //- this.penaltyMinus*schedule.getMinMin()/60);
 
 		//for every day in the schedule, add the coefficient to the corresponding constraint of the duty that is schedules on that day
 		for(int t = 0; t < schedule.getSchedule().length; t++) {
 			//if the day is a Sunday:
-			if (t % 7 == 0) {
-				IloColumn coefficient1sun = this.cplex.column(this.constraints1.get(0).get(schedule.getSchedule()[t]), 1);
-				column.and(coefficient1sun);
+			if (schedule.getSchedule()[t] > 1000) {
+				IloColumn coefficient1sun = this.cplex.column(this.constraints1.get(t % 7).get(schedule.getSchedule()[t]), 1);
+				column = column.and(coefficient1sun);				
 			}
-			//if the day is a Monday:
-			if (t % 7 == 1) {
-				IloColumn coefficient1mon = this.cplex.column(this.constraints1.get(1).get(schedule.getSchedule()[t]), 1);
-				column.and(coefficient1mon);
-			}
-			//if the day is a Tuesday:
-			if (t % 7 == 2) {
-				IloColumn coefficient1tue = this.cplex.column(this.constraints1.get(2).get(schedule.getSchedule()[t]), 1);
-				column.and(coefficient1tue);
-			}
-			//if the day is a Wednesday:
-			if (t % 7 == 3) {
-				IloColumn coefficient1wed = this.cplex.column(this.constraints1.get(3).get(schedule.getSchedule()[t]), 1);
-				column.and(coefficient1wed);
-			}
-			//if the day is a Thursday:
-			if (t % 7 == 4) {
-				IloColumn coefficient1thu = this.cplex.column(this.constraints1.get(4).get(schedule.getSchedule()[t]), 1);
-				column.and(coefficient1thu);
-			}
-			//if the day is a Friday:
-			if (t % 7 == 5) {
-				IloColumn coefficient1fri = this.cplex.column(this.constraints1.get(5).get(schedule.getSchedule()[t]), 1);
-				column.and(coefficient1fri);
-			}
-			//if the day is a Saturday:
-			if (t % 7 == 6) {
-				IloColumn coefficient1sat = this.cplex.column(this.constraints1.get(6).get(schedule.getSchedule()[t]), 1);
-				column.and(coefficient1sat);
-			}
-
 		}
 		//if the schedule is for a certain contract group, add a coefficient for this particular group
 		IloColumn coefficient2 = this.cplex.column(this.constraints2[schedule.getC().getNr()-1], 1);
 		column = column.and(coefficient2);
 
 		//add the schedule as a variable
-		IloNumVar var = this.cplex.numVar(column, 0, Double.POSITIVE_INFINITY);
+		IloNumVar var = this.cplex.numVar(column, 0, Double.POSITIVE_INFINITY, schedule.toString());
 		this.variables.add(var);
-		this.cplex.exportModel("model.lp");
+		this.cplex.exportModel("model3.lp");
 	}
 
 	/*public ArrayList<ArrayList<Double>> getSolutionDummiesDuties() throws IloException {

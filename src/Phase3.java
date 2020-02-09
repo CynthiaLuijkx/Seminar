@@ -88,5 +88,32 @@ public class Phase3
 
 			iteration++;
 		}
+		for(int i = 0; i < model.dummies2.length; i++) {
+			System.out.println(model.cplex.getValue(model.dummies2[i]));
+		}
+		for (int s = 0; s < model.dummiesDuties.size(); s++) {
+			// Day type: Sunday
+			if (s == 0) {
+				// add all duties that need to be schedules on Sundays
+				for (Duty duty : instance.getSunday()) {
+					System.out.println(duty.getNr() + " " + model.cplex.getValue(model.dummiesDuties.get(s).get(duty.getNr())));
+				}
+			}
+			// Day type: Saturday
+			else if (s == 6) {
+				// add all duties that need to be scheduled on Saturday
+				for (Duty duty : instance.getSaturday()) {
+					System.out.println(duty.getNr() + " " + model.cplex.getValue(model.dummiesDuties.get(s).get(duty.getNr())));
+				}
+
+			}
+			// Day type: Workingday (add for Mon, Tue, Wed, Thu, Fri)
+			else {
+				// add all duties that need to be scheduled on working days
+				for (Duty duty : instance.getWorkingDays()) {
+					System.out.println(duty.getNr() + " " + model.cplex.getValue(model.dummiesDuties.get(s).get(duty.getNr())));
+				}
+			}
+	}
 	}
 }

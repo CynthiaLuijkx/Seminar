@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -181,8 +182,13 @@ public class PricingProblem_Phase3
 
 			// Initialise the label at the source (t == -1)
 			Set<Label> labels = new HashSet<>();
+			ArrayList<Set<Integer>> dutiesOn = new ArrayList<>();
+			for(int i = 0; i < 7; i++) {
+				Set<Integer> newSet = new HashSet<>();
+				dutiesOn.add(newSet);
+			}
 			for (Node source : graphs.get(c).getNodes().get(-1)) {
-				labels.add(new Label(0, 0, 0, new int[instance.getBasicSchedules().get(c).length]));
+				labels.add(new Label(0, 0, 0, new int[instance.getBasicSchedules().get(c).length], dutiesOn));
 				labelMap.put(source, labels);
 			}
 
@@ -217,6 +223,7 @@ public class PricingProblem_Phase3
 					}
 					labelMap.put(curNode, labels);
 				}
+			
 				Set<Node> removeMap = new HashSet<>();
 				for (Node curNode : labelMap.keySet()) {
 					if (curNode.getDay() < t) {
@@ -254,64 +261,98 @@ public class PricingProblem_Phase3
 	 * @param c						the contract group of consideration
 	 * @return						null if the schedule is not feasible or the new label
 	 */
-	public Label getLabel(Label prevLabel, DirectedGraphArc<Node, Double> curArc, int t, int dutyNr, ContractGroup c) {		
+	public Label getLabel(Label prevLabel, DirectedGraphArc<Node, Double> curArc, int t, int dutyNr, ContractGroup c) {
 		int[] schedule = this.copyIntArray(prevLabel.getSchedule());
-		schedule[t] = dutyNr;
-		
-		if (t >= 7) {
+		ArrayList<Set<Integer>> dutiesOn = prevLabel.getDutiesOn();
+		boolean dutyNotYetTaken = true;
+		if (dutyNr > 1000) {
+			
+			int max = (int) t/7;
+			for (int w = 0; w < max; w++) {
+				if (schedule[(7*w) + t%7] == dutyNr) {
+					dutyNotYetTaken = false;
+					break;
+				}
+			}
+			
+			//Cynthia: I have no idea why this one doesn't work and the above does... Probably something stupid
 			/*
-			 * For a schedule to be feasible:
-			 * 		- at least one period of 32 hours free in the past 7X24 hours
-			 * 		- at least 72 hours free in the past 14x24 hours of which at least 32 hours per period free
-			 */
-			
-			// 7 x 14
-			boolean feas7 = this.isFeasible7(schedule, t - 7);
-			
-			if (!feas7) {
+			if(dutiesOn.get(t%7).contains(dutyNr)) {
+				dutyNotYetTaken = false;
+			}*/
+		}
+		if (dutyNotYetTaken) {
+			schedule[t] = dutyNr;
+			if(dutyNr > 1000) {
+				dutiesOn.get(t%7).add(dutyNr);
+			}
+
+			if (t >= 7) {
+				/*
+				 * For a schedule to be feasible: - at least one period of 32 hours free in the
+				 * past 7X24 hours - at least 72 hours free in the past 14x24 hours of which at
+				 * least 32 hours per period free
+				 */
+
+				// 7 x 14
+				boolean feas7 = this.isFeasible7(schedule, t - 7);
+
+				if (!feas7) {
+					return null;
+				}
+
+				boolean feas14 = true;
+				if (t >= 14) {
+					feas14 = this.isFeasible14(schedule, t - 14);
+				}
+
+				if (feas7 && feas14) {
+					if (t % 7 == 6) {
+						int totHours = 0;
+						for (int i = 0; i < 7; i++) {
+							if (instance.getFromDutyNrToDuty().containsKey(schedule[t - i])) {
+								totHours += instance.getFromDutyNrToDuty().get(schedule[t - i]).getPaidMin();
+							} else if (instance.getFromRDutyNrToRDuty().containsKey(schedule[t - i])) {
+								totHours += c.getAvgHoursPerDay() * 60;
+							}
+						}
+						return new Label(prevLabel.getRedCosts() + curArc.getData(),
+								prevLabel.getTotOvertime() + Math.max(0,
+										(int) (totHours - 60 * (c.getAvgDaysPerWeek() * c.getAvgHoursPerDay()))),
+								prevLabel.getTotMinus() + Math.max(0,
+										(int) (60 * (c.getAvgDaysPerWeek() * c.getAvgHoursPerDay()) - totHours)),
+								schedule, dutiesOn);
+					} else {
+						return new Label(prevLabel.getRedCosts() + curArc.getData(), prevLabel.getTotOvertime(),
+								prevLabel.getTotMinus(), schedule, dutiesOn);
+					}
+				}
+
 				return null;
-			}
-			
-			boolean feas14 = true;
-			if (t >= 14) {
-				feas14 = this.isFeasible14(schedule, t - 14);
-			}
-			
-			if (feas7 && feas14) {
+			} else {
 				if (t % 7 == 6) {
 					int totHours = 0;
 					for (int i = 0; i < 7; i++) {
-						if (instance.getFromDutyNrToDuty().containsKey(schedule[t-i])) {
-							totHours += instance.getFromDutyNrToDuty().get(schedule[t-i]).getPaidMin();
-						} else if (instance.getFromRDutyNrToRDuty().containsKey(schedule[t-i])) {
+						if (instance.getFromDutyNrToDuty().containsKey(schedule[t - i])) {
+							totHours += instance.getFromDutyNrToDuty().get(schedule[t - i]).getPaidMin();
+						} else if (instance.getFromRDutyNrToRDuty().containsKey(schedule[t - i])) {
 							totHours += c.getAvgHoursPerDay() * 60;
 						}
 					}
-					return new Label(prevLabel.getRedCosts() + curArc.getData(), prevLabel.getTotOvertime() + 
-							Math.max(0, (int) (totHours - 60 * (c.getAvgDaysPerWeek() * c.getAvgHoursPerDay()))), prevLabel.getTotMinus() + 
-							Math.max(0, (int) (60 * (c.getAvgDaysPerWeek() * c.getAvgHoursPerDay()) - totHours)), schedule);
+					return new Label(prevLabel.getRedCosts() + curArc.getData(),
+							prevLabel.getTotOvertime() + Math.max(0,
+									(int) (totHours - 60 * (c.getAvgDaysPerWeek() * c.getAvgHoursPerDay()))),
+							prevLabel.getTotMinus() + Math.max(0,
+									(int) (60 * (c.getAvgDaysPerWeek() * c.getAvgHoursPerDay()) - totHours)),
+							schedule, dutiesOn);
 				} else {
-					return new Label(prevLabel.getRedCosts() + curArc.getData(), prevLabel.getTotOvertime(), prevLabel.getTotMinus(), schedule);
+					return new Label(prevLabel.getRedCosts() + curArc.getData(), prevLabel.getTotOvertime(),
+							prevLabel.getTotMinus(), schedule, dutiesOn);
 				}
 			}
-			
+		}
+		else {
 			return null;
-		} else {
-			if (t % 7 == 6) {
-				int totHours = 0;
-				for (int i = 0; i < 7; i++) {
-					if (instance.getFromDutyNrToDuty().containsKey(schedule[t-i])) {
-						totHours += instance.getFromDutyNrToDuty().get(schedule[t-i]).getPaidMin();
-					} else if (instance.getFromRDutyNrToRDuty().containsKey(schedule[t-i])) {
-						totHours += c.getAvgHoursPerDay() * 60;
-					}
-				}
-				return new Label(prevLabel.getRedCosts() + curArc.getData(), prevLabel.getTotOvertime() + 
-						Math.max(0, (int) (totHours - 60 * (c.getAvgDaysPerWeek() * c.getAvgHoursPerDay()))), prevLabel.getTotMinus() + 
-						Math.max(0, (int) (60 * (c.getAvgDaysPerWeek() * c.getAvgHoursPerDay()) - totHours)), schedule);
-			} else {
-				return new Label(prevLabel.getRedCosts() + curArc.getData(), prevLabel.getTotOvertime(), prevLabel.getTotMinus(), schedule);
-			}
 		}
 	}
 	
