@@ -45,16 +45,16 @@ public class Main
 
 		System.out.println("Instance " + depot + " initialised");
 		
-		instance.setNrDrivers(instance.getLB() + 10);
+			int numberOfDrivers = instance.getLB()+5;
+			instance.setNrDrivers(numberOfDrivers);
 
-		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
+			Phase1_Penalties penalties = new Phase1_Penalties();
+			MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
+    updateJava8
 		
-		//RMP_Phase3 RMP = new RMP_Phase3(instance);
-		//RMP.solve();
-		
-		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance);
-		pricing.initGraphs();
+		RMP_Phase3 RMP = new RMP_Phase3(instance);
+		RMP.solve();
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
