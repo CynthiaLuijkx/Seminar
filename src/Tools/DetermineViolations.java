@@ -22,15 +22,15 @@ public class DetermineViolations {
 
 	private static int dailyRestMin = 11*60; 
 	private static int restDayMin = 32*60; 
-	private double violationBound = 0.9; 
+	private double violationBound; 
 
 	private Map<String, HashMap<String, ReserveDutyType>> rDutyMap = new HashMap<String, HashMap<String, ReserveDutyType>>(); 
 
 	private Map<String, HashMap<String, Set<Duty>>> dutySetMap = new HashMap<String, HashMap<String, Set<Duty>>>(); 
 
-	public DetermineViolations(Instance instance, Set<String> dutyTypes) {
+	public DetermineViolations(Instance instance, Set<String> dutyTypes, double violationBound) {
 		this.instance = instance; 
-
+		this.violationBound = violationBound; 
 		for(String dutyTypeFrom: dutyTypes) {
 			for(String dutyTypeTo: dutyTypes) {
 				combDutyType.add(new String[] {dutyTypeFrom, dutyTypeTo}); 

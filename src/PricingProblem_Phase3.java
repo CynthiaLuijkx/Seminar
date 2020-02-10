@@ -17,15 +17,17 @@ import Tools.Schedule;
 
 public class PricingProblem_Phase3 
 {
-	private final int consecFreeWeekly = 32 * 60;
-	private final int freeTwoWeeks = 72 * 60;
+	private final int consecFreeWeekly;
+	private final int freeTwoWeeks;
 	
 	private final Instance instance;
 
 	private HashMap<ContractGroup, DirectedGraph<Node, Double>> graphs;
 
-	public PricingProblem_Phase3(Instance instance) {
+	public PricingProblem_Phase3(Instance instance, int consecWeek, int twoWeek) {
 		this.instance = instance;
+		this.consecFreeWeekly = consecWeek;
+		this.freeTwoWeeks = twoWeek;
 		initGraphs();
 	}
 	
@@ -424,7 +426,7 @@ public class PricingProblem_Phase3
 						}
 					}
 					
-					if (consec >= 32 * 60) {
+					if (consec >= this.consecFreeWeekly) {
 						return true;
 					}
 				}
@@ -483,11 +485,11 @@ public class PricingProblem_Phase3
 						}
 					}
 					
-					if (consec >= 32 * 60) {
+					if (consec >= this.consecFreeWeekly) {
 						consec14 += consec;
 					}
 					
-					if (consec14 >= 72 * 60) {
+					if (consec14 >= this.freeTwoWeeks) {
 						return true;
 					}
 				}

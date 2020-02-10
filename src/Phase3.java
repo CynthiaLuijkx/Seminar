@@ -12,9 +12,13 @@ import ilog.concert.IloException;
 public class Phase3 
 {
 	private final Instance instance;
+	private final int consecWeek;
+	private final int twoWeek;
 	
-	public Phase3(Instance instance) {
+	public Phase3(Instance instance, int consecWeek, int twoWeek) {
 		this.instance = instance;
+		this.consecWeek = consecWeek;
+		this.twoWeek = twoWeek;
 	}
 	
 	public void executeColumnGeneration() throws IloException {
@@ -38,7 +42,7 @@ public class Phase3
 		List<HashMap<Integer, Double>> dualsDuties = model.getDuals1();
 		
 		int iteration = 1;
-		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance);		
+		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, consecWeek, twoWeek);		
 		
 		boolean negRedCosts = true;
 		while (negRedCosts) {
