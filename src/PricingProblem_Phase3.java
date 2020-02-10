@@ -233,7 +233,7 @@ public class PricingProblem_Phase3
 						}
 					}
 					labelMap.put(curNode, labels);
-					System.out.println(t + ": " + labels.size());
+					//System.out.println(t + ": " + labels.size());
 				}
 				Set<Node> removeMap = new HashSet<>();
 				for (Node curNode : labelMap.keySet()) {

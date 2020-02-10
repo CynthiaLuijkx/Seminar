@@ -10,6 +10,7 @@ import Tools.DetermineViolations;
 import Tools.Duty;
 import Tools.Instance;
 import Tools.ReserveDutyType;
+import Tools.Schedule;
 import Tools.Violation;
 import ilog.concert.IloException;
 
@@ -19,7 +20,7 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "DirkslandEasier"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		double violationBound = 0.9; 
@@ -29,7 +30,7 @@ public class Main
 		//add the duty types
 		dutyTypes.add("V");	dutyTypes.add("G");	dutyTypes.add("D");	dutyTypes.add("L");	dutyTypes.add("P"); dutyTypes.add("ATV"); 
 		dutyTypes.add("RV"); dutyTypes.add("RG"); dutyTypes.add("RD"); dutyTypes.add("RL");
-		if (depot.equals("Dirksland")) {
+		if (depot.equals("Dirksland") || depot.equals("DirkslandEasier")) {
 			dutyTypes.add("M");	dutyTypes.add("GM"); 
 		} else if (depot.equals("Heinenoord")) {
 			dutyTypes.add("W");
@@ -56,7 +57,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getUB();
+		int numberOfDrivers = instance.getLB()+2;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
@@ -64,7 +65,10 @@ public class Main
 		instance.setBasicSchedules(mip.getSolution());
 		
 		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
-		colGen.executeColumnGeneration();
+		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+		for(Schedule curSchedule : solution.keySet()) {
+			System.out.println(curSchedule.toString() + " " + solution.get(curSchedule));
+		}
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets

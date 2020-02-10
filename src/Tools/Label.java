@@ -51,22 +51,23 @@ public class Label
 	 * @return				a boolean denoting whether this label dominated the other label or not
 	 */
 	public boolean dominates(Label other) {
-		if (this.redCosts <= other.getRedCosts()) {
-				boolean containsAll = true;
-				for(int i = 0; i < 7; i++) {
-					for(Integer dutyNr : this.duties.get(i)) {
-						if(!other.duties.get(i).contains(dutyNr)) {
-							containsAll = false;
-							break;
-						}
+		if (this.redCosts == other.getRedCosts()) {
+			boolean containsAll = true;
+			for (int i = 0; i < 7; i++) {
+				for (Integer dutyNr : this.duties.get(i)) {
+					if (!other.duties.get(i).contains(dutyNr)) {
+						containsAll = false;
+						break;
 					}
 				}
-				if (containsAll) {
+			}
+			if (containsAll) {
+				if (this.totOvertime <= other.getTotOvertime()) {
 					return true;
 				}
-				else {
-					return false;
-				}
+			} else {
+				return false;
+			}
 		}
 		return false;
 	}
