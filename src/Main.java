@@ -5,6 +5,12 @@ import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
 
+import Tools.ContractGroup;
+import Tools.DetermineViolations;
+import Tools.Duty;
+import Tools.Instance;
+import Tools.ReserveDutyType;
+import Tools.Violation;
 import ilog.concert.IloException;
 
 import java.util.Locale;

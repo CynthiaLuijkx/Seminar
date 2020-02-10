@@ -3,6 +3,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import Tools.Duty;
+import Tools.Instance;
+import Tools.Schedule;
 import ilog.concert.IloColumn;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;

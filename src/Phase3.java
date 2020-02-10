@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import Tools.ContractGroup;
+import Tools.Instance;
+import Tools.Schedule;
 import ilog.concert.IloException;
 
 public class Phase3 

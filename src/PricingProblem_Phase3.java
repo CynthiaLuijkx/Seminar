@@ -5,6 +5,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import Tools.ContractGroup;
+import Tools.DirectedGraph;
+import Tools.DirectedGraphArc;
+import Tools.Duty;
+import Tools.Instance;
+import Tools.Label;
+import Tools.Node;
+import Tools.ReserveDutyType;
+import Tools.Schedule;
+
 public class PricingProblem_Phase3 
 {
 	private final int consecFreeWeekly = 32 * 60;
