@@ -185,7 +185,8 @@ public class RMP_Phase3 {
 		//add to the objective the cost corresponding to the schedule
 		//we add cost of overtime + minus time + contract time
 		//System.out.println(schedule.toString());
-		IloColumn column = this.cplex.column(this.obj,  this.penaltyOver*schedule.getPlusMin()/60  + (schedule.getC().getTc()/7 * schedule.getC().getAvgDaysPerWeek()*schedule.getC().getAvgHoursPerDay())); //- this.penaltyMinus*schedule.getMinMin()/60);
+		int max = Math.max(0, (int) ((schedule.getPlusMin()-this.penaltyMinus*schedule.getMinMin())));
+		IloColumn column = this.cplex.column(this.obj,  this.penaltyOver*max  + (60* schedule.getC().getTc()/7 * schedule.getC().getAvgDaysPerWeek()*schedule.getC().getAvgHoursPerDay())); //- this.penaltyMinus*schedule.getMinMin()/60);
 
 		//for every day in the schedule, add the coefficient to the corresponding constraint of the duty that is schedules on that day
 		for(int t = 0; t < schedule.getSchedule().length; t++) {

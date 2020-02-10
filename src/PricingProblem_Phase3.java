@@ -263,7 +263,7 @@ public class PricingProblem_Phase3
 	 */
 	public Label getLabel(Label prevLabel, DirectedGraphArc<Node, Double> curArc, int t, int dutyNr, ContractGroup c) {
 		int[] schedule = this.copyIntArray(prevLabel.getSchedule());
-		ArrayList<Set<Integer>> dutiesOn = prevLabel.getDutiesOn();
+		ArrayList<Set<Integer>> dutiesOn = this.copyArrayList(prevLabel.getDutiesOn());
 		boolean dutyNotYetTaken = true;
 		if (dutyNr > 1000) {
 			
@@ -574,5 +574,18 @@ public class PricingProblem_Phase3
 		}
 
 		return copy;
+	}
+	
+	public ArrayList<Set<Integer>> copyArrayList(ArrayList<Set<Integer>> toCopy){
+		ArrayList<Set<Integer>> arrayList = new ArrayList<>();
+		for(int i = 0; i < 7; i++) {
+			HashSet<Integer> copy = new HashSet<>();
+			for(Integer dutyCopy : toCopy.get(i)) {
+				copy.add(dutyCopy);
+			}
+			arrayList.add(copy);
+		}
+		
+		return arrayList;
 	}
 }

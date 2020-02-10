@@ -1,0 +1,100 @@
+Picked up _JAVA_OPTIONS: -Xmx512M
+Instance Dirksland initialised
+Drivers: 26
+Drivers: 39
+Warning:  Output names have been modified to conform to LP format.
+Tried aggregator 1 time.
+MIP Presolve eliminated 4344 rows and 65 columns.
+MIP Presolve modified 776 coefficients.
+Reduced MIP has 2974 rows, 4758 columns, and 19524 nonzeros.
+Reduced MIP has 4758 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.03 sec. (15.08 ticks)
+Probing time = 0.02 sec. (2.40 ticks)
+Tried aggregator 1 time.
+Reduced MIP has 2974 rows, 4758 columns, and 19524 nonzeros.
+Reduced MIP has 4758 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.02 sec. (9.22 ticks)
+Probing time = 0.02 sec. (2.40 ticks)
+Clique table members: 1237.
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: deterministic, using up to 8 threads.
+
+Root node processing (before b&c):
+  Real time             =    0.20 sec. (65.84 ticks)
+Parallel b&c, 8 threads:
+  Real time             =    0.00 sec. (0.00 ticks)
+  Sync time (average)   =    0.00 sec.
+  Wait time (average)   =    0.00 sec.
+                          ------------
+Total (root+branch&cut) =    0.20 sec. (65.84 ticks)
+Objective Value: 0.0
+ 
+Rest RV P V RV L RL  
+L Rest V RL L RL Rest  
+Rest V D V RL Rest Rest  
+Rest GM RG P V L Rest  
+L Rest G D V RV RV  
+Rest L L Rest V Rest Rest  
+Rest L L RL L Rest Rest  
+Rest RV Rest RG RL Rest Rest  
+Rest RL RD V G V L  
+V Rest V L P RL Rest  
+Rest G V L Rest Rest V  
+Rest RD V Rest RG RV L  
+Rest V V V G RD RV  
+Rest V V L G V RV  
+Rest V V G L P V  
+L Rest RL L L G D  
+RL L Rest V Rest V Rest  
+Rest G RV RV G Rest Rest  
+Rest L RL L D RG V  
+RV RL L Rest RV RV Rest  
+V Rest RG L GM RL Rest  
+Rest V Rest G V V L  
+Rest G V L G G Rest  
+L D Rest V RL Rest Rest  
+L Rest Rest V RG RL Rest  
+Rest P V L L L Rest 
+--------------
+ 
+ATV V L Rest ATV V L  
+ATV RV RD Rest RV RV Rest  
+ATV V RL D V G Rest  
+Rest G L G V RD Rest  
+Rest V RG V L L L  
+Rest V G V V G V  
+ATV L Rest GM D G Rest  
+ATV Rest RV D Rest RV Rest  
+Rest V RV P RV V P  
+V L RL Rest L L D  
+Rest RG L RD Rest L Rest  
+Rest Rest V V D Rest Rest  
+Rest L L RD ATV V V  
+Rest V Rest V V RG RL  
+Rest L L Rest RV D Rest  
+Rest RG V RV RV L RL  
+Rest L Rest V P V Rest  
+ATV V RV RV Rest L Rest  
+V RV P L RL D ATV  
+Rest V RV V Rest G Rest  
+Rest RV L P V V ATV  
+ATV D V RV G P Rest  
+Rest RL D RL RL RL Rest  
+Rest V L Rest V V ATV  
+Rest V V RV Rest V RD  
+ATV D G V V V RD  
+Rest G RV G L GM Rest  
+Rest L G RV L P Rest  
+ATV P G G L Rest Rest  
+RV ATV V RG V L Rest  
+Rest RV G G P RV V  
+Rest G V L L D Rest  
+Rest RL GM Rest V V Rest  
+Rest Rest Rest RG V V D  
+Rest RG P V V V L  
+ATV L RL L Rest L P  
+V RL L ATV RG RG M  
+Rest P D RL RD L Rest  
+RL RD ATV RL RD ATV V 
+--------------

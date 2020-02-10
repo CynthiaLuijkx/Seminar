@@ -50,7 +50,7 @@ public class Label
 	 * @return				a boolean denoting whether this label dominated the other label or not
 	 */
 	public boolean dominates(Label other) {
-		if (this.redCosts <= other.getRedCosts()) {// && this.totOvertime <= other.getTotOvertime()){//&& this.totMinus <= other.getTotMinus()) {
+		if (this.totOvertime <= other.getTotOvertime() && this.redCosts <= other.getRedCosts()) {// && this.totOvertime <= other.getTotOvertime()){//&& this.totMinus <= other.getTotMinus()) {
 				/*
 				int counter = 0;
 				int needed = 0;
@@ -67,7 +67,7 @@ public class Label
 						}							
 					}
 				}*/
-			
+			/*
 				boolean containsAll = true;
 				for(int i = 0; i < 7; i++) {
 					for(Integer dutyNr : this.dutiesOn.get(i)) {
@@ -81,13 +81,14 @@ public class Label
 				if (containsAll) {
 					//System.out.println("Met");
 					return true;
-				} 
+				} */
+			return true;
 			//if(counter == needed) {
 			//	return true;
 			//}
-				else {
-					return false;
-				}
+			//	else {
+			//		return false;
+			//	}
 		}
 		return false;
 	}

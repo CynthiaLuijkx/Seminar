@@ -50,7 +50,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getUB();
+		int numberOfDrivers = instance.getLB() + 10;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
