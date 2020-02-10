@@ -57,7 +57,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB()+2;
+		int numberOfDrivers = instance.getLB();
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
@@ -66,9 +66,15 @@ public class Main
 		
 		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
 		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+		
+		Phase4 phase4 = new Phase4(solution, instance);
+		phase4.runILP();
+		phase4.runRelaxFix();
+		
+		/*
 		for(Schedule curSchedule : solution.keySet()) {
 			System.out.println(curSchedule.toString() + " " + solution.get(curSchedule));
-		}
+		}*/
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
