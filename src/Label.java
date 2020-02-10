@@ -50,17 +50,44 @@ public class Label
 	 * @return				a boolean denoting whether this label dominated the other label or not
 	 */
 	public boolean dominates(Label other) {
-		if (this.redCosts <= other.getRedCosts()) {
-			boolean containsAll = true;
-			for(int i = 0; i < 7; i++) {
-				if (!this.duties.get(i).containsAll(other.getDuties().get(i)) || !other.getDuties().get(i).containsAll(this.duties.get(i))) {
-					containsAll = false;
-					break;
+		if (this.redCosts <= other.getRedCosts()) {// && this.totOvertime <= other.getTotOvertime()){//&& this.totMinus <= other.getTotMinus()) {
+				/*
+				int counter = 0;
+				int needed = 0;
+				for (int i = 0; i < this.schedule.length; i++) {
+					if (this.schedule[i] > 1000) {
+						needed++;
+						int weekday = i % 7;
+						int max = (int) this.schedule.length/7;
+						for(int j = 0; j < max; j++) {
+							if(this.schedule[i] == other.schedule[(j*7) + weekday]) {
+								counter++;
+								break;
+							}
+						}							
+					}
+				}*/
+
+				boolean containsAll = true;
+				for(int i = 0; i < 7; i++) {
+					for(Integer dutyNr : this.duties.get(i)) {
+						//System.out.println(dutyNr);
+						if(!other.duties.get(i).contains(dutyNr)) {
+							containsAll = false;
+							break;
+						}
+					}
 				}
-			}
-			if (containsAll) {
-				return true;
-			} 
+				if (containsAll) {
+					//System.out.println("Met");
+					return true;
+				} 
+			//if(counter == needed) {
+			//	return true;
+			//}
+				else {
+					return false;
+				}
 		}
 		return false;
 	}
