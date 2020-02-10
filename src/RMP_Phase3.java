@@ -1,7 +1,11 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
+import Tools.Duty;
+import Tools.Instance;
+import Tools.Schedule;
 import ilog.concert.IloColumn;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
@@ -179,59 +183,57 @@ public class RMP_Phase3 {
 	}
 
 	//Method that add schedules as columns to the RMP
-	public void addSchedules(List<Schedule> newSchedules) throws IloException {
-		for (Schedule schedules : newSchedules) {
-			//add to the objective the cost corresponding to the schedule
-			//we add cost of overtime + minus time + contract time
-			IloColumn column = this.cplex.column(this.obj,  this.penaltyOver*schedules.getPlusMin() + this.penaltyMinus*schedules.getMinMin() + schedules.getC().getAvgDaysPerWeek()*schedules.getC().getAvgHoursPerDay());
+	public void addSchedule(Schedule schedule) throws IloException {
+		//add to the objective the cost corresponding to the schedule
+		//we add cost of overtime + minus time + contract time
+		IloColumn column = this.cplex.column(this.obj,  this.penaltyOver*schedule.getPlusMin() + this.penaltyMinus*schedule.getMinMin() + schedule.getC().getAvgDaysPerWeek()*schedule.getC().getAvgHoursPerDay());
 
-			//for every day in the schedule, add the coefficient to the corresponding constraint of the duty that is schedules on that day
-			for(int t = 0; t < schedules.getSchedule().length; t++) {
-				//if the day is a Sunday:
-				if (t % 7 == 0) {
-					IloColumn coefficient1sun = this.cplex.column(this.constraints1.get(0).get(schedules.getSchedule()[t]), 1);
-					column.and(coefficient1sun);
-				}
-				//if the day is a Monday:
-				if (t % 7 == 1) {
-					IloColumn coefficient1mon = this.cplex.column(this.constraints1.get(1).get(schedules.getSchedule()[t]), 1);
-					column.and(coefficient1mon);
-				}
-				//if the day is a Tuesday:
-				if (t % 7 == 2) {
-					IloColumn coefficient1tue = this.cplex.column(this.constraints1.get(2).get(schedules.getSchedule()[t]), 1);
-					column.and(coefficient1tue);
-				}
-				//if the day is a Wednesday:
-				if (t % 7 == 3) {
-					IloColumn coefficient1wed = this.cplex.column(this.constraints1.get(3).get(schedules.getSchedule()[t]), 1);
-					column.and(coefficient1wed);
-				}
-				//if the day is a Thursday:
-				if (t % 7 == 4) {
-					IloColumn coefficient1thu = this.cplex.column(this.constraints1.get(4).get(schedules.getSchedule()[t]), 1);
-					column.and(coefficient1thu);
-				}
-				//if the day is a Friday:
-				if (t % 7 == 5) {
-					IloColumn coefficient1fri = this.cplex.column(this.constraints1.get(5).get(schedules.getSchedule()[t]), 1);
-					column.and(coefficient1fri);
-				}
-				//if the day is a Saturday:
-				if (t % 7 == 6) {
-					IloColumn coefficient1sat = this.cplex.column(this.constraints1.get(6).get(schedules.getSchedule()[t]), 1);
-					column.and(coefficient1sat);
-				}
-
+		//for every day in the schedule, add the coefficient to the corresponding constraint of the duty that is schedules on that day
+		for(int t = 0; t < schedule.getSchedule().length; t++) {
+			//if the day is a Sunday:
+			if (t % 7 == 0) {
+				IloColumn coefficient1sun = this.cplex.column(this.constraints1.get(0).get(schedule.getSchedule()[t]), 1);
+				column.and(coefficient1sun);
 			}
-			//if the schedule is for a certain contract group, add a coefficient for this particular group
-			IloColumn coefficient2 = this.cplex.column(this.constraints2[schedules.getC().getNr()-1], 1);
-			column = column.and(coefficient2);
+			//if the day is a Monday:
+			if (t % 7 == 1) {
+				IloColumn coefficient1mon = this.cplex.column(this.constraints1.get(1).get(schedule.getSchedule()[t]), 1);
+				column.and(coefficient1mon);
+			}
+			//if the day is a Tuesday:
+			if (t % 7 == 2) {
+				IloColumn coefficient1tue = this.cplex.column(this.constraints1.get(2).get(schedule.getSchedule()[t]), 1);
+				column.and(coefficient1tue);
+			}
+			//if the day is a Wednesday:
+			if (t % 7 == 3) {
+				IloColumn coefficient1wed = this.cplex.column(this.constraints1.get(3).get(schedule.getSchedule()[t]), 1);
+				column.and(coefficient1wed);
+			}
+			//if the day is a Thursday:
+			if (t % 7 == 4) {
+				IloColumn coefficient1thu = this.cplex.column(this.constraints1.get(4).get(schedule.getSchedule()[t]), 1);
+				column.and(coefficient1thu);
+			}
+			//if the day is a Friday:
+			if (t % 7 == 5) {
+				IloColumn coefficient1fri = this.cplex.column(this.constraints1.get(5).get(schedule.getSchedule()[t]), 1);
+				column.and(coefficient1fri);
+			}
+			//if the day is a Saturday:
+			if (t % 7 == 6) {
+				IloColumn coefficient1sat = this.cplex.column(this.constraints1.get(6).get(schedule.getSchedule()[t]), 1);
+				column.and(coefficient1sat);
+			}
 
-			//add the schedule as a variable
-			IloNumVar var = this.cplex.numVar(column, 0, Double.POSITIVE_INFINITY);
-			this.variables.add(var);
 		}
+		//if the schedule is for a certain contract group, add a coefficient for this particular group
+		IloColumn coefficient2 = this.cplex.column(this.constraints2[schedule.getC().getNr()-1], 1);
+		column = column.and(coefficient2);
+
+		//add the schedule as a variable
+		IloNumVar var = this.cplex.numVar(column, 0, Double.POSITIVE_INFINITY);
+		this.variables.add(var);
 		this.cplex.exportModel("model.lp");
 	}
 

@@ -3,6 +3,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import Tools.Combination;
+import Tools.ContractGroup;
+import Tools.Instance;
+import Tools.Violation;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
