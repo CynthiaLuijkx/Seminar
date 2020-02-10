@@ -19,7 +19,7 @@ public class Phase4 {
 		HashMap<Schedule, Double> intSolution = ilp.getSolution();
 		for(Schedule schedule : intSolution.keySet()) {
 			if(intSolution.get(schedule) > 0) {
-				System.out.println(intSolution.get(schedule) + " " + schedule.toString());
+				System.out.println(schedule.toString());
 			}
 		}
 	}
@@ -31,7 +31,7 @@ public class Phase4 {
 		Set<Schedule> relaxedSchedules = new HashSet<>();
 		
 		Set<Schedule> added = new HashSet<>();
-		for(int i = 0; i < inputSolution.keySet().size()/parameter; i++) {
+		for(int i = 0; i < Math.max(1,inputSolution.keySet().size()/(parameter)); i++) {
 			for(Schedule schedule : inputSolution.keySet()) {
 				if(!added.contains(schedule)) {
 					integerSchedules.add(schedule);
@@ -41,14 +41,13 @@ public class Phase4 {
 			}
 		}
 		
-		
 		relaxedSchedules.addAll(inputSolution.keySet());
 		while(fixedSchedules.size() != inputSolution.keySet().size()) {
 			Phase4_RelaxFix_LP lp = new Phase4_RelaxFix_LP(fixedSchedules, integerSchedules, relaxedSchedules, instance);
 			
 			//Moving from Integer to Fixed
 			Set<Schedule> toRemove = new HashSet<>();
-			for(int i = 0; i < inputSolution.keySet().size()/(parameter*2); i++) {
+			for(int i = 0; i < Math.max(1,inputSolution.keySet().size()/(parameter*2)); i++) {
 				for(Schedule schedule : integerSchedules) {
 					if(!toRemove.contains(schedule)) {
 					int solValue = 0;
@@ -65,7 +64,7 @@ public class Phase4 {
 			
 			//Moving from relaxed to Integer
 			toRemove = new HashSet<>();
-			for(int i = 0; i < inputSolution.keySet().size()/(parameter*2); i++) {
+			for(int i = 0; i < Math.max(1,inputSolution.keySet().size()/(parameter*2)); i++) {
 				for(Schedule schedule : relaxedSchedules) {
 					if(!toRemove.contains(schedule)) {
 						integerSchedules.add(schedule);
@@ -75,7 +74,6 @@ public class Phase4 {
 				}
 			}
 			relaxedSchedules.removeAll(toRemove);
-			
 		}
 		
 		int objValue = 0;

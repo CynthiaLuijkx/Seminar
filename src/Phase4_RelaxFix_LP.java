@@ -8,7 +8,6 @@ import Tools.Instance;
 import Tools.Schedule;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
