@@ -62,8 +62,8 @@ public class RMP_Phase3 {
 		//this.cplex.exportModel("model.lp");
 		this.cplex.solve();
 		//Some printing
-		System.out.println(cplex.getModel());
-		System.out.println(cplex.getObjValue());
+//		System.out.println(cplex.getModel());
+//		System.out.println(cplex.getObjValue());
 		/*ArrayList<ArrayList<Double>> solution = getSolutionDummiesDuties();
 		ArrayList<ArrayList<Double>> solutionReserve = getSolutionDummiesReserve();
 		ArrayList<Double> solutionATV = getSolutionDummiesATV();
