@@ -42,7 +42,7 @@ public class Phase3
 		List<HashMap<Integer, Double>> dualsDuties = model.getDuals1();
 		
 		int iteration = 1;
-		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, consecWeek, twoWeek);		
+		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, consecWeek, twoWeek);
 		
 		boolean negRedCosts = true;
 		while (negRedCosts) {

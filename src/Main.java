@@ -23,7 +23,7 @@ public class Main
 		String depot = "DirkslandEasier"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
-		double violationBound = 0.9; 
+		double violationBound = 0.9;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
@@ -57,7 +57,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getUB();
+		int numberOfDrivers = instance.getLB() + 10;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();

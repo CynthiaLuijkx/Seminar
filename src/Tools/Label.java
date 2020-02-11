@@ -10,7 +10,7 @@ public class Label
 	private final int totMinus;
 	private final int[] schedule;
 	private final List<Set<Integer>> duties;
-	
+
 	public Label(double redCosts, int totOvertime, int totMinus, int[] schedule, List<Set<Integer>> duties) {
 		this.redCosts = redCosts;
 		this.totOvertime = totOvertime;
@@ -34,7 +34,7 @@ public class Label
 	public int[] getSchedule() {
 		return schedule;
 	}
-	
+
 	public List<Set<Integer>> getDuties() {
 		return duties;
 	}
@@ -44,7 +44,7 @@ public class Label
 		return "Label [redCosts=" + redCosts + ", totOvertime=" + totOvertime + ", totMinus=" + totMinus + ", schedule="
 				+ Arrays.toString(schedule) + "]";
 	}
-	
+
 	/**
 	 * This method returns true if this label dominates the other label.
 	 * @param other			another label
@@ -70,7 +70,7 @@ public class Label
 		}
 		return false;
 	}
-	
+
 	/**
 	 * This method returns true if this label dominates the other label.
 	 * @param other			another label
@@ -83,5 +83,15 @@ public class Label
 			return true;
 		}
 		return false;
+	}
+
+	public int compareToArcCosts(Label l2) {
+		if (this.redCosts < l2.getRedCosts()) {
+			return -1;
+		} else if (this.redCosts > l2.getRedCosts()) {
+			return 1;
+		} else {
+			return 0;
+		}
 	}
 }
