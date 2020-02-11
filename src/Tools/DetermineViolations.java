@@ -11,14 +11,20 @@ import java.util.Set;
 public class DetermineViolations {
 
 	private List<String[]> combDutyType = new ArrayList<String[]>(); 
+	private List<String[]> combDutyType3Days = new ArrayList<String[]>(); 
 	private List<String[]> combDayType11 = new ArrayList<String[]>();
 	private List<String[]> combDayType32 = new ArrayList<String[]>(); 
+	private List<String[]> comb3Day = new ArrayList<String[]>(); 
 	private List<String[]> combType = new ArrayList<String[]>(); 
+	private List<Boolean[]> reserveNormal = new ArrayList<Boolean[]>(); 
+
 	private String[] typesDuty = new String[] {"L", "V", "D", "G", "GM"}; 
 	private String[] weekDays = new String[] {"Workingday", "Saturday", "Sunday"}; 
 	private Instance instance; 
+	
 	private Set<Violation> violations11; 
 	private Set<Violation> violations32; 
+	private Set<Violation3Days> violations3Days; 
 
 	private static int dailyRestMin = 11*60; 
 	private static int restDayMin = 32*60; 
@@ -34,6 +40,9 @@ public class DetermineViolations {
 		for(String dutyTypeFrom: dutyTypes) {
 			for(String dutyTypeTo: dutyTypes) {
 				combDutyType.add(new String[] {dutyTypeFrom, dutyTypeTo}); 
+				for(String dutyTypeMiddle: dutyTypes) {
+					combDutyType3Days.add(new String[] {dutyTypeFrom, dutyTypeMiddle, dutyTypeTo}); 
+				}
 			}
 		}
 
@@ -48,9 +57,23 @@ public class DetermineViolations {
 		combDayType32.add(new String[] {"Saturday", "Workingday"});
 		combDayType32.add(new String[] {"Sunday", "Workingday"}); 
 
+		comb3Day.add(new String[] {"Workingday", "Workingday", "Workingday"}); 
+		comb3Day.add(new String[] {"Workingday", "Workingday", "Saturday"}); 
+		comb3Day.add(new String[] {"Workingday", "Saturday", "Sunday"}); 
+		comb3Day.add(new String[] {"Saturday", "Sunday", "Workingday"}); 
+		comb3Day.add(new String[] {"Sunday", "Workingday", "Workingday"}); 
+
 		dutySetMap.put("Workingday", instance.getDutiesPerTypeW()); 
 		dutySetMap.put("Saturday", instance.getDutiesPerTypeSat()); 
 		dutySetMap.put("Sunday", instance.getDutiesPerTypeSun()); 
+
+		for(int i1 = 0; i1<2; i1++) {
+			for(int i2 = 0; i2<2; i2++) {
+				for(int i3 = 0; i3<2; i3++) {
+					reserveNormal.add(new Boolean[] {i1==0, i2==0, i3==0}); 
+				}
+			}
+		}
 
 		combType.add(new String[] {"N", "N"}); 
 		combType.add(new String[] {"N", "R"}); 
@@ -59,7 +82,142 @@ public class DetermineViolations {
 
 		rDutyMap = checkReserveDuties(); 
 		violations11 = getViolations(combDayType11, 0);
+		for(Violation violation : violations11) {
+			System.out.println(violation.toString()) ;
+		}
 		violations32 = getViolations(combDayType32, 1);
+		
+		this.violations3Days = determineViolations3Days(); 
+		for(Violation3Days viol: violations3Days) {
+			System.out.println(viol.toString()); 
+		}
+	}
+
+	public Set<Violation3Days> getViolations3Days() {
+		return violations3Days;
+	}
+
+	public Set<Violation3Days> determineViolations3Days(){
+		Set<Violation3Days> violations = new HashSet<Violation3Days>(); 
+		for(String[] dayComb: comb3Day){
+			for(String[] dutyComb3Days: combDutyType3Days){
+				for(Boolean[] combResNor: reserveNormal ) {
+					if(violated3Days(dayComb, dutyComb3Days,combResNor)) {
+						violations.add(new Violation3Days( dayComb, getTrueDutyTypes(dutyComb3Days, combResNor))); 
+					}
+				}
+			}
+		}
+		return violations; 
+	}
+
+
+	public String[] getTrueDutyTypes(String[] dutyTypes, Boolean[] reserveON) {
+		String[] result = new String[dutyTypes.length]; 
+		for(int i = 0; i<dutyTypes.length; i++) {
+			if(reserveON[i]) {
+				result[i] = "R" + dutyTypes[i];  
+			}else {
+				result[i] = dutyTypes[i]; 
+			}
+		}
+		return result; 
+	}
+	
+	public boolean violated3Days(String[] dayComb, String[] dutyComb3Days, Boolean[] combResNor) {
+		ArrayList<Integer> lastEndTimes = new ArrayList<Integer>(); 
+		
+		int totalComb = 0; 
+		if(combResNor[0]) {
+			if(this.rDutyMap.get(dayComb[0]).get("R"+dutyComb3Days[0])!= null) {		
+				lastEndTimes.add(this.rDutyMap.get(dayComb[0]).get("R"+dutyComb3Days[0]).getEndTime()); 
+				totalComb = 1; 
+			}
+			else {
+				return false; 
+			}
+		}else {
+			if(this.dutySetMap.get(dayComb[0]).containsKey(dutyComb3Days[0])) {
+				for(Duty duty: this.dutySetMap.get(dayComb[0]).get(dutyComb3Days[0]) ) {
+					lastEndTimes.add(duty.getEndTime()); 
+				}
+				totalComb = this.dutySetMap.get(dayComb[0]).get(dutyComb3Days[0]).size(); 
+			}
+			else {
+				return false; 
+			}
+		}
+		
+		if(combResNor[1]) {
+			if(this.rDutyMap.get(dayComb[1]).get("R"+dutyComb3Days[1]) != null) {		
+				ArrayList<Integer> temp = new ArrayList<Integer>(); 
+				for(Integer lastEndTime: lastEndTimes) {
+					ReserveDutyType reserveDuty = this.rDutyMap.get(dayComb[1]).get("R"+dutyComb3Days[1]);
+					if(reserveDuty.getStartTime() + 24*60 - lastEndTime > dailyRestMin) {
+						temp.add(reserveDuty.getEndTime()); 
+					}
+				}
+				lastEndTimes = temp; 
+			}
+			else {
+				return false; 
+			}
+		}else {
+			if(this.dutySetMap.get(dayComb[1]).containsKey(dutyComb3Days[1])) {
+				ArrayList<Integer> temp = new ArrayList<Integer>(); 
+				for(Duty duty: this.dutySetMap.get(dayComb[1]).get(dutyComb3Days[1]) ) {
+					for(Integer lastEndTime: lastEndTimes) {
+						if(duty.getStartTime() + 24*60 - lastEndTime > dailyRestMin) {
+							temp.add(duty.getEndTime()); 
+						}
+					}
+				}
+				lastEndTimes = temp; 
+				totalComb = totalComb * this.dutySetMap.get(dayComb[1]).get(dutyComb3Days[1]).size(); 
+			}
+			else {
+				return false; 
+			}
+		}
+		
+		if(combResNor[2]) {
+			if(this.rDutyMap.get(dayComb[2]).get("R"+dutyComb3Days[2])!=null) {		
+				ArrayList<Integer> temp = new ArrayList<Integer>(); 
+				for(Integer lastEndTime: lastEndTimes) {
+					ReserveDutyType reserveDuty = this.rDutyMap.get(dayComb[2]).get("R"+dutyComb3Days[2]);
+					if(reserveDuty.getStartTime() + 24*60 - lastEndTime > dailyRestMin) {
+						temp.add(reserveDuty.getEndTime()); 
+					}
+				}
+				lastEndTimes = temp; 
+			}
+			else {
+				return false; 
+			}
+		}else {
+			if(this.dutySetMap.get(dayComb[2]).containsKey(dutyComb3Days[2])) {
+				ArrayList<Integer> temp = new ArrayList<Integer>(); 
+				for(Duty duty: this.dutySetMap.get(dayComb[2]).get(dutyComb3Days[2]) ) {
+					for(Integer lastEndTime: lastEndTimes) {
+						if(duty.getStartTime() + 24*60 - lastEndTime > dailyRestMin) {
+							temp.add(duty.getEndTime()); 
+						}
+					}
+				}
+				lastEndTimes = temp; 
+				totalComb = totalComb * this.dutySetMap.get(dayComb[2]).get(dutyComb3Days[2]).size(); 
+			}
+			else {
+				return false; 
+			}
+		}
+		
+		if(lastEndTimes.size()/totalComb < this.violationBound) {
+			return true; 
+		}
+		else {
+			return false; 
+		}
 	}
 
 	/**
@@ -77,7 +235,7 @@ public class DetermineViolations {
 	public Set<Violation> get32Violations(){
 		return this.violations32; 
 	}
-	
+
 	/**
 	 * Returns a set of all combinations that have a high chance of violating the 11 hours constraint
 	 * @return
@@ -123,7 +281,6 @@ public class DetermineViolations {
 		return violations; 
 	}
 
-
 	/**
 	 * Determines the number of violations between two sets of duties
 	 * @param fromDuties			a set of duties
@@ -167,7 +324,6 @@ public class DetermineViolations {
 	 * @param restDayMin			the minimum nr of minutes for a rest day
 	 * @return						an array with the number of daily rest hours violations, number of rest day hours violations, total number of combinations
 	 */
-	//similar idea
 	public static int[] getViolations(ReserveDutyType from, ReserveDutyType to) {
 		int[] counts = new int[3];
 
@@ -199,7 +355,6 @@ public class DetermineViolations {
 	 * @param restDayMin			the minimum nr of minutes for a rest day
 	 * @return						an array with the number of daily rest hours violations, number of rest day hours violations, total number of combinations
 	 */
-	//Similar idea
 	public static int[] getViolations(ReserveDutyType from, Set<Duty> toDuties) {
 		int[] counts = new int[3];
 
