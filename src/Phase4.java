@@ -7,10 +7,10 @@ import Tools.*;
 import ilog.concert.IloException;
 
 public class Phase4 {
-	private final HashMap<Schedule, Double> inputSolution; 
+	private final Set<Schedule> inputSolution; 
 	private final Instance instance;
 	
-	public Phase4(HashMap<Schedule, Double> inputSolution, Instance instance) {
+	public Phase4(Set<Schedule> inputSolution, Instance instance) {
 		this.inputSolution = inputSolution;
 		this.instance = instance;
 	}
@@ -36,8 +36,8 @@ public class Phase4 {
 		Set<Schedule> relaxedSchedules = new HashSet<>();
 		
 		Set<Schedule> added = new HashSet<>();
-		for(int i = 0; i < Math.max(1,inputSolution.keySet().size()/(parameter)); i++) {
-			for(Schedule schedule : inputSolution.keySet()) {
+		for(int i = 0; i < Math.max(1,inputSolution.size()/(parameter)); i++) {
+			for(Schedule schedule : inputSolution) {
 				if(!added.contains(schedule)) {
 					integerSchedules.add(schedule);
 					added.add(schedule);
@@ -45,22 +45,27 @@ public class Phase4 {
 				}
 			}
 		}
+		relaxedSchedules.addAll(inputSolution);
+		relaxedSchedules.removeAll(integerSchedules);
 		
-		relaxedSchedules.addAll(inputSolution.keySet());
-		while(fixedSchedules.size() != inputSolution.keySet().size()) {
+		while(fixedSchedules.size() != inputSolution.size()) {
+			/*
+			System.out.println("Fixed Size: " + fixedSchedules.size());
+			System.out.println("Integer Size: " + integerSchedules.size());
+			System.out.println("Relaxed Size: " + relaxedSchedules.size());*/
 			Phase4_RelaxFix_LP lp = new Phase4_RelaxFix_LP(fixedSchedules, integerSchedules, relaxedSchedules, instance);
 			
 			//Moving from Integer to Fixed
 			Set<Schedule> toRemove = new HashSet<>();
-			for(int i = 0; i < Math.max(1,inputSolution.keySet().size()/(parameter*2)); i++) {
-				for(Schedule schedule : integerSchedules) {
-					if(!toRemove.contains(schedule)) {
-					int solValue = 0;
-					if(lp.getSolution().get(schedule) > 0.1) {
-						solValue = 1;
-					}
-					fixedSchedules.put(schedule, solValue);
-					toRemove.add(schedule);
+			for (int i = 0; i < Math.max(1, inputSolution.size() / (parameter * 2)); i++) {
+				for (Schedule schedule : integerSchedules) {
+					if (!toRemove.contains(schedule)) {
+						int solValue = 0;
+						if (lp.getSolution().get(schedule) > 0.1) {
+							solValue = 1;
+						}
+						fixedSchedules.put(schedule, solValue);
+						toRemove.add(schedule);
 					}
 					break;
 				}
@@ -69,7 +74,7 @@ public class Phase4 {
 			
 			//Moving from relaxed to Integer
 			toRemove = new HashSet<>();
-			for(int i = 0; i < Math.max(1,inputSolution.keySet().size()/(parameter*2)); i++) {
+			for(int i = 0; i < Math.max(1,inputSolution.size()/(parameter*2)); i++) {
 				for(Schedule schedule : relaxedSchedules) {
 					if(!toRemove.contains(schedule)) {
 						integerSchedules.add(schedule);
@@ -123,7 +128,7 @@ public class Phase4 {
 		if(depot.equals("Dirksland") || depot.equals("DirkslandEasier")) {
 			Set<Schedule> contractGroup1 = new HashSet<>();
 			Set<Schedule> contractGroup2 = new HashSet<>();
-			for(Schedule schedule : this.inputSolution.keySet()) {
+			for(Schedule schedule : this.inputSolution) {
 				if(schedule.getC().getNr() == 1) {
 					contractGroup1.add(schedule);
 				}
@@ -149,7 +154,7 @@ public class Phase4 {
 			Set<Schedule> contractGroup2 = new HashSet<>();
 			Set<Schedule> contractGroup3 = new HashSet<>();
 			Set<Schedule> contractGroup4 = new HashSet<>();
-			for(Schedule schedule : this.inputSolution.keySet()) {
+			for(Schedule schedule : this.inputSolution) {
 				if(schedule.getC().getNr() == 1) {
 					contractGroup1.add(schedule);
 				}

@@ -24,10 +24,10 @@ public class Phase4_ILP {
 	private final HashMap<Schedule, Double> solution;
 	
 
-	public Phase4_ILP(HashMap<Schedule, Double> inputSolution, Instance instance) throws IloException {
+	public Phase4_ILP(Set<Schedule> inputSolution, Instance instance) throws IloException {
 		this.cplex = new IloCplex();
 		this.schedules = new HashSet<>();
-		schedules.addAll(inputSolution.keySet());
+		schedules.addAll(inputSolution);
 		this.instance = instance;
 		
 		this.variables = new HashSet<>();
@@ -96,7 +96,7 @@ public class Phase4_ILP {
 					}
 				}
 			}
-			this.cplex.addEq(constraint, 1, duty.getNr() + "_" + 0);
+			this.cplex.addGe(constraint, 1, duty.getNr() + "_" + 0);
 		}
 		for(Duty duty : instance.getSaturday()) {
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
@@ -108,7 +108,7 @@ public class Phase4_ILP {
 					}
 				}
 			}
-			this.cplex.addEq(constraint, 1, duty.getNr() + "_" + 6);
+			this.cplex.addGe(constraint, 1, duty.getNr() + "_" + 6);
 		}
 		for (Duty duty : instance.getWorkingDays()) {
 			for (int s = 1; s <= 5; s++) {
@@ -121,7 +121,7 @@ public class Phase4_ILP {
 						}
 					}
 				}
-				this.cplex.addEq(constraint, 1, duty.getNr() + "_" + s);
+				this.cplex.addGe(constraint, 1, duty.getNr() + "_" + s);
 			}
 		}
 	}

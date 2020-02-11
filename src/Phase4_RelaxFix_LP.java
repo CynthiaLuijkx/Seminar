@@ -132,7 +132,7 @@ public class Phase4_RelaxFix_LP {
 					}
 				}
 			}
-			this.cplex.addEq(constraint, 1-alreadyCovered, duty.getNr() + "_" + 0);
+			this.cplex.addGe(constraint, 1-alreadyCovered, duty.getNr() + "_" + 0);
 		}
 		for(Duty duty : instance.getSaturday()) {
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
@@ -156,7 +156,7 @@ public class Phase4_RelaxFix_LP {
 					}
 				}
 			}
-			this.cplex.addEq(constraint, 1-alreadyCovered, duty.getNr() + "_" + 6);
+			this.cplex.addGe(constraint, 1-alreadyCovered, duty.getNr() + "_" + 6);
 		}
 		for (Duty duty : instance.getWorkingDays()) {
 			for (int s = 1; s <= 5; s++) {
@@ -182,7 +182,7 @@ public class Phase4_RelaxFix_LP {
 						}
 					}
 				}
-				this.cplex.addEq(constraint, 1 - alreadyCovered, duty.getNr() + "_" + s);
+				this.cplex.addGe(constraint, 1 - alreadyCovered, duty.getNr() + "_" + s);
 			}
 		}
 	}

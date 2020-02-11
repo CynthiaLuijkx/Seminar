@@ -57,7 +57,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() + 10;
+		int numberOfDrivers = instance.getUB();
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
@@ -67,15 +67,15 @@ public class Main
 		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
 		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
 		
-		Phase4 phase4 = new Phase4(solution, instance);
+		for(Schedule schedule : solution.keySet()) {
+			System.out.println(solution.get(schedule) + " " + schedule.toString());
+		}
+		
+		int treshold = 0; //bigger than or equal 
+		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
 		phase4.runILP();
 		phase4.runRelaxFix();
 		phase4.runAllCombinations(depot);
-		
-		/*
-		for(Schedule curSchedule : solution.keySet()) {
-			System.out.println(curSchedule.toString() + " " + solution.get(curSchedule));
-		}*/
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
@@ -301,5 +301,18 @@ public class Main
 		}
 
 		return counts;
+	}
+	
+	public static Set<Schedule> getSchedulesAboveTreshold(HashMap<Schedule, Double> solution, double treshold){
+		Set<Schedule> output = new HashSet<>();
+		for(Schedule schedule : solution.keySet()) {
+			if(solution.get(schedule) >= treshold) {
+				output.add(schedule);
+			}
+		}
+		for(Schedule schedule : output) {
+			System.out.println(schedule.toString());
+		}
+		return output;
 	}
 }
