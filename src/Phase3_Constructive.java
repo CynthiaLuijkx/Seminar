@@ -77,7 +77,6 @@ public class Phase3_Constructive {
 		}
 	}
 
-	
 	public Set<Schedule> getSchedule(){
 		return this.finalSchedules; 
 	}
@@ -395,7 +394,7 @@ public class Phase3_Constructive {
 		int overTime = 0; 
 		int minHours = 0; 
 		int[] time = calculateOverTime(group); 
-		
+
 		for(int i = 0; i<time.length; i++) {
 			if(time[i]>0) {
 				overTime += time[i]; 
@@ -403,7 +402,7 @@ public class Phase3_Constructive {
 				minHours += -1*time[i]; 
 			}
 		}
-		
+
 		return new Schedule(group, overTime, minHours, Arrays.stream(this.solutionHeur.get(group)).mapToInt(Integer::intValue).toArray()); 
 	}
 }
