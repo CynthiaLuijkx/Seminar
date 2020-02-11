@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -18,6 +19,7 @@ public class Phase3_Constructive {
 	private Map<ContractGroup, Integer[]> solutionHeur; 
 	private Instance instance; 
 	private Map<Integer, Duty> dutyNrToDuty; 
+	private Set<Schedule> finalSchedules = new HashSet<Schedule>(); 
 
 	public Phase3_Constructive(Instance instance, HashMap<ContractGroup, String[]> solutionMIP ) {
 		this.dutyNrToDuty = instance.getFromDutyNrToDuty(); 
@@ -68,12 +70,18 @@ public class Phase3_Constructive {
 		solve(); 
 
 		for(ContractGroup group: solutionHeur.keySet()) {
+			this.finalSchedules.add(getSchedule(group)); 
 			System.out.println(Arrays.toString(solutionHeur.get(group))); 
 			System.out.println(Arrays.toString(calculateOverTime(group))); 
 			System.out.println(Arrays.toString(calculateAvOverTime(calculateOverTime(group)))); 
 		}
 	}
 
+	
+	public Set<Schedule> getSchedule(){
+		return this.finalSchedules; 
+	}
+	
 	/**
 	 * converts a set of duties to a list of the duty numbers 
 	 * @param duties
@@ -381,5 +389,21 @@ public class Phase3_Constructive {
 		}
 		
 		return timePQuarter; 
+	}
+	
+	public Schedule getSchedule(ContractGroup group) {
+		int overTime = 0; 
+		int minHours = 0; 
+		int[] time = calculateOverTime(group); 
+		
+		for(int i = 0; i<time.length; i++) {
+			if(time[i]>0) {
+				overTime += time[i]; 
+			}else {
+				minHours += -1*time[i]; 
+			}
+		}
+		
+		return new Schedule(group, overTime, minHours, Arrays.stream(this.solutionHeur.get(group)).mapToInt(Integer::intValue).toArray()); 
 	}
 }
