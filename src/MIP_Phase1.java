@@ -7,6 +7,7 @@ import Tools.Combination;
 import Tools.ContractGroup;
 import Tools.Instance;
 import Tools.Violation;
+import Tools.Violation3Days;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
@@ -81,6 +82,7 @@ public class MIP_Phase1
 		initConstraint6(); //Minimum of one rest day per two weeks
 		initConstraint7(); //Rest of 32 hours
 		initConstraint8(); //Sunday maximum 
+		initConstraint9(); //3 day violations
 		
 		//Soft constraints 
 		initSoft1(); //Even spread of ATV days 
@@ -437,6 +439,84 @@ public class MIP_Phase1
 			int numberOfSundays = (int) (Math.floor((group.getTc()/7 * 3/4))); //Rounding down 
 			this.cplex.addLe(constraint, numberOfSundays, "Sundays" + group.groupNumberToString());
 		}
+	}
+	
+	public void initConstraint9() throws IloException {
+		int counter = 0; 
+		for (Violation3Days violation : this.instance.getViolations3Days()) {// For all violations
+			String[] dayTypes = violation.getDayTypes();
+			String[] dutyTypes = violation.getDutyTypes();
+			for (ContractGroup group : this.instance.getContractGroups()) { // For all contract groups
+
+				// Get a set of all the days in this contract group the violation can apply to
+				Set<Integer> daysToCover = this.daysToCover(dayTypes[0], group.getTc() / 7);
+
+				for (Integer t : daysToCover) { // Go over all days
+
+					// Ensuring the connection from end to start
+					boolean feasible = true;
+					int nextDay = t + 1;
+					int twoDays = t + 2;
+					if (twoDays == this.daysPerGroup.get(group).size()) {
+						if (dayTypes[2].equals("Sunday")) { // Otherwise, it's not feasible
+							twoDays = 0;
+						} else {
+							feasible = false;
+						}
+					} else if (twoDays == this.daysPerGroup.get(group).size() + 1) {
+						if (dayTypes[2].equals("Workingday")) {
+							nextDay = 0;
+							twoDays = 1;
+						} else {
+							feasible = false;
+						}
+					}
+					
+					if(dayTypes[1] == "Sunday" && nextDay%7 !=0) {
+						feasible = false;
+					}
+					if(dayTypes[1] == "Saturday" && nextDay%7 != 6) {
+						feasible = false;
+					}
+					if(dayTypes[1] == "Workingday" && (nextDay%7 == 0 || nextDay%7 ==6)){
+						feasible = false;
+					}
+					if(dayTypes[2] == "Sunday" && twoDays%7 !=0) {
+						feasible = false;
+					}
+					if(dayTypes[2] == "Saturday" && twoDays%7 != 6) {
+						feasible = false;
+					}
+
+					if(dayTypes[2] == "Workingday" && (twoDays%7 == 0 || twoDays%7 ==6)){
+						feasible = false;
+					}
+
+					if (feasible) {
+						// Find a decVar with this type
+						IloNumVar decVar0 = this.decVarOfThisType(this.daysPerGroup.get(group).get(t), dutyTypes[0]);
+						IloNumVar decVar1 = this.decVarOfThisType(this.daysPerGroup.get(group).get(nextDay),
+								dutyTypes[1]);
+						IloNumVar decVar2 = this.decVarOfThisType(this.daysPerGroup.get(group).get(twoDays),
+								dutyTypes[2]);
+
+						// If we found one
+						if (decVar0 != null && decVar1 != null && decVar2 != null) {
+							// Look for the right dutyTo type in one day from now
+
+							IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+							constraint.addTerm(decVar0, 1); // The First day
+							constraint.addTerm(decVar1, 1); // The second day
+							constraint.addTerm(decVar2, 1); // The third day
+
+							this.cplex.addLe(constraint, 2, group.groupNumberToString() + " " + violation.toString());
+							counter++;
+						}
+					}
+				}
+			}
+		}
+		System.out.println(counter);
 	}
 	
 	public void initSoft1() throws IloException { // ATV spread

@@ -21,7 +21,7 @@ public class Phase3
 		this.twoWeek = twoWeek;
 	}
 	
-	public void executeColumnGeneration() throws IloException {
+	public HashMap<Schedule, Double> executeColumnGeneration() throws IloException {
 		/*
 		 * Until no more schedules with negative reduced costs:
 		 * 		Solve RMP
@@ -95,5 +95,7 @@ public class Phase3
 
 			iteration++;
 		}
+		model.makeSolution();
+		return model.getSolution();
 	}
 }

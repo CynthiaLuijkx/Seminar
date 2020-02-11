@@ -10,6 +10,7 @@ import Tools.DetermineViolations;
 import Tools.Duty;
 import Tools.Instance;
 import Tools.ReserveDutyType;
+import Tools.Schedule;
 import Tools.Violation;
 import ilog.concert.IloException;
 
@@ -23,13 +24,14 @@ public class Main
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		double violationBound = 0.9;
+		double violationBound3Days = 0.9;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
 		//add the duty types
 		dutyTypes.add("V");	dutyTypes.add("G");	dutyTypes.add("D");	dutyTypes.add("L");	dutyTypes.add("P"); dutyTypes.add("ATV"); 
 		dutyTypes.add("RV"); dutyTypes.add("RG"); dutyTypes.add("RD"); dutyTypes.add("RL");
-		if (depot.equals("Dirksland")) {
+		if (depot.equals("Dirksland") || depot.equals("DirkslandEasier")) {
 			dutyTypes.add("M");	dutyTypes.add("GM"); 
 		} else if (depot.equals("Heinenoord")) {
 			dutyTypes.add("W");
@@ -47,16 +49,17 @@ public class Main
 
 		System.out.println("Instance " + depot + " initialised");
 
-		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound); 
+		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound, violationBound3Days); 
 		System.out.println("Violations Determined"); 
 
 		System.out.println(temp.get11Violations().size()); 
 		System.out.println(temp.get32Violations().size()); 
+		System.out.println(temp.getViolations3Days().size());
 
-		instance.setViol(temp.get11Violations(), temp.get32Violations());
+		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() + 10;
+		int numberOfDrivers = instance.getUB();
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
@@ -64,7 +67,17 @@ public class Main
 		instance.setBasicSchedules(mip.getSolution());
 		
 		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
-		colGen.executeColumnGeneration();
+		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+		
+		for(Schedule schedule : solution.keySet()) {
+			System.out.println(solution.get(schedule) + " " + schedule.toString());
+		}
+		
+		int treshold = 0; //bigger than or equal 
+		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
+		//phase4.runILP();
+		//phase4.runRelaxFix();
+		phase4.runAllCombinations(depot);
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
@@ -290,5 +303,15 @@ public class Main
 		}
 
 		return counts;
+	}
+	
+	public static Set<Schedule> getSchedulesAboveTreshold(HashMap<Schedule, Double> solution, double treshold){
+		Set<Schedule> output = new HashSet<>();
+		for(Schedule schedule : solution.keySet()) {
+			if(solution.get(schedule) >= treshold) {
+				output.add(schedule);
+			}
+		}
+		return output;
 	}
 }

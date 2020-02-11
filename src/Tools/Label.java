@@ -49,7 +49,7 @@ public class Label
 	 * This method returns true if this label dominates the other label.
 	 * @param other			another label
 	 * @return				a boolean denoting whether this label dominated the other label or not
-	 */
+	 */	
 	public boolean dominates(Label other) {
 		if (this.redCosts <= other.getRedCosts()) {
 			boolean containsAll = true;
