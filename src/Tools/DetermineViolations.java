@@ -155,7 +155,7 @@ public class DetermineViolations {
 				ArrayList<Integer> temp = new ArrayList<Integer>(); 
 				for(Integer lastEndTime: lastEndTimes) {
 					ReserveDutyType reserveDuty = this.rDutyMap.get(dayComb[1]).get("R"+dutyComb3Days[1]);
-					if(reserveDuty.getStartTime() + 24*60 - lastEndTime > dailyRestMin) {
+					if(reserveDuty.getStartTime() + 24*60 - lastEndTime >= dailyRestMin) {
 						temp.add(reserveDuty.getEndTime()); 
 					}
 				}
@@ -169,7 +169,7 @@ public class DetermineViolations {
 				ArrayList<Integer> temp = new ArrayList<Integer>(); 
 				for(Duty duty: this.dutySetMap.get(dayComb[1]).get(dutyComb3Days[1]) ) {
 					for(Integer lastEndTime: lastEndTimes) {
-						if(duty.getStartTime() + 24*60 - lastEndTime > dailyRestMin) {
+						if(duty.getStartTime() + 24*60 - lastEndTime >= dailyRestMin) {
 							temp.add(duty.getEndTime()); 
 						}
 					}
@@ -187,7 +187,7 @@ public class DetermineViolations {
 				ArrayList<Integer> temp = new ArrayList<Integer>(); 
 				for(Integer lastEndTime: lastEndTimes) {
 					ReserveDutyType reserveDuty = this.rDutyMap.get(dayComb[2]).get("R"+dutyComb3Days[2]);
-					if(reserveDuty.getStartTime() + 24*60 - lastEndTime > dailyRestMin) {
+					if(reserveDuty.getStartTime() + 24*60 - lastEndTime >= dailyRestMin) {
 						temp.add(reserveDuty.getEndTime()); 
 					}
 				}
@@ -201,7 +201,7 @@ public class DetermineViolations {
 				ArrayList<Integer> temp = new ArrayList<Integer>(); 
 				for(Duty duty: this.dutySetMap.get(dayComb[2]).get(dutyComb3Days[2]) ) {
 					for(Integer lastEndTime: lastEndTimes) {
-						if(duty.getStartTime() + 24*60 - lastEndTime > dailyRestMin) {
+						if(duty.getStartTime() + 24*60 - lastEndTime >= dailyRestMin) {
 							temp.add(duty.getEndTime()); 
 						}
 					}
@@ -214,7 +214,7 @@ public class DetermineViolations {
 			}
 		}
 		
-		if(lastEndTimes.size()/totalComb <= 1- this.violationBound3Days) {
+		if(lastEndTimes.size()/(double) totalComb <= 1- this.violationBound3Days) {
 			Violation firstTwo = new Violation(dutyComb3Days[0], dayComb[0], combResNor[0], dutyComb3Days[1], dayComb[1], combResNor[1]); 
 			Violation secondTwo = new Violation(dutyComb3Days[1], dayComb[1], combResNor[1], dutyComb3Days[2], dayComb[2], combResNor[2]); 
 			boolean b1 = checkContains(this.violations11, firstTwo); 
