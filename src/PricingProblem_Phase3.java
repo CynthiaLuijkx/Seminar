@@ -277,7 +277,7 @@ public class PricingProblem_Phase3
 			Set<Schedule> schedules = new HashSet<>();
 			for (Node curNode : labelMap.keySet()) {
 				for (Label curLabel : labelMap.get(curNode)) {
-					if (curLabel.getRedCosts() < 0) {
+					if (curLabel.getRedCosts() < -0.000001) {
 						if (this.isFeasibleSchedule(curLabel)) {
 							schedules.add(new Schedule(c, curLabel.getTotMinus(), curLabel.getTotOvertime(), curLabel.getSchedule()));
 						}

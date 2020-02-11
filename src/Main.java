@@ -59,7 +59,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getUB();
+		int numberOfDrivers = instance.getLB() +10;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
@@ -69,15 +69,11 @@ public class Main
 		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
 		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
 		
-		for(Schedule schedule : solution.keySet()) {
-			System.out.println(solution.get(schedule) + " " + schedule.toString());
-		}
-		
 		int treshold = 0; //bigger than or equal 
 		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
-		//phase4.runILP();
+		phase4.runILP();
 		//phase4.runRelaxFix();
-		phase4.runAllCombinations(depot);
+		//phase4.runAllCombinations(depot);
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
