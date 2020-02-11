@@ -3,8 +3,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 
+import Tools.ComparatorLabelCosts;
 import Tools.ContractGroup;
 import Tools.DirectedGraph;
 import Tools.DirectedGraphArc;
@@ -21,6 +23,7 @@ public class PricingProblem_Phase3
 	private final int freeTwoWeeks;
 	
 	private final Instance instance;
+	private final double propLabels = 0.1;
 
 	private HashMap<ContractGroup, DirectedGraph<Node, Double>> graphs;
 
@@ -150,6 +153,14 @@ public class PricingProblem_Phase3
 			System.out.println("After removal: ");
 			System.out.println("Number of nodes: " + newGraph.getNumberOfNodes());
 			System.out.println("Number of arcs: " + newGraph.getNumberOfArcs());
+			
+			int count = 0;
+			for (int t = 0; t < instance.getBasicSchedules().get(c).length; t++) {
+				if (newGraph.getNodes().get(t).size() > 1) {
+					count += newGraph.getNodes().get(t).size();
+				}
+			}
+			System.out.println("Number of duties nodes: " + count);
 
 			this.graphs.put(c, newGraph);
 		}
@@ -206,15 +217,19 @@ public class PricingProblem_Phase3
 			// Execute labelling for all other nodes
 			for (int t = 0; t < instance.getBasicSchedules().get(c).length; t++) {
 				for (Node curNode : graphs.get(c).getNodes().get(t)) {
+					PriorityQueue<Label> tempLabels = new PriorityQueue<>(new ComparatorLabelCosts());
 					labels = new HashSet<>();
 					for (DirectedGraphArc<Node, Double> curArc : graphs.get(c).getInArcs(curNode)) {
 						for (Label prevLabel : labelMap.get(curArc.getFrom())) {
 							// Construct the label if it is feasible
+							if (prevLabel == null) {
+								System.out.println();
+							}
 							Label newLabel = this.getLabel(prevLabel, curArc, t, curNode.getDutyNr(), c);
 							if (newLabel != null) {
 								Set<Label> toRemove = new HashSet<>();
 								boolean dominated = false;
-								for (Label other : labels) {
+								for (Label other : tempLabels) {
 									if (newLabel.dominates(other)) {
 										toRemove.add(other);
 									} else if (other.dominates(newLabel)) {
@@ -223,17 +238,29 @@ public class PricingProblem_Phase3
 									}
 								}
 								if (!dominated) {
-									labels.add(newLabel);
+									tempLabels.add(newLabel);
 								}
 								
 								for (Label label : toRemove) {
-									labels.remove(label);
+									tempLabels.remove(label);
 								}
 							}
 						}
 					}
-					labelMap.put(curNode, labels);
-					System.out.println(t + ": " + labels.size());
+					boolean add = !tempLabels.isEmpty();
+					while (add) {
+						labels.add(tempLabels.poll());
+						if (tempLabels.isEmpty()) {
+							add = false;
+						}
+						if (labels.size() == 10) {
+							add = false;
+						}
+					}
+//					System.out.println(t + ": " + labels.size() + "(" + tempLabels.size() + ")");
+					if (labels != null) {
+						labelMap.put(curNode, labels);
+					}
 				}
 				Set<Node> removeMap = new HashSet<>();
 				for (Node curNode : labelMap.keySet()) {
@@ -403,9 +430,9 @@ public class PricingProblem_Phase3
 					int consec = 24 * 60;
 					
 					if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i-1)%schedule.length])) {
-						consec += instance.getFromDutyNrToDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
+						consec += 24 * 60 - instance.getFromDutyNrToDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					} else {
-						consec += instance.getFromRDutyNrToRDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
+						consec += 24 * 60 - instance.getFromRDutyNrToRDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					}
 					
 					if (i == 6) {
@@ -462,9 +489,9 @@ public class PricingProblem_Phase3
 					int consec = 24 * 60;
 					
 					if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i-1)%schedule.length])) {
-						consec += instance.getFromDutyNrToDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
+						consec += 24 * 60 - instance.getFromDutyNrToDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					} else {
-						consec += instance.getFromRDutyNrToRDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
+						consec += 24 * 60 - instance.getFromRDutyNrToRDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					}
 					
 					if (i == 13) {
@@ -538,7 +565,7 @@ public class PricingProblem_Phase3
 				source = curNode;
 			}
 			for (DirectedGraphArc<Node, Double> outArc : graphs.get(c).getOutArcs(source)) {
-				if (outArc.getTo().getDutyNr() != 1 && outArc.getTo().getDutyNr() != 2) {
+				if (instance.getFromDutyNrToDuty().containsKey(outArc.getTo().getDutyNr())) {
 					outArc.setData(-dualsContractGroup[c.getNr() - 1] - dualsDuties.get(0).get(outArc.getTo().getDutyNr()));
 				} else {
 					outArc.setData(-dualsContractGroup[c.getNr() - 1]);
