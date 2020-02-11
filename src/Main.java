@@ -20,10 +20,11 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "DirkslandEasier"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		double violationBound = 0.9;
+		double violationBound3Days = 0.9;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
@@ -48,13 +49,14 @@ public class Main
 
 		System.out.println("Instance " + depot + " initialised");
 
-		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound); 
+		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound, violationBound3Days); 
 		System.out.println("Violations Determined"); 
 
 		System.out.println(temp.get11Violations().size()); 
 		System.out.println(temp.get32Violations().size()); 
+		System.out.println(temp.getViolations3Days().size());
 
-		instance.setViol(temp.get11Violations(), temp.get32Violations());
+		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
 		int numberOfDrivers = instance.getUB();
@@ -73,8 +75,8 @@ public class Main
 		
 		int treshold = 0; //bigger than or equal 
 		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
-		phase4.runILP();
-		phase4.runRelaxFix();
+		//phase4.runILP();
+		//phase4.runRelaxFix();
 		phase4.runAllCombinations(depot);
 	}
 
@@ -309,9 +311,6 @@ public class Main
 			if(solution.get(schedule) >= treshold) {
 				output.add(schedule);
 			}
-		}
-		for(Schedule schedule : output) {
-			System.out.println(schedule.toString());
 		}
 		return output;
 	}

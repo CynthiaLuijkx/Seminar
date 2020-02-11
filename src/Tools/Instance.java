@@ -28,6 +28,7 @@ public class Instance
 	
 	private Set<Violation> violations11;
 	private Set<Violation> violations32;
+	private Set<Violation3Days> violations3Days;
 	
 	private Set<Combination> M;					// A Set with combinations of day type, duty type and the number of times this shift should be added
 	
@@ -212,8 +213,13 @@ public class Instance
 		}
 	}
 	
-	public void setViol(Set<Violation> violations11, Set<Violation> violations32) {
+	public void setViol(Set<Violation> violations11, Set<Violation> violations32, Set<Violation3Days> violations3Days) {
 		this.violations11 = violations11; 
 		this.violations32 = violations32; 
+		this.violations3Days = violations3Days;
+	}
+
+	public Set<Violation3Days> getViolations3Days() {
+		return violations3Days;
 	}
 }

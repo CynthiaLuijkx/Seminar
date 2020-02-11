@@ -60,8 +60,15 @@ public class Schedule
 			return false;
 		if (plusMin != other.plusMin)
 			return false;
-		if (!Arrays.equals(schedule, other.schedule))
+		boolean arrayEqual = true;
+		for(int i = 0; i < schedule.length; i++) {
+			if(schedule[i] != other.schedule[i]) {
+				arrayEqual = false;
+			}
+		}
+		if (arrayEqual) {
 			return false;
+		}
 		return true;
 	}
 

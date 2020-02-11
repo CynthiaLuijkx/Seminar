@@ -25,7 +25,7 @@ public class ScheduleCombination {
 					}
 				}
 			}
-			if(found > 1) {
+			if(found < 1) {
 				return false;
 			}
 		}
@@ -40,7 +40,7 @@ public class ScheduleCombination {
 					}
 				}
 			}
-			if(found != 1) {
+			if(found < 1) {
 				return false;
 			}
 		}
@@ -55,7 +55,7 @@ public class ScheduleCombination {
 						}
 					}
 				}
-				if (found != 1) {
+				if (found < 1) {
 					return false;
 				}
 			}
