@@ -72,4 +72,42 @@ public class Violation
 		return "Violation [dayTypeFrom=" + dayTypeFrom + ", dayTypeTo=" + dayTypeTo + ", typeFrom=" + typeFrom
 				+ ", typeTo=" + typeTo + ", reserveFrom=" + reserveFrom + ", reserveTo=" + reserveTo + "]";
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Violation other = (Violation) obj;
+		if (dayTypeFrom == null) {
+			if (other.dayTypeFrom != null)
+				return false;
+		} else if (!dayTypeFrom.equals(other.dayTypeFrom))
+			return false;
+		if (dayTypeTo == null) {
+			if (other.dayTypeTo != null)
+				return false;
+		} else if (!dayTypeTo.equals(other.dayTypeTo))
+			return false;
+		if (reserveFrom != other.reserveFrom)
+			return false;
+		if (reserveTo != other.reserveTo)
+			return false;
+		if (typeFrom == null) {
+			if (other.typeFrom != null)
+				return false;
+		} else if (!typeFrom.equals(other.typeFrom))
+			return false;
+		if (typeTo == null) {
+			if (other.typeTo != null)
+				return false;
+		} else if (!typeTo.equals(other.typeTo))
+			return false;
+		return true;
+	}
+	
+	
 }

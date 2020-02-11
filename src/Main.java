@@ -22,7 +22,7 @@ public class Main
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
-		double violationBound = 0.9; 
+		double violationBound = 0.8; 
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
@@ -44,7 +44,7 @@ public class Main
 
 		//Get all starting information
 		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound);
-
+		
 		System.out.println("Instance " + depot + " initialised");
 
 		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound); 
@@ -52,19 +52,22 @@ public class Main
 
 		System.out.println(temp.get11Violations().size()); 
 		System.out.println(temp.get32Violations().size()); 
+		System.out.println(temp.getViolations3Days().size()); 
 
 		instance.setViol(temp.get11Violations(), temp.get32Violations());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getUB();
+		int numberOfDrivers = instance.getLB() + 15;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
 		
-		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
-		colGen.executeColumnGeneration();
+		Phase3_Constructive conHeur = new Phase3_Constructive(instance, mip.getSolution()); 
+		
+//		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
+//		colGen.executeColumnGeneration();
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
@@ -150,145 +153,7 @@ public class Main
 		scReserve.close();
 
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, fromDutyNrToDuty, contractGroups, 
-				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32);
+				reserveDutyTypes, fromRDutyNrToRDuty, dutyTypes);
 
-	}
-
-	/**
-	 * Determines the number of violations between a set of duties and a reserve shift
-	 * @param fromDuties			a set of duties
-	 * @param to					the to shift (reserve)
-	 * @param dailyRestMin			the minimum nr of minutes daily rest
-	 * @param restDayMin			the minimum nr of minutes for a rest day
-	 * @return						an array with the number of daily rest hours violations, number of rest day hours violations, total number of combinations
-	 */
-	public static int[] getViolations(Set<Duty> fromDuties, ReserveDutyType to, int dailyRestMin, int restDayMin) {
-		int[] counts = new int[3];
-
-		for (Duty from : fromDuties) {
-			int gap = 0;
-			//if the end time of the from duty is before the 24:00, we can determine the rest time of that day
-			//if the end time of the from duty is after the 24:00, the rest only start afterwards
-			if (from.getEndTime() <= 24 * 60) {
-				gap += 24 * 60 - from.getEndTime();
-			} else {
-				gap -= from.getEndTime() - 24 * 60;
-			}
-			//add the start time of the follow up duty to get the rest time
-			gap += to.getStartTime();
-			//if the gap is less than 11 hours, it violates the daily rest constraint
-			if (gap < dailyRestMin) {
-				counts[0]++;
-			}
-			//if the gap is less than 32 hours, it violates the 32 hours constraint
-			if (gap + 24 * 60 < restDayMin) {
-				counts[1]++;
-			}
-			counts[2]++;
-		}
-
-		return counts;
-	}
-
-	/**
-	 * Determines whether a violation exists between reserve duties
-	 * @param from					the from shift
-	 * @param to					the to shift
-	 * @param dailyRestMin			the minimum nr of minutes daily rest
-	 * @param restDayMin			the minimum nr of minutes for a rest day
-	 * @return						an array with the number of daily rest hours violations, number of rest day hours violations, total number of combinations
-	 */
-	//similar idea
-	public static int[] getViolations(ReserveDutyType from, ReserveDutyType to, int dailyRestMin, int restDayMin) {
-		int[] counts = new int[3];
-
-		int gap = 0;
-		if (from.getEndTime() <= 24 * 60) {
-			gap += 24 * 60 - from.getEndTime();
-		} else {
-			gap -= from.getEndTime() - 24 * 60;
-		}
-
-		gap += to.getStartTime();
-
-		if (gap < dailyRestMin) {
-			counts[0]++;
-		}
-		if (gap + 24 * 60 < restDayMin) {
-			counts[1]++;
-		}
-		counts[2]++;
-
-		return counts;
-	}
-
-	/**
-	 * Determines the number of violations between a reserve duty and a set of duties
-	 * @param from					the from shift (reserve)
-	 * @param toDuties				the set of duties
-	 * @param dailyRestMin			the minimum nr of minutes daily rest
-	 * @param restDayMin			the minimum nr of minutes for a rest day
-	 * @return						an array with the number of daily rest hours violations, number of rest day hours violations, total number of combinations
-	 */
-	//Similar idea
-	public static int[] getViolations(ReserveDutyType from, Set<Duty> toDuties, int dailyRestMin, int restDayMin) {
-		int[] counts = new int[3];
-
-		for (Duty to : toDuties) {
-			int gap = 0;
-			if (from.getEndTime() <= 24 * 60) {
-				gap += 24 * 60 - from.getEndTime();
-			} else {
-				gap -= from.getEndTime() - 24 * 60;
-			}
-
-			gap += to.getStartTime();
-
-			if (gap < dailyRestMin) {
-				counts[0]++;
-			}
-			if (gap + 24 * 60 < restDayMin) {
-				counts[1]++;
-			}
-			counts[2]++;
-		}
-
-		return counts;
-	}
-
-	/**
-	 * Determines the number of violations between two sets of duties
-	 * @param fromDuties			a set of duties
-	 * @param toDuties				a set of duties
-	 * @param dailyRestMin			the minimum nr of minutes daily rest
-	 * @param restDayMin			the minimum nr of minutes for a rest day
-	 * @return						an array with the number of daily rest hours violations, number of rest day hours violations, total number of combinations
-	 */
-	//Similar idea
-	public static int[] getViolations(Set<Duty> fromDuties, Set<Duty> toDuties, int dailyRestMin, int restDayMin) {
-		int[] counts = new int[3];
-
-		for (Duty from : fromDuties) {
-			for (Duty to : toDuties) {
-				int gap = 0;
-				if (from.getEndTime() <= 24 * 60) {
-					gap += 24 * 60 - from.getEndTime();
-				} else {
-					gap -= from.getEndTime() - 24 * 60;
-				}
-
-				gap += to.getStartTime();
-
-				if (gap < dailyRestMin) {
-					counts[0]++;
-				}
-				if (gap + 24 * 60 < restDayMin) {
-					counts[1]++;
-				}
-				counts[2]++;
-			}
-		}
-
-		return counts;
 	}
 }

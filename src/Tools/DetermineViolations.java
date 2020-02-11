@@ -1,7 +1,6 @@
 package Tools;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,7 +20,7 @@ public class DetermineViolations {
 	private String[] typesDuty = new String[] {"L", "V", "D", "G", "GM"}; 
 	private String[] weekDays = new String[] {"Workingday", "Saturday", "Sunday"}; 
 	private Instance instance; 
-	
+
 	private Set<Violation> violations11; 
 	private Set<Violation> violations32; 
 	private Set<Violation3Days> violations3Days; 
@@ -86,7 +85,7 @@ public class DetermineViolations {
 			System.out.println(violation.toString()) ;
 		}
 		violations32 = getViolations(combDayType32, 1);
-		
+
 		this.violations3Days = determineViolations3Days(); 
 		for(Violation3Days viol: violations3Days) {
 			System.out.println(viol.toString()); 
@@ -123,10 +122,10 @@ public class DetermineViolations {
 		}
 		return result; 
 	}
-	
+
 	public boolean violated3Days(String[] dayComb, String[] dutyComb3Days, Boolean[] combResNor) {
 		ArrayList<Integer> lastEndTimes = new ArrayList<Integer>(); 
-		
+
 		int totalComb = 0; 
 		if(combResNor[0]) {
 			if(this.rDutyMap.get(dayComb[0]).get("R"+dutyComb3Days[0])!= null) {		
@@ -147,7 +146,7 @@ public class DetermineViolations {
 				return false; 
 			}
 		}
-		
+
 		if(combResNor[1]) {
 			if(this.rDutyMap.get(dayComb[1]).get("R"+dutyComb3Days[1]) != null) {		
 				ArrayList<Integer> temp = new ArrayList<Integer>(); 
@@ -179,7 +178,7 @@ public class DetermineViolations {
 				return false; 
 			}
 		}
-		
+
 		if(combResNor[2]) {
 			if(this.rDutyMap.get(dayComb[2]).get("R"+dutyComb3Days[2])!=null) {		
 				ArrayList<Integer> temp = new ArrayList<Integer>(); 
@@ -211,9 +210,17 @@ public class DetermineViolations {
 				return false; 
 			}
 		}
-		
-		if(lastEndTimes.size()/totalComb < this.violationBound) {
-			return true; 
+
+		if(lastEndTimes.size()/totalComb < 1- this.violationBound) {
+			Violation firstTwo = new Violation(dutyComb3Days[0], dayComb[0], combResNor[0], dutyComb3Days[1], dayComb[1], combResNor[1]); 
+			Violation secondTwo = new Violation(dutyComb3Days[1], dayComb[1], combResNor[1], dutyComb3Days[2], dayComb[2], combResNor[2]); 
+			boolean b1 = checkContains(this.violations11, firstTwo); 
+			boolean b2 = checkContains(this.violations11, secondTwo); 
+			if(!b1 && !b2) {
+				return true; 
+			}else {
+				return false; 
+			}
 		}
 		else {
 			return false; 
@@ -432,5 +439,14 @@ public class DetermineViolations {
 			checks.put(weekDays[i], currentCheck1); 
 		}
 		return checks; 
+	}
+	
+	public boolean checkContains(Set<Violation> violations, Violation viol) {
+		for(Violation other:violations) {
+			if(other.equals(viol)) {
+				return true; 
+			}
+		}
+		return false; 
 	}
 }

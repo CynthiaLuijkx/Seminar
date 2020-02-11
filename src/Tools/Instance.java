@@ -29,10 +29,16 @@ public class Instance
 	private Set<Violation> violations11;
 	private Set<Violation> violations32;
 	
+	private Set<String> dutyTypes; 
+	
 	private Set<Combination> M;					// A Set with combinations of day type, duty type and the number of times this shift should be added
 	
 	private int UB = 0; 
 	private int LB = 0;
+	
+	private final int minBreak = 11*60; 
+	private final int minWeekBreak = 32*60; 
+	private final int min2WeekBreak = 72*60; 
 	
 	private int nDrivers;
 	
@@ -54,7 +60,7 @@ public class Instance
 	 */
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
 			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
-			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32) {
+			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty, Set<String> dutyTypes) {
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
@@ -66,8 +72,7 @@ public class Instance
 		this.fromRDutyNrToRDuty = fromRDutyNrToRDuty;
 		this.contractGroups = contractGroups;
 		this.reserveDutyTypes = reserveDutyTypes;
-		this.violations11 = violations11;
-		this.violations32 = violations32;
+		this.dutyTypes = dutyTypes; 
 		
 		this.M = new HashSet<>();
 		String[] workDays = new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
@@ -212,8 +217,24 @@ public class Instance
 		}
 	}
 	
+	public Set<String> getDutyTypes(){
+		return this.dutyTypes; 
+	}
+	
 	public void setViol(Set<Violation> violations11, Set<Violation> violations32) {
 		this.violations11 = violations11; 
 		this.violations32 = violations32; 
+	}
+
+	public int getMinBreak() {
+		return minBreak;
+	}
+
+	public int getMinWeekBreak() {
+		return minWeekBreak;
+	}
+
+	public int getMin2WeekBreak() {
+		return min2WeekBreak;
 	}
 }
