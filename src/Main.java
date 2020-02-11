@@ -70,6 +70,7 @@ public class Main
 		Phase4 phase4 = new Phase4(solution, instance);
 		phase4.runILP();
 		phase4.runRelaxFix();
+		phase4.runAllCombinations(depot);
 		
 		/*
 		for(Schedule curSchedule : solution.keySet()) {

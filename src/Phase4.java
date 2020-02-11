@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,6 +16,7 @@ public class Phase4 {
 	}
 	
 	public void runILP() throws IloException {
+		long start = System.nanoTime();
 		Phase4_ILP ilp = new Phase4_ILP(this.inputSolution, this.instance);
 		HashMap<Schedule, Double> intSolution = ilp.getSolution();
 		for(Schedule schedule : intSolution.keySet()) {
@@ -22,9 +24,12 @@ public class Phase4 {
 				System.out.println(schedule.toString());
 			}
 		}
+		long end = System.nanoTime();
+		System.out.println("ILP runTime: " + (end-start)/1000000000.0);
 	}
 	
 	public void runRelaxFix() throws IloException {
+		long start = System.nanoTime();
 		int parameter = 10; //Amount of groups 
 		HashMap<Schedule, Integer> fixedSchedules = new HashMap<>();
 		Set<Schedule> integerSchedules = new HashSet<>();
@@ -83,6 +88,109 @@ public class Phase4 {
 				objValue = objValue + Math.max(0, schedule.getPlusMin() - schedule.getMinMin());
 			}
 		}
+		long end = System.nanoTime();
+		System.out.println("Relax&Fix runTime: " + (end-start)/1000000000.0);
 		System.out.println("Objective: " + objValue);
+		
 	}
+	
+	public void runAllCombinations(String depot) {
+		long start = System.nanoTime();
+		Set<ScheduleCombination> allCombinations = this.getAllCombinations(depot);
+		int minimum = Integer.MAX_VALUE;
+		ScheduleCombination minimumCombi = null;
+		for (ScheduleCombination combi : allCombinations) {
+			if (combi.getCost() < minimum) {
+				minimum = combi.getCost();
+				minimumCombi = combi;
+			}
+			if (minimum == 0) {
+				break;
+			}
+		}
+		System.out.println("Objective: " + minimum);
+		for (Schedule schedule : minimumCombi.getSchedules()) {
+			System.out.println(schedule.toString());
+		}
+		
+		long end = System.nanoTime();
+		System.out.println("All Combinations runTime: " + (end-start)/1000000000.0);
+	}
+	
+	public Set<ScheduleCombination> getAllCombinations(String depot){
+		Set<ScheduleCombination> output = new HashSet<>();
+		
+		if(depot.equals("Dirksland") || depot.equals("DirkslandEasier")) {
+			Set<Schedule> contractGroup1 = new HashSet<>();
+			Set<Schedule> contractGroup2 = new HashSet<>();
+			for(Schedule schedule : this.inputSolution.keySet()) {
+				if(schedule.getC().getNr() == 1) {
+					contractGroup1.add(schedule);
+				}
+				else {
+					contractGroup2.add(schedule);
+				}
+			}
+		
+			for(Schedule group1 : contractGroup1) {
+				for(Schedule group2 : contractGroup2) {
+					Set<Schedule> combiInput = new HashSet<>();
+					combiInput.add(group1);
+					combiInput.add(group2);
+					ScheduleCombination combination = new ScheduleCombination(combiInput, instance);
+					if(combination.isFeasible()) {
+						output.add(combination);
+					}
+				}
+			}
+		}
+		else if(depot.equals("Heinenoord")) {
+			Set<Schedule> contractGroup1 = new HashSet<>();
+			Set<Schedule> contractGroup2 = new HashSet<>();
+			Set<Schedule> contractGroup3 = new HashSet<>();
+			Set<Schedule> contractGroup4 = new HashSet<>();
+			for(Schedule schedule : this.inputSolution.keySet()) {
+				if(schedule.getC().getNr() == 1) {
+					contractGroup1.add(schedule);
+				}
+				else if(schedule.getC().getNr() == 2) {
+					contractGroup2.add(schedule);
+				}
+				else if(schedule.getC().getNr() == 3) {
+					contractGroup3.add(schedule);
+				}
+				else {
+					contractGroup4.add(schedule);
+				}
+			}
+		
+			for(Schedule group1 : contractGroup1) {
+				for(Schedule group2 : contractGroup2) {
+					for(Schedule group3: contractGroup3) {
+						for(Schedule group4 : contractGroup4) {
+							Set<Schedule> combiInput = new HashSet<>();
+							combiInput.add(group1);
+							combiInput.add(group2);
+							combiInput.add(group3);
+							combiInput.add(group4);
+							ScheduleCombination combination = new ScheduleCombination(combiInput, instance);
+							if(combination.isFeasible()) {
+								output.add(combination);
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return output;
+			
+	}
+
+
+
+
+
 }
+
+

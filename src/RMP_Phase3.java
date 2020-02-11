@@ -75,7 +75,6 @@ public class RMP_Phase3 {
 		ArrayList<ArrayList<Double>> solutionReserve = getSolutionDummiesReserve();
 		ArrayList<Double> solutionATV = getSolutionDummiesATV();
 		ArrayList<Double> solution2 = getSolutionDummies2();*/
-
 	}
 
 	//Method to clean cplex
