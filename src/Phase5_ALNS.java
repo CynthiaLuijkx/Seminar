@@ -32,7 +32,7 @@ public class Phase5_ALNS {
 		this.copySolution(initSol);
 		this.globalSchedule = this.copySchedule;
 		Solution currentSol = initSol;
-
+		System.out.println(initSol);
 		while (n <= this.nIterations) {	
 			int sizeNeighbourhood = this.random.nextInt(this.maxSizeNeighbourhood - this.minSizeNeighbourhood) + this.minSizeNeighbourhood;
 			System.out.println("-----------------------------------------------------------------------");
