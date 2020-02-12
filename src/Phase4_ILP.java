@@ -1,9 +1,11 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
 import Tools.ContractGroup;
 import Tools.Duty;
+import Tools.ILPSolution;
 import Tools.Instance;
 import Tools.Schedule;
 import ilog.concert.IloException;
@@ -19,10 +21,12 @@ public class Phase4_ILP {
 	
 	private final HashMap<IloNumVar, Schedule> varToSchedule;
 	private final HashMap<Schedule, IloNumVar> scheduleToVar;
+	private final HashMap<IloNumVar, Duty> penaltyToDuty;
+	private final HashMap<IloNumVar, Integer> penaltyToDay;
 	private final Set<IloNumVar> variables;
 	private final Set<IloNumVar> dutyIncludedPenalty;
 	
-	private final HashMap<Schedule, Double> solution;
+	private final ILPSolution solution;
 	
 
 	public Phase4_ILP(Set<Schedule> inputSolution, Instance instance) throws IloException {
@@ -35,6 +39,8 @@ public class Phase4_ILP {
 		this.dutyIncludedPenalty = new HashSet<>();
 		this.scheduleToVar = new HashMap<>();
 		this.varToSchedule = new HashMap<>();
+		this.penaltyToDay = new HashMap<>();
+		this.penaltyToDuty = new HashMap<>();
 		
 		initVars();
 		initConstraint1();
@@ -47,8 +53,7 @@ public class Phase4_ILP {
 	
 		System.out.println("Objective: " + this.cplex.getObjValue());
 		
-		this.solution = new HashMap<>();
-		makeSolution();
+		this.solution =	makeSolution();
 	}
 	
 	public void clearModel() throws IloException {
@@ -103,6 +108,8 @@ public class Phase4_ILP {
 			IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
 			constraint.addTerm(penalty,1);
 			this.dutyIncludedPenalty.add(penalty);
+			this.penaltyToDay.put(penalty, 0);
+			this.penaltyToDuty.put(penalty, duty);
 			this.cplex.addGe(constraint, 1, duty.getNr() + "_" + 0);
 		}
 		for(Duty duty : instance.getSaturday()) {
@@ -119,6 +126,8 @@ public class Phase4_ILP {
 			IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
 			constraint.addTerm(penalty,1);
 			this.dutyIncludedPenalty.add(penalty);
+			this.penaltyToDay.put(penalty, 6);
+			this.penaltyToDuty.put(penalty, duty);
 			this.cplex.addGe(constraint, 1, duty.getNr() + "_" + 6);
 		}
 		for (Duty duty : instance.getWorkingDays()) {
@@ -136,6 +145,8 @@ public class Phase4_ILP {
 				IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
 				constraint.addTerm(penalty,1);
 				this.dutyIncludedPenalty.add(penalty);
+				this.penaltyToDay.put(penalty, s);
+				this.penaltyToDuty.put(penalty, duty);
 				this.cplex.addGe(constraint, 1, duty.getNr() + "_" + s);
 			}
 		}
@@ -153,13 +164,28 @@ public class Phase4_ILP {
 		this.cplex.addMinimize(objective);
 	}
 	
-	public void makeSolution() throws IloException {
+	public ILPSolution makeSolution() throws IloException {
+		Set<Schedule> schedules = new HashSet<>();
 		for(Schedule schedule : this.schedules) {
-			this.solution.put(schedule, this.cplex.getValue(this.scheduleToVar.get(schedule)));
+			if(this.cplex.getValue(this.scheduleToVar.get(schedule)) > 0) {
+				schedules.add(schedule);
+			}
 		}
+		
+		ArrayList<Set<Duty>> unscheduledPerWeekday = new ArrayList<>();
+		for(int i = 0; i <= 6; i++) {
+			Set<Duty> duties = new HashSet<>();
+			unscheduledPerWeekday.add(duties);
+		}
+		for(IloNumVar var : this.dutyIncludedPenalty) {
+			if(this.cplex.getValue(var) > 0) {
+				unscheduledPerWeekday.get(this.penaltyToDay.get(var)).add(this.penaltyToDuty.get(var));
+			}
+		}
+		return new ILPSolution(schedules, unscheduledPerWeekday);
 	}
 	
-	public HashMap<Schedule, Double> getSolution(){
+	public ILPSolution getSolution(){
 		return this.solution;
 	}
 }

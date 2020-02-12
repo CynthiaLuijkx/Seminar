@@ -17,7 +17,7 @@ public class Phase3
 	
 	public Phase3(Instance instance, int consecWeek, int twoWeek) {
 		this.instance = instance;
-		this.consecWeek = consecWeek;
+		this.consecWeek = 32*60;
 		this.twoWeek = twoWeek;
 	}
 	

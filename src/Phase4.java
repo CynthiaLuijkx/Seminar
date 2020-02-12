@@ -18,12 +18,6 @@ public class Phase4 {
 	public void runILP() throws IloException {
 		long start = System.nanoTime();
 		Phase4_ILP ilp = new Phase4_ILP(this.inputSolution, this.instance);
-		HashMap<Schedule, Double> intSolution = ilp.getSolution();
-		for(Schedule schedule : intSolution.keySet()) {
-			if(intSolution.get(schedule) > 0) {
-				System.out.println(schedule.toString());
-			}
-		}
 		long end = System.nanoTime();
 		System.out.println("ILP runTime: " + (end-start)/1000000000.0);
 	}

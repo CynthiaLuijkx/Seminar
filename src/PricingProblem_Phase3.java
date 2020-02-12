@@ -29,8 +29,8 @@ public class PricingProblem_Phase3
 
 	public PricingProblem_Phase3(Instance instance, int consecWeek, int twoWeek) {
 		this.instance = instance;
-		this.consecFreeWeekly = consecWeek;
-		this.freeTwoWeeks = twoWeek;
+		this.consecFreeWeekly = 32*60;
+		this.freeTwoWeeks = 72*60;
 		initGraphs();
 	}
 	
@@ -253,11 +253,11 @@ public class PricingProblem_Phase3
 						if (tempLabels.isEmpty()) {
 							add = false;
 						}
-						if (labels.size() == 10) {
+						if (labels.size() == 50) {
 							add = false;
 						}
 					}
-//					System.out.println(t + ": " + labels.size() + "(" + tempLabels.size() + ")");
+					//System.out.println(t + ": " + labels.size() + "(" + tempLabels.size() + ")");
 					if (labels != null) {
 						labelMap.put(curNode, labels);
 					}
@@ -452,7 +452,7 @@ public class PricingProblem_Phase3
 							consec += instance.getFromRDutyNrToRDuty().get(schedule[(t+i+1)%schedule.length]).getStartTime();
 						}
 					}
-					
+					//System.out.println(consec + " " + this.consecFreeWeekly);
 					if (consec >= this.consecFreeWeekly) {
 						return true;
 					}
@@ -515,7 +515,6 @@ public class PricingProblem_Phase3
 					if (consec >= this.consecFreeWeekly) {
 						consec14 += consec;
 					}
-					
 					if (consec14 >= this.freeTwoWeeks) {
 						return true;
 					}
