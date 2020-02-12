@@ -20,6 +20,8 @@ public class Phase3_Constructive {
 	private Instance instance; 
 	private Map<Integer, Duty> dutyNrToDuty; 
 	private Set<Schedule> finalSchedules = new HashSet<Schedule>(); 
+	private Map<Integer, Integer> prevOfThisType = new HashMap<Integer, Integer>(); 
+	private int[] numberOfThisChecked; 
 
 	public Phase3_Constructive(Instance instance, HashMap<ContractGroup, String[]> solutionMIP ) {
 		this.dutyNrToDuty = instance.getFromDutyNrToDuty(); 
@@ -77,9 +79,11 @@ public class Phase3_Constructive {
 		}
 	}
 
+
 	public Set<Schedule> getSchedule(){
 		return this.finalSchedules; 
 	}
+
 	
 	/**
 	 * converts a set of duties to a list of the duty numbers 
@@ -101,24 +105,28 @@ public class Phase3_Constructive {
 		outmostLoop:
 			for(ContractGroup group:groups) {
 				System.out.println("Checking contract group: " + group.getNr()); 
+
 				Map<Integer, ArrayList<Integer>> otherPos = new HashMap<Integer, ArrayList<Integer>>(); 
 				String[] solution = solutionMIP.get(group); 
-				boolean allDutiesPContractGroupPlanned = false; 
-				int current = 0; 
+				this.numberOfThisChecked = new int[solution.length]; 
 				Integer[] sol = new Integer[solution.length]; 
 				this.solutionHeur.put(group, sol); 
+				HashMap<Integer, Integer> prevOfThisType =  getPrevOfThisType(group); 
+				int change = 0; 
+				boolean allDutiesPContractGroupPlanned = false; 
 				boolean goBack = false; 
+				int current = 0; 
 
 				while(!allDutiesPContractGroupPlanned) {
 					ArrayList<Integer> possibleDuties = null; 
 					boolean normalDuty = false; 
 					if(goBack) {
+						goBack(change, current + change, solution, sol);
 						if(solution[current].equals("ATV") ||solution[current].contains("R") ) {
 							current--; 
 							normalDuty = false; 
 						}else {
 							possibleDuties = otherPos.get(current); 
-							this.toSchedule.get(current%7).get(solution[current]).add(sol[current]); 
 							normalDuty = true; 
 						}
 					}else {
@@ -136,7 +144,8 @@ public class Phase3_Constructive {
 						}
 
 						if(!feas) {
-							current--; 
+							change = 1; 
+							current -= change; 
 							goBack = true;
 						}else if(!normalDuty) {
 							current++; 
@@ -161,7 +170,23 @@ public class Phase3_Constructive {
 							}
 						}
 						if(!possDay) {
-							current--; 
+							this.numberOfThisChecked[current]++; 
+							int nPosPrev = otherPos.containsKey(current-1)? otherPos.get(current - 1).size() : 1; 
+
+							if(this.numberOfThisChecked[current] >= nPosPrev* possibleDuties.size()) {
+								if(prevOfThisType.get(current) == null) {
+									change = 1; 
+								}
+								else {
+									change = current - prevOfThisType.get(current);
+								}
+								this.numberOfThisChecked[current] = 0; 
+
+							}
+							else {
+								change = 1; 
+							}
+							current -= change;  
 							goBack = true; 
 						}
 					}
@@ -243,7 +268,7 @@ public class Phase3_Constructive {
 				startCur = curDuty.getStartTime(); 
 			}
 
-			minbreak = startCur +  (24*60 -  endPrev)> instance.getMinBreak(); 
+			minbreak = startCur +  (24*60 -  endPrev)>= instance.getMinBreak(); 
 		}
 
 		if(current >=6) {
@@ -404,5 +429,38 @@ public class Phase3_Constructive {
 		}
 
 		return new Schedule(group, overTime, minHours, Arrays.stream(this.solutionHeur.get(group)).mapToInt(Integer::intValue).toArray()); 
+	}
+	public HashMap<Integer, Integer> getPrevOfThisType(ContractGroup group){
+		HashMap<Integer, Integer> prevOfThisType = new HashMap<Integer, Integer> (); 
+		ArrayList<HashMap<String, Integer>> lastOfThisType = new ArrayList<HashMap<String, Integer>>(); 
+
+		for(int i = 0; i<7; i++) {
+			lastOfThisType.add(new HashMap<String, Integer>()); 
+		}
+
+		String[] solution = this.solutionMIP.get(group); 
+		for(int i =0; i< solution.length; i++) {
+
+			if(lastOfThisType.get(i%7).containsKey(solution[i])) {
+				prevOfThisType.put(i,lastOfThisType.get(i%7).get(solution[i])); 
+				lastOfThisType.get(i%7).put(solution[i], i); 
+			}else {
+				lastOfThisType.get(i%7).put(solution[i], i); 
+			}
+		}
+
+		return prevOfThisType; 
+	}
+
+	public void goBack(int change, int current, String[] solution, Integer[] sol) {
+		for(int i = current - 1; i>=current - change; i--) {
+			if(!(solution[i].equals("ATV") ||solution[i].contains("R"))) {
+				if(sol[i] == null) {
+					System.out.println("test2"); 
+				}
+				this.toSchedule.get(i%7).get(solution[i]).add(0, sol[i]); 
+			}
+			sol[i] = null; 
+		}
 	}
 }
