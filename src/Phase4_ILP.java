@@ -1,3 +1,4 @@
+import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,7 +52,7 @@ public class Phase4_ILP {
 		this.cplex.exportModel("Phase4_ILP.lp");
 		solve();
 	
-		System.out.println("Objective: " + this.cplex.getObjValue());
+		System.out.println("Mising duties: " + this.cplex.getObjValue());
 		
 		this.solution =	makeSolution();
 	}
@@ -165,7 +166,7 @@ public class Phase4_ILP {
 	}
 	
 	public ILPSolution makeSolution() throws IloException {
-		Set<Schedule> schedules = new HashSet<>();
+		List<Schedule> schedules = new ArrayList<>();
 		for(Schedule schedule : this.schedules) {
 			if(this.cplex.getValue(this.scheduleToVar.get(schedule)) > 0) {
 				schedules.add(schedule);

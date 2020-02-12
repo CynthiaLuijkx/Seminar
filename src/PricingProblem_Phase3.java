@@ -29,8 +29,8 @@ public class PricingProblem_Phase3
 
 	public PricingProblem_Phase3(Instance instance, int consecWeek, int twoWeek) {
 		this.instance = instance;
-		this.consecFreeWeekly = 32*60;
-		this.freeTwoWeeks = 72*60;
+		this.consecFreeWeekly = consecWeek;
+		this.freeTwoWeeks = twoWeek;
 		initGraphs();
 	}
 	
@@ -253,7 +253,7 @@ public class PricingProblem_Phase3
 						if (tempLabels.isEmpty()) {
 							add = false;
 						}
-						if (labels.size() == 50) {
+						if (labels.size() == 10) {
 							add = false;
 						}
 					}

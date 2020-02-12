@@ -49,6 +49,7 @@ public class Main
 
 		System.out.println("Instance " + depot + " initialised");
 
+
 		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound, violationBound3Days); 
 		System.out.println("Violations Determined"); 
 
@@ -59,12 +60,13 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() +14;
+		int numberOfDrivers = instance.getLB() + 14;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
+		System.out.println(instance.getFromRDutyNrToRDuty().get(100).getStartTime());
 		
 		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
 		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
