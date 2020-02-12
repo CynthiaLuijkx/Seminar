@@ -15,7 +15,7 @@ public class LSschedule {
 		this.weeklyOvertime = new double[schedule.getSchedule().length/7];
 	}
 
-	public Schedule getSchedule() {
+	public Schedule getLSSchedule() {
 		return schedule;
 	}
 

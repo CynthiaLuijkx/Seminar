@@ -41,10 +41,10 @@ public class Phase5_ALNS {
 			n++;
 		}
 
-		return new Solution(null, this.globalSchedule);
+		return new Solution(null, this.globalSchedule, instance);
 	}
 	public Solution getInitialSol(Map<ContractGroup, Schedule> startSol) {
-		Solution initSol = new Solution(null, null);
+		Solution initSol = new Solution(null, null, instance);
 		Map<ContractGroup, LSschedule> need = new HashMap<>();
 		for(ContractGroup group: startSol.keySet()) {
 		LSschedule startLSsol = new LSschedule(startSol.get(group), (double) (startSol.get(group).getPlusMin() - startSol.get(group).getMinMin()), null);
@@ -76,14 +76,14 @@ public class Phase5_ALNS {
 		Map<ContractGroup, LSschedule> schedule = solution.getNewSchedule();
 		this.copySchedule = new HashMap<ContractGroup, LSschedule>();
 		for(ContractGroup group: schedule.keySet()) {
-			LSschedule newLSschedule = new LSschedule(schedule.get(group).getSchedule(), schedule.get(group).getOvertime(), null);
-			newLSschedule.setWeeklyOvertime(schedule.get(group).getSchedule(), instance);
+			LSschedule newLSschedule = new LSschedule(schedule.get(group).getLSSchedule(), schedule.get(group).getOvertime(), null);
+			newLSschedule.setWeeklyOvertime(schedule.get(group).getLSSchedule(), instance);
 			this.copySchedule.put(group, newLSschedule);
 		}
 
 		this.copyRequest = new HashSet<>(solution.getRequests());
 
-		Solution copy = new Solution(this.copyRequest, this.copySchedule);
+		Solution copy = new Solution(this.copyRequest, this.copySchedule, instance);
 
 		return copy;
 	}
