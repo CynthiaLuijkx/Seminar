@@ -17,8 +17,8 @@ public class Phase3
 	
 	public Phase3(Instance instance, int consecWeek, int twoWeek) {
 		this.instance = instance;
-		this.consecWeek = consecWeek;
-		this.twoWeek = twoWeek;
+		this.consecWeek = 32*60;
+		this.twoWeek = 72*60;
 	}
 	
 	public HashMap<Schedule, Double> executeColumnGeneration() throws IloException {
@@ -45,7 +45,7 @@ public class Phase3
 		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, consecWeek, twoWeek);
 		
 		boolean negRedCosts = true;
-		while (negRedCosts) {
+		while (negRedCosts && model.getObjective() > 0) {
 			long start = System.nanoTime();
 			negRedCosts = false;
 			System.out.println("-------------------------------------------");

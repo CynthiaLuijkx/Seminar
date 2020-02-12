@@ -2,19 +2,17 @@ package Tools;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
 
 public class ILPSolution {
 	private final List<Schedule> schedules;
-	private final ArrayList<Set<Duty>> unscheduledPerWeekday;
+	private final ArrayList<List<Duty>> unscheduledPerWeekday;
 	
-	public ILPSolution(List<Schedule> schedules, ArrayList<Set<Duty>> unscheduledPerWeekday) {
+	public ILPSolution(List<Schedule> schedules, ArrayList<List<Duty>> unscheduledPerWeekday) {
 		this.schedules = schedules;
 		this.unscheduledPerWeekday = unscheduledPerWeekday;
 	}
 
-	public ArrayList<Set<Duty>> getUnscheduledPerWeekday() {
+	public ArrayList<List<Duty>> getUnscheduledPerWeekday() {
 		return unscheduledPerWeekday;
 	}
 

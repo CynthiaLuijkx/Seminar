@@ -23,8 +23,8 @@ public class Main
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
-		double violationBound = 0.9;
-		double violationBound3Days = 0.9;
+		double violationBound = 0.55;
+		double violationBound3Days = 0.55;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
@@ -60,13 +60,12 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() + 14;
+		int numberOfDrivers = instance.getLB() + 5;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
-		System.out.println(instance.getFromRDutyNrToRDuty().get(100).getStartTime());
 		
 		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
 		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();

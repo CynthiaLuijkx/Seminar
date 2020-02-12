@@ -8,7 +8,7 @@ import Tools.*;
 public class Phase4_AddMissing {
 	private final ILPSolution ilpSolution;
 	private final Instance instance;
-	private final ArrayList<Set<Duty>> originalDuplicates;
+	private final ArrayList<List<Duty>> originalDuplicates;
 	
 	public Phase4_AddMissing(ILPSolution ilpSolution, Instance instance) {
 		this.ilpSolution = ilpSolution;
@@ -22,20 +22,19 @@ public class Phase4_AddMissing {
 		determineDuplicates();
 	}
 	
-	public ArrayList<Set<Duty>> determineDuplicates() {
-		ArrayList<Set<Duty>> duplicates = new ArrayList<>();
+	public ArrayList<List<Duty>> determineDuplicates() {
+		ArrayList<List<Duty>> duplicates = new ArrayList<>();
 		int counter = 0;
-		for(int i = 0; i <= 6; i++) {
-			Set<Duty> duties = new HashSet<>();
+		for(int i = 0; i < 7; i++) {
+			List<Duty> duties = new ArrayList<>();
 			duplicates.add(duties);
 		}
-		for (int s = 0; s <= 6; s++) {
+		for (int s = 0; s < 7; s++) {
 			if(s == 0) {
 				for(Duty duty : instance.getSunday()) {
 					int included = 0;
 					for(Schedule schedule : ilpSolution.getSchedules()) {
 						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
-							//System.out.println(duty.getNr() + " " + schedule.getSchedule()[(7*w) + s]);
 							if(schedule.getSchedule()[(7*w) + s] == duty.getNr()) {
 								included++;
 							}
@@ -52,7 +51,6 @@ public class Phase4_AddMissing {
 					int included = 0;
 					for(Schedule schedule : ilpSolution.getSchedules()) {
 						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
-							//System.out.println(duty.getNr() + " " +  schedule.getSchedule()[(7*w) + s]);
 							if(schedule.getSchedule()[(7*w) + s] == duty.getNr()) {
 								included++;
 							}
@@ -86,10 +84,10 @@ public class Phase4_AddMissing {
 		return duplicates;
 	}
 	
-	public ArrayList<Set<Duty>> createDuplicateCopy(){
-		ArrayList<Set<Duty>> copy = new ArrayList<>();
+	public ArrayList<List<Duty>> createDuplicateCopy(){
+		ArrayList<List<Duty>> copy = new ArrayList<>();
 		for(int i = 0; i <= 6; i++) {
-			Set<Duty> duties = new HashSet<>();
+			List<Duty> duties = new ArrayList<>();
 			for(Duty duty : this.originalDuplicates.get(i)) {
 				duties.add(duty);
 			}
@@ -100,23 +98,39 @@ public class Phase4_AddMissing {
 	}
 
 	public void swapDuplicatesWithMissing() {
-		ArrayList<Set<Duty>> duplicatesCopy = this.createDuplicateCopy();
+		ArrayList<List<Duty>> duplicatesCopy = this.createDuplicateCopy();
 		ArrayList<Set<Duty>> duplicatesTaken = new ArrayList<>();
+		ArrayList<Set<Duty>> insertedDuties = new ArrayList<>();
+		ArrayList<Set<Duty>> triedDuties = new ArrayList<>();
 		for (int i = 0; i < 7; i++) {
-			Set<Duty> duties = new HashSet<>();
-			duplicatesTaken.add(duties);
+			Set<Duty> dutiesTaken = new HashSet<>();
+			Set<Duty> dutiesInserted = new HashSet<>();
+			Set<Duty> dutiesTried = new HashSet<>();
+			duplicatesTaken.add(dutiesTaken);
+			insertedDuties.add(dutiesInserted);
+			triedDuties.add(dutiesTried);
 		}
 		int totalInserted = 0;
+		boolean allDutiesTried = true;
 		for (int i = 0; i < 7; i++) {
-			HashSet<Duty> insertedDuties = new HashSet<>();
+			if (triedDuties.get(i).size() != ilpSolution.getUnscheduledPerWeekday().get(i).size()) {
+				allDutiesTried = false;
+			}
+		}
+		while (!allDutiesTried) {
+			allDutiesTried = true;
+			for (int i = 0; i < 7; i++) {
+				if (triedDuties.get(i).size() != ilpSolution.getUnscheduledPerWeekday().get(i).size()) {
+					allDutiesTried = false;
+				}
+			}
+			int i = (int) (Math.random() * 7);
 			for (Duty toInsert : ilpSolution.getUnscheduledPerWeekday().get(i)) {
-				if (!insertedDuties.contains(toInsert)) {
-					
+				triedDuties.get(i).add(toInsert);
+				if (!insertedDuties.get(i).contains(toInsert)) {
 					for (Duty toDelete : duplicatesCopy.get(i)) {
-						
-						if (!insertedDuties.contains(toInsert) && toInsert.getType().equals(toDelete.getType())
+						if (!insertedDuties.get(i).contains(toInsert) && toInsert.getType().equals(toDelete.getType())
 								&& !duplicatesTaken.get(i).contains(toDelete)) {
-							
 							List<Schedule> schedulesChecked = new ArrayList<>();
 							while (schedulesChecked.size() != ilpSolution.getSchedules().size()) {
 								int random = (int) (Math.random() * ilpSolution.getSchedules().size());
@@ -124,22 +138,26 @@ public class Phase4_AddMissing {
 								if (!schedulesChecked.contains(ilpSolution.getSchedules().get(random))) {
 									schedulesChecked.add(ilpSolution.getSchedules().get(random));
 									int[] scheduleArray = ilpSolution.getSchedules().get(random).getSchedule();
-									
-									for (int t = 0; t < scheduleArray.length / 7; t++) {//Could save time by saving where this duplicate is located
-										if (!insertedDuties.contains(toInsert) && !duplicatesTaken.get(i).contains(toDelete)) {
+
+									for (int t = 0; t < scheduleArray.length / 7; t++) {// Could save time by saving
+																						// where this duplicate is
+																						// located
+										if (!insertedDuties.get(i).contains(toInsert)
+												&& !duplicatesTaken.get(i).contains(toDelete)) {
 											int current = (t * 7) + i;
 											if (scheduleArray[current] == toDelete.getNr()) {
 
 												if (restTimeFeasible(scheduleArray, current, toInsert.getStartTime(),
 														toInsert.getEndTime())) {
 													scheduleArray[t * 7 + i] = toInsert.getNr();
-													//System.out.println("Trying to swap:" + " " + (i) + " " + random + " "
-													//		+ toInsert.getNr() + " " + toDelete.getNr());
+													// System.out.println("Trying to swap:" + " " + (i) + " " + random +
+													// " "
+													// + toInsert.getNr() + " " + toDelete.getNr());
 													if (scheduleIsFeasible(scheduleArray)) {
 														System.out.println("Swapped:" + " " + (i) + " " + random + " "
 																+ toInsert.getNr() + " " + toDelete.getNr());
 														duplicatesTaken.get(i).add(toDelete);
-														insertedDuties.add(toInsert);
+														insertedDuties.get(i).add(toInsert);
 													} else {
 														scheduleArray[t * 7 + i] = toDelete.getNr();
 													}
@@ -153,22 +171,20 @@ public class Phase4_AddMissing {
 					}
 				}
 			}
-			totalInserted = totalInserted + insertedDuties.size();
 		}
 
-		System.out.println("Total inserted: " + totalInserted);
 	}
 
 	public boolean scheduleIsFeasible(int[] schedule) {
 		// 7 feasibility
-		//if(!isFeasible7(schedule)) {
-		//	System.out.println("7 check failed");
-		//	return false;
-		//}
-		//if(!isFeasible14(schedule)) {
-		//	System.out.println("14 check failed");
-		//	return false;
-		//}
+		if(!isFeasible7(schedule)) {
+			System.out.println("7 check failed");
+			return false;
+		}
+		if(!isFeasible14(schedule)) {
+			System.out.println("14 check failed");
+			return false;
+		}
 		return true;
 	}
 	
@@ -235,14 +251,12 @@ public class Phase4_AddMissing {
 								}
 							}
 							if (consecRest >= 32 * 60) {
-								System.out.println("reached for" + s);
 								rangeFeasible = true;
 							}
 						}
 					}
 				}
 				if(!rangeFeasible) {
-					System.out.println(s);
 					return false;
 				}
 			}

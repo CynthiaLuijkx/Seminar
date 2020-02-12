@@ -173,13 +173,13 @@ public class Phase4_ILP {
 			}
 		}
 		
-		ArrayList<Set<Duty>> unscheduledPerWeekday = new ArrayList<>();
+		ArrayList<List<Duty>> unscheduledPerWeekday = new ArrayList<>();
 		for(int i = 0; i <= 6; i++) {
-			Set<Duty> duties = new HashSet<>();
+			List<Duty> duties = new ArrayList<>();
 			unscheduledPerWeekday.add(duties);
 		}
 		for(IloNumVar var : this.dutyIncludedPenalty) {
-			if(this.cplex.getValue(var) > 0) {
+			if(this.cplex.getValue(var) > 0.1) {
 				unscheduledPerWeekday.get(this.penaltyToDay.get(var)).add(this.penaltyToDuty.get(var));
 			}
 		}
