@@ -13,7 +13,7 @@ public class Solution {
 		this.requests = requests;
 		this.newSchedule = schedule;
 	}
-
+	
 	public Set<Request> getRequests() {
 		return requests;
 	}
