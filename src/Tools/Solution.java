@@ -23,7 +23,7 @@ public class Solution {
 	 * @param request					the request to remove from the solution
 	 * @param problem					the rich pick-up and delivery vehicle routing problem with time windows
 	 */
-	public void removeRequest(Request request, Solution solution, List<TimeSlot> emptyTimeSlots, double value) {
+	public void removeRequest(Request request, Solution solution, Set<TimeSlot> emptyTimeSlots) {
 		if(!requests.contains(request)) {
 			for(int i =0; i <solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule().length; i++ ) {
 			if (solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[i] == (request.getDuty().getNr())) {
