@@ -30,6 +30,17 @@ public class Schedule
 	public int[] getSchedule() {
 		return schedule;
 	}
+	
+	public Schedule copy() {
+		ContractGroup c = this.c;
+		int minMin = this.minMin;
+		int plusMin = this.plusMin; 
+		int[] schedule = new int[this.schedule.length];
+		for(int i = 0; i < this.schedule.length; i++) {
+			schedule[i] = this.schedule[i];
+		}
+		return new Schedule(c, minMin, plusMin, schedule);
+	}
 
 	@Override
 	public int hashCode() {
