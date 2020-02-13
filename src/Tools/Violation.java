@@ -7,6 +7,9 @@ package Tools;
  */
 public class Violation 
 {
+
+
+
 	private final String dayTypeFrom;
 	private final String dayTypeTo;
 	private final String typeFrom;
@@ -72,7 +75,7 @@ public class Violation
 		return "Violation [dayTypeFrom=" + dayTypeFrom + ", dayTypeTo=" + dayTypeTo + ", typeFrom=" + typeFrom
 				+ ", typeTo=" + typeTo + ", reserveFrom=" + reserveFrom + ", reserveTo=" + reserveTo + "]";
 	}
-
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -108,6 +111,5 @@ public class Violation
 			return false;
 		return true;
 	}
-	
-	
+
 }

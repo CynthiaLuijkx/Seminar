@@ -102,7 +102,6 @@ public class Phase4 {
 	public void runAllCombinations(String depot) {
 		long start = System.nanoTime();
 		Set<ScheduleCombination> allCombinations = this.getAllCombinations(depot);
-		System.out.println(allCombinations.size());
 		int minimum = Integer.MAX_VALUE;
 		ScheduleCombination minimumCombi = null;
 		for (ScheduleCombination combi : allCombinations) {

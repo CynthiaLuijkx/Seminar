@@ -7,7 +7,7 @@ public class Phase1_Penalties {
 	private final int consecutiveMinPenaltyParam;
 	private final int consecutiveRestParam;
 	private final int earlyToLateParam;
-	private final int partTimeParam;
+	private final double partTimeParam;
 	
 	public Phase1_Penalties() {
 		this.ATVSpreadPenaltyParam = 1;
@@ -17,7 +17,7 @@ public class Phase1_Penalties {
 		this.consecutiveMinPenaltyParam = 1;
 		this.consecutiveRestParam = 1;
 		this.earlyToLateParam = 1;
-		this.partTimeParam = 1;
+		this.partTimeParam = 0.001;
 	}
 
 	public int getATVSpreadPenaltyParam() {
@@ -48,7 +48,7 @@ public class Phase1_Penalties {
 		return earlyToLateParam;
 	}
 
-	public int getPartTimeParam() {
+	public double getPartTimeParam() {
 		return partTimeParam;
 	}
 }

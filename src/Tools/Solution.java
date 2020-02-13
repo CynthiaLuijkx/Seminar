@@ -6,6 +6,7 @@ import Tools.LSschedule;
 import java.util.*;
 
 public class Solution {
+
 	private Set<Request> requests;
 	private Map<ContractGroup, LSschedule> newSchedule = new HashMap<ContractGroup, LSschedule>();
 	private final Instance instance;
@@ -23,18 +24,15 @@ public class Solution {
 	 * @param request					the request to remove from the solution
 	 * @param problem					the rich pick-up and delivery vehicle routing problem with time windows
 	 */
-	public void removeRequest(Request request, Solution solution, Set<TimeSlot> emptyTimeSlots) {
+	public void removeRequest(Request request, Solution solution, Set<TimeSlot> emptyTimeSlots, int dutyDay) {
 		if(!requests.contains(request)) {
-			for(int i =0; i <solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule().length; i++ ) {
-			if (solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[i] == (request.getDuty().getNr())) {
-				TimeSlot slot = new TimeSlot(request.getGroup(), i);
+				TimeSlot slot = new TimeSlot(request.getGroup(), dutyDay);
 				emptyTimeSlots.add(slot);
-				int weekNumber = (int) Math.floor(i/7);
-				solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[i] = 0; //set it empty = 0
+				int weekNumber = (int) Math.floor(dutyDay/7);
 				int sum = 0;
 				for(int k = 7*weekNumber; k < (7*weekNumber+6); k++) {
 					if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[k])) {
-						sum += instance.getFromDutyNrToDuty().get(k).getPaidMin();
+						sum += instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[k]).getPaidMin();
 					}
 					else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[k])) {
 						sum +=solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getC().getAvgHoursPerDay()*60;
@@ -45,10 +43,11 @@ public class Solution {
 					
 					
 				}
+				
+				solution.getNewSchedule().get(request.getGroup()).getWeeklyOvertime()[weekNumber] = sum;				
+				
+			solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[dutyDay] = 2;
 			
-			solution.getNewSchedule().get(request.getGroup()).getWeeklyOvertime()[weekNumber] = sum;				
-				}
-			}
 		this.requests.add(request);
 		}
 		
@@ -68,6 +67,11 @@ public class Solution {
 
 	public void setNewSchedule(Map<ContractGroup, LSschedule> schedule) {
 		this.newSchedule = schedule;
+	}
+	
+	@Override
+	public String toString() {
+		return "Solution [ newSchedule=" + newSchedule + "]";
 	}
 	
 }

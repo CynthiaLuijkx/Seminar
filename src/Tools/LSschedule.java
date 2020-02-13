@@ -39,7 +39,7 @@ public class LSschedule {
 			sum = 0;
 			for(int i = 7*k; i < (7*k+6); i++) {
 				if(instance.getFromDutyNrToDuty().containsKey(schedule.getSchedule()[i])) {
-					sum += instance.getFromDutyNrToDuty().get(i).getPaidMin();
+					sum += instance.getFromDutyNrToDuty().get(schedule.getSchedule()[i]).getPaidMin();
 				}
 				else if(instance.getFromRDutyNrToRDuty().containsKey(schedule.getSchedule()[i])) {
 					sum += schedule.getC().getAvgHoursPerDay()*60;
@@ -49,7 +49,7 @@ public class LSschedule {
 				}
 			}
 		
-		this.weeklyOvertime[k] = sum;
+		this.weeklyOvertime[k] = sum - (schedule.getC().getAvgDaysPerWeek()*schedule.getC().getAvgHoursPerDay()*60) ;
 	}
 	}
 }

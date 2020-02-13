@@ -20,7 +20,6 @@ public class Phase4_ILP {
 	private final HashMap<IloNumVar, Schedule> varToSchedule;
 	private final HashMap<Schedule, IloNumVar> scheduleToVar;
 	private final Set<IloNumVar> variables;
-	private final Set<IloNumVar> dutyIncludedPenalty;
 	
 	private final HashMap<Schedule, Double> solution;
 	
@@ -32,7 +31,6 @@ public class Phase4_ILP {
 		this.instance = instance;
 		
 		this.variables = new HashSet<>();
-		this.dutyIncludedPenalty = new HashSet<>();
 		this.scheduleToVar = new HashMap<>();
 		this.varToSchedule = new HashMap<>();
 		
@@ -83,7 +81,6 @@ public class Phase4_ILP {
 					constraint.addTerm(this.scheduleToVar.get(curSchedule), 1);
 				}
 			}
-			
 			this.cplex.addEq(constraint, 1, group.groupNumberToString());
 		}
 	}
@@ -99,10 +96,6 @@ public class Phase4_ILP {
 					}
 				}
 			}
-			//Penalty
-			IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
-			constraint.addTerm(penalty,1);
-			this.dutyIncludedPenalty.add(penalty);
 			this.cplex.addGe(constraint, 1, duty.getNr() + "_" + 0);
 		}
 		for(Duty duty : instance.getSaturday()) {
@@ -115,10 +108,6 @@ public class Phase4_ILP {
 					}
 				}
 			}
-			//Penalty
-			IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
-			constraint.addTerm(penalty,1);
-			this.dutyIncludedPenalty.add(penalty);
 			this.cplex.addGe(constraint, 1, duty.getNr() + "_" + 6);
 		}
 		for (Duty duty : instance.getWorkingDays()) {
@@ -132,10 +121,6 @@ public class Phase4_ILP {
 						}
 					}
 				}
-				//Penalty
-				IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
-				constraint.addTerm(penalty,1);
-				this.dutyIncludedPenalty.add(penalty);
 				this.cplex.addGe(constraint, 1, duty.getNr() + "_" + s);
 			}
 		}
@@ -145,10 +130,7 @@ public class Phase4_ILP {
 		IloLinearNumExpr objective = this.cplex.linearNumExpr();
 		for(IloNumVar var : this.variables) {
 			Schedule schedule = this.varToSchedule.get(var);
-		//	objective.addTerm(Math.max(0, schedule.getPlusMin() - schedule.getMinMin()), var);
-		}
-		for(IloNumVar var : this.dutyIncludedPenalty) {
-			objective.addTerm(var, 1);
+			objective.addTerm(Math.max(0, schedule.getPlusMin() - schedule.getMinMin()), var);
 		}
 		this.cplex.addMinimize(objective);
 	}

@@ -1,3 +1,4 @@
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -9,12 +10,11 @@ import java.util.Stack;
 
 import Tools.*; 
 
-public class Phase3_Constructive {
+public class Phase3_Constructive_Skip {
 
 	private Map<ContractGroup, String[]> solutionMIP; 
 	private ArrayList<HashMap<String, ArrayList<Integer>>> toSchedule; 
 	private ArrayList<HashMap<String, ArrayList<Integer>>> allDuties; 
-	private ArrayList<HashMap<String, ArrayList<Integer>>> alrScheduled; 
 	private Map<ContractGroup, int[]> solutionHeur; 
 	private Instance instance; 
 	private Map<Integer, Duty> dutyNrToDuty; 
@@ -24,13 +24,14 @@ public class Phase3_Constructive {
 	private String[] completeSolution; 
 	private ArrayList<ContractGroup> groups; 
 	private int totalDays = 0; 
+	private HashMap<Integer, String> skipped = new HashMap<Integer, String>(); 
 
-	public Phase3_Constructive(Instance instance, HashMap<ContractGroup, String[]> solutionMIP ) {
+	public Phase3_Constructive_Skip(Instance instance, HashMap<ContractGroup, String[]> solutionMIP ) {
 		this.dutyNrToDuty = instance.getFromDutyNrToDuty(); 
 		this.solutionHeur = new  HashMap<ContractGroup, int[]>(); 
 		this.solutionMIP = instance.getBasicSchedules(); 
 		this.toSchedule = new ArrayList<HashMap<String, ArrayList<Integer>>>(); 
-		this.alrScheduled = new ArrayList<HashMap<String, ArrayList<Integer>>>(); 
+		this.allDuties = new ArrayList<HashMap<String, ArrayList<Integer>>>(); 
 		this.instance = instance; 
 
 		this.groups = new ArrayList<ContractGroup>(instance.getContractGroups()); 
@@ -50,13 +51,13 @@ public class Phase3_Constructive {
 		}
 
 		for(int i= 0; i<7; i++) {
-			this.alrScheduled.add(new HashMap<String, ArrayList<Integer>>()); 
+			this.allDuties.add(new HashMap<String, ArrayList<Integer>>()); 
 			this.toSchedule.add(new HashMap<String, ArrayList<Integer>>()); 
 			for(String dutyType : instance.getDutyTypes()) {
 				if(i==0) {
 					if(instance.getDutiesPerTypeSun().containsKey(dutyType)) {
 						this.toSchedule.get(i).put(dutyType, getNumbersFromDuty(instance.getDutiesPerTypeSun().get(dutyType))); 
-						this.alrScheduled.get(i).put(dutyType, new ArrayList<Integer>()); 	
+						this.allDuties.get(i).put(dutyType, new ArrayList<Integer>()); 	
 						if(dutyType.substring(dutyType.length()-1, dutyType.length()).equals("L")) {
 							Collections.sort(this.toSchedule.get(i).get(dutyType), (a,b) -> this.dutyNrToDuty.get(b).getEndTime() - this.dutyNrToDuty.get(a).getEndTime()); 
 						}else {
@@ -66,7 +67,7 @@ public class Phase3_Constructive {
 				}else if(i==6) {
 					if(instance.getDutiesPerTypeSat().containsKey(dutyType)) {
 						this.toSchedule.get(i).put(dutyType, getNumbersFromDuty(instance.getDutiesPerTypeSat().get(dutyType))); 
-						this.alrScheduled.get(i).put(dutyType, new ArrayList<Integer>()); 
+						this.allDuties.get(i).put(dutyType, new ArrayList<Integer>()); 
 						if(dutyType.substring(dutyType.length()-1, dutyType.length()).equals("L")) {
 							Collections.sort(this.toSchedule.get(i).get(dutyType), (a,b) -> this.dutyNrToDuty.get(b).getEndTime() - this.dutyNrToDuty.get(a).getEndTime()); 
 						}else {
@@ -76,7 +77,7 @@ public class Phase3_Constructive {
 				}else {
 					if(instance.getDutiesPerTypeW().containsKey(dutyType)) {
 						this.toSchedule.get(i).put(dutyType, getNumbersFromDuty(instance.getDutiesPerTypeW().get(dutyType))); 
-						this.alrScheduled.get(i).put(dutyType, new ArrayList<Integer>()); 
+						this.allDuties.get(i).put(dutyType, new ArrayList<Integer>()); 
 						if(dutyType.substring(dutyType.length()-1, dutyType.length()).equals("L")) {
 							Collections.sort(this.toSchedule.get(i).get(dutyType), (a,b) -> this.dutyNrToDuty.get(b).getEndTime() - this.dutyNrToDuty.get(a).getEndTime()); 
 						}else {
@@ -87,7 +88,6 @@ public class Phase3_Constructive {
 			}
 		}
 
-		this.allDuties = new ArrayList<HashMap<String, ArrayList<Integer>>>(this.toSchedule); 
 
 		int[] finalSolution = solve(); 
 		this.solutionHeur = getIndividualSolutions(finalSolution); 
@@ -95,10 +95,11 @@ public class Phase3_Constructive {
 
 		for(ContractGroup group: solutionHeur.keySet()) {
 			this.finalSchedules.add(getSchedule(group)); 
-			printSolution(group); 
+			System.out.println(this.getSchedule(group)); 
+		//	printSolution(group); 
 			//System.out.println(Arrays.toString(solutionHeur.get(group))); 
-			System.out.println(Arrays.toString(calculateOverTime(group))); 
-			System.out.println(Arrays.toString(calculateAvOverTime(calculateOverTime(group)))); 
+			//System.out.println(Arrays.toString(calculateOverTime(group))); 
+			//System.out.println(Arrays.toString(calculateAvOverTime(calculateOverTime(group)))); 
 		}
 	}
 
@@ -126,8 +127,7 @@ public class Phase3_Constructive {
 		Map<Integer, ArrayList<Integer>> otherPos = new HashMap<Integer, ArrayList<Integer>>(); 
 		this.numberOfThisChecked = new int[solution.length]; 
 		int[] sol = new int[solution.length]; 
-		HashMap<Integer, Integer> prevOfThisType =  getPrevOfThisType(solution); 
-		HashMap<Integer, String> skipped = new HashMap<Integer, String>(); 
+		prevOfThisType =  getPrevOfThisType(solution); 
 
 		int change = 0; 
 		boolean allDutiesPContractGroupPlanned = false; 
@@ -197,7 +197,7 @@ public class Phase3_Constructive {
 					if(checkFeasibility(sol, current)) {
 						possibleDuties.remove(i); 
 						otherPos.put(current, possibleDuties); 
-						this.toSchedule.get(current%7).get(solution[current]).remove(i); 
+						this.toSchedule.get(current%7).get(solution[current]).remove(sol[current]); 
 						possDay = true; 
 						current++; 
 						goBack = false; 
@@ -219,29 +219,35 @@ public class Phase3_Constructive {
 				if(!possDay) {
 					this.numberOfThisChecked[current]++; 
 					int nPosPrev = otherPos.containsKey(current-1)? otherPos.get(current - 1).size() : 1; 
-
-					if(nPosPrev == 0) {
-						if(prevOfThisType.containsKey(current - 1)) {
-							change = current - prevOfThisType.get(current - 1); 
-						}else {
-							change = 1; 
+					int boundForSkip = this.allDuties.get(maxDay%7).get(solution[maxDay]).size() *this.allDuties.get(maxDay-1%7).get(solution[maxDay - 1]).size() ; 
+					boolean skip = false; 
+					if(current ==maxDay) {
+						if(this.numberOfThisChecked[current] > boundForSkip ) {
+							sol = maxSol; 
+							skipped.put(current, solution[current]); 
+							solution[current]  = "Rest"; 
+							current++; 
+							skip = true; 
+							goBack = false; 
 						}
 					}
-					else if(this.numberOfThisChecked[current] >= nPosPrev* possibleDuties.size()) {
-						if(prevOfThisType.get(current) == null) {
-							change = 1; 
+
+					if(!skip) {
+						if(possibleDuties.size() != 0 && this.numberOfThisChecked[current] >= nPosPrev* possibleDuties.size()) {
+							if(prevOfThisType.get(current) == null) {
+								change = 1; 
+							}
+							else {
+								change = current - prevOfThisType.get(current);
+							}
+							this.numberOfThisChecked[current] = 0; 
 						}
 						else {
-							change = current - prevOfThisType.get(current);
+							change = 1; 
 						}
-						this.numberOfThisChecked[current] = 0; 
+						current -= change; 
+						goBack = true; 
 					}
-					else {
-						change = 1; 
-					}
-					current -= change; 
-					goBack = true; 
-
 				}
 			}
 

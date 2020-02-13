@@ -1,32 +1,37 @@
 package Tools;
 import Tools.TimeSlot;
-import java.util.*;
 
-public class Placement {
-	private List<Map<TimeSlot, Double>> possibilities = new ArrayList<Map<TimeSlot, Double>>();
+public class Placement{
 	private final Request request;
-	private double changedOvertime;
+	private final TimeSlot timeslot;
+	private double cost;
 	
-	public Placement(List<Map<TimeSlot, Double>> pos, Request request) {
-		this.possibilities = pos;
+	public Placement(Request request, TimeSlot slot, double cost) {
 		this.request = request;
-		this.changedOvertime = Double.MAX_VALUE;
+		this.timeslot = slot;
+		
 	}
-	public List<Map<TimeSlot, Double>> getPossibilities() {
-		return possibilities;
+	
+	public double getCost() {
+		return cost;
+	}
+	
+	@Override
+	public String toString() {
+		return "Placement [request=" + request + ", timeslot=" + timeslot + ", cost=" + cost + "]";
 	}
 
-	public void setPossibilities(List<Map<TimeSlot, Double>> pos) {
-		this.possibilities = pos;
+	public void setCost(double cost) {
+		this.cost = cost;
 	}
 
-	public double getChangedOvertime() {
-		return changedOvertime;
+
+
+	public TimeSlot getTimeslot() {
+		return timeslot;
 	}
 
-	public void setChangedOvertime(double changedOvertime) {
-		this.changedOvertime = changedOvertime;
-	}
+
 
 	public Request getRequest() {
 		return request;

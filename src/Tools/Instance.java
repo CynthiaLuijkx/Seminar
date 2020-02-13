@@ -25,11 +25,7 @@ public class Instance
 	private final Set<ContractGroup> contractGroups;
 	private final Set<ReserveDutyType> reserveDutyTypes;
 	private final HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty;
-	
-	private final int minBreak = 11*60; 
-	private final int minWeekBreak = 32*60; 
-	private final int min2WeekBreak = 72*60; 
-	
+
 	private final Set<String> dutyTypes; 
 	
 	private Set<Violation> violations11;
@@ -41,6 +37,10 @@ public class Instance
 	
 	private int UB = 0; 
 	private int LB = 0;
+	
+	private final int minBreak = 11*60; 
+	private final int minWeekBreak = 32*60; 
+	private final int min2WeekBreak = 72*60; 
 	
 	private int nDrivers;
 	
@@ -62,7 +62,8 @@ public class Instance
 	 */
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
 			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
-			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32, Set<String>dutyTypes) {
+			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty, Set<String> dutyTypes) {
+
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
@@ -74,8 +75,7 @@ public class Instance
 		this.fromRDutyNrToRDuty = fromRDutyNrToRDuty;
 		this.contractGroups = contractGroups;
 		this.reserveDutyTypes = reserveDutyTypes;
-		this.violations11 = violations11;
-		this.violations32 = violations32;
+
 		this.dutyTypes = dutyTypes; 
 
 		this.M = new HashSet<>();
@@ -226,6 +226,7 @@ public class Instance
 		this.violations32 = violations32; 
 		this.violations3Days = violations3Days;
 	}
+
 
 	public Set<Violation3Days> getViolations3Days() {
 		return violations3Days;
