@@ -6,7 +6,6 @@ import java.util.Set;
 
 import Tools.ContractGroup;
 import Tools.Duty;
-import Tools.ILPSolution;
 import Tools.Instance;
 import Tools.Schedule;
 import ilog.concert.IloException;
@@ -27,7 +26,7 @@ public class Phase4_ILP {
 	private final Set<IloNumVar> variables;
 	private final Set<IloNumVar> dutyIncludedPenalty;
 	
-	private final ILPSolution solution;
+	private final List<Schedule> solution;
 	
 
 	public Phase4_ILP(Set<Schedule> inputSolution, Instance instance) throws IloException {
@@ -52,7 +51,7 @@ public class Phase4_ILP {
 		this.cplex.exportModel("Phase4_ILP.lp");
 		solve();
 	
-		System.out.println("Mising duties: " + this.cplex.getObjValue());
+		System.out.println("Objective: " + this.cplex.getObjValue());
 		
 		this.solution =	makeSolution();
 	}
@@ -106,7 +105,7 @@ public class Phase4_ILP {
 				}
 			}
 			//Penalty
-			IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
+			IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
 			constraint.addTerm(penalty,1);
 			this.dutyIncludedPenalty.add(penalty);
 			this.penaltyToDay.put(penalty, 0);
@@ -143,7 +142,7 @@ public class Phase4_ILP {
 					}
 				}
 				//Penalty
-				IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
+				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
 				constraint.addTerm(penalty,1);
 				this.dutyIncludedPenalty.add(penalty);
 				this.penaltyToDay.put(penalty, s);
@@ -157,36 +156,25 @@ public class Phase4_ILP {
 		IloLinearNumExpr objective = this.cplex.linearNumExpr();
 		for(IloNumVar var : this.variables) {
 			Schedule schedule = this.varToSchedule.get(var);
-		//	objective.addTerm(Math.max(0, schedule.getPlusMin() - schedule.getMinMin()), var);
+			objective.addTerm(Math.max(0, schedule.getPlusMin() - schedule.getMinMin()), var);
 		}
 		for(IloNumVar var : this.dutyIncludedPenalty) {
-			objective.addTerm(var, 1);
+			//objective.addTerm(var, 1);
 		}
 		this.cplex.addMinimize(objective);
 	}
 	
-	public ILPSolution makeSolution() throws IloException {
+	public List<Schedule> makeSolution() throws IloException {
 		List<Schedule> schedules = new ArrayList<>();
 		for(Schedule schedule : this.schedules) {
 			if(this.cplex.getValue(this.scheduleToVar.get(schedule)) > 0) {
 				schedules.add(schedule);
 			}
 		}
-		
-		ArrayList<List<Duty>> unscheduledPerWeekday = new ArrayList<>();
-		for(int i = 0; i <= 6; i++) {
-			List<Duty> duties = new ArrayList<>();
-			unscheduledPerWeekday.add(duties);
-		}
-		for(IloNumVar var : this.dutyIncludedPenalty) {
-			if(this.cplex.getValue(var) > 0) {
-				unscheduledPerWeekday.get(this.penaltyToDay.get(var)).add(this.penaltyToDuty.get(var));
-			}
-		}
-		return new ILPSolution(schedules, unscheduledPerWeekday);
+		return schedules;
 	}
 	
-	public ILPSolution getSolution(){
+	public List<Schedule> getSolution(){
 		return this.solution;
 	}
 }

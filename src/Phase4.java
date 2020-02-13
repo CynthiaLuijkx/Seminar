@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import Tools.*;
@@ -20,8 +21,8 @@ public class Phase4 {
 		Phase4_ILP ilp = new Phase4_ILP(this.inputSolution, this.instance);
 		long end = System.nanoTime();
 		System.out.println("ILP runTime: " + (end-start)/1000000000.0);
-		ILPSolution ilpSolution = ilp.getSolution();
-		for(Schedule schedule : ilpSolution.getSchedules()) {
+		List<Schedule> ilpSolution = ilp.getSolution();
+		for(Schedule schedule : ilpSolution) {
 			System.out.println(schedule.toString());
 		}
 		Phase4_AddMissing addMissing = new Phase4_AddMissing(ilpSolution, this.instance);
@@ -85,17 +86,19 @@ public class Phase4 {
 			relaxedSchedules.removeAll(toRemove);
 		}
 		
+		List<Schedule> schedules = new ArrayList<>();
 		int objValue = 0;
 		for(Schedule schedule : fixedSchedules.keySet()) {
 			if(fixedSchedules.get(schedule) == 1) {
 				System.out.println(schedule.toString());
+				schedules.add(schedule);
 				objValue = objValue + Math.max(0, schedule.getPlusMin() - schedule.getMinMin());
 			}
 		}
 		long end = System.nanoTime();
 		System.out.println("Relax&Fix runTime: " + (end-start)/1000000000.0);
 		System.out.println("Objective: " + objValue);
-		
+		Phase4_AddMissing addMissing = new Phase4_AddMissing(schedules, this.instance);		
 	}
 	
 	public void runAllCombinations(String depot) {
@@ -114,12 +117,14 @@ public class Phase4 {
 			}
 		}
 		System.out.println("Objective: " + minimum);
+		List<Schedule> schedules = new ArrayList<>();
 		for (Schedule schedule : minimumCombi.getSchedules()) {
 			System.out.println(schedule.toString());
+			schedules.add(schedule);
 		}
-		
 		long end = System.nanoTime();
 		System.out.println("All Combinations runTime: " + (end-start)/1000000000.0);
+		Phase4_AddMissing addMissing = new Phase4_AddMissing(schedules, this.instance);	
 	}
 	
 	public Set<ScheduleCombination> getAllCombinations(String depot){
@@ -191,11 +196,6 @@ public class Phase4 {
 		return output;
 			
 	}
-
-
-
-
-
 }
 
 

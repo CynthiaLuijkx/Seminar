@@ -22,8 +22,11 @@ public class Phase4_RelaxFix_LP {
 	
 	private final HashMap<IloNumVar, Schedule> varToSchedule;
 	private final HashMap<Schedule, IloNumVar> scheduleToVar;
+	private final HashMap<IloNumVar, Duty> penaltyToDuty;
+	private final HashMap<IloNumVar, Integer> penaltyToDay;
 	private final Set<IloNumVar> integerVariables;
 	private final Set<IloNumVar> relaxedVariables;
+	private final Set<IloNumVar> dutyIncludedPenalty;
 	
 	private final HashMap<Schedule, Double> solution;
 	
@@ -40,8 +43,11 @@ public class Phase4_RelaxFix_LP {
 		
 		this.integerVariables = new HashSet<>();
 		this.relaxedVariables = new HashSet<>(); 
+		this.dutyIncludedPenalty = new HashSet<>();
 		this.scheduleToVar = new HashMap<>();
 		this.varToSchedule = new HashMap<>();
+		this.penaltyToDay = new HashMap<>();
+		this.penaltyToDuty = new HashMap<>();
 		
 		initVars();
 		initConstraint1();
@@ -53,8 +59,6 @@ public class Phase4_RelaxFix_LP {
 		this.cplex.setWarning(null);
 		this.cplex.exportModel("Phase4_ILP.lp");
 		solve();
-	
-		//System.out.println(this.cplex.getObjValue());
 		
 		this.solution = new HashMap<>();
 		makeSolution();
@@ -132,6 +136,12 @@ public class Phase4_RelaxFix_LP {
 					}
 				}
 			}
+			//Penalty
+			IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+			constraint.addTerm(penalty,1);
+			this.dutyIncludedPenalty.add(penalty);
+			this.penaltyToDay.put(penalty, 0);
+			this.penaltyToDuty.put(penalty, duty);
 			this.cplex.addGe(constraint, 1-alreadyCovered, duty.getNr() + "_" + 0);
 		}
 		for(Duty duty : instance.getSaturday()) {
@@ -156,6 +166,11 @@ public class Phase4_RelaxFix_LP {
 					}
 				}
 			}
+			IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+			constraint.addTerm(penalty,1);
+			this.dutyIncludedPenalty.add(penalty);
+			this.penaltyToDay.put(penalty, 6);
+			this.penaltyToDuty.put(penalty, duty);
 			this.cplex.addGe(constraint, 1-alreadyCovered, duty.getNr() + "_" + 6);
 		}
 		for (Duty duty : instance.getWorkingDays()) {
@@ -182,6 +197,11 @@ public class Phase4_RelaxFix_LP {
 						}
 					}
 				}
+				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+				constraint.addTerm(penalty,1);
+				this.dutyIncludedPenalty.add(penalty);
+				this.penaltyToDay.put(penalty, s);
+				this.penaltyToDuty.put(penalty, duty);
 				this.cplex.addGe(constraint, 1 - alreadyCovered, duty.getNr() + "_" + s);
 			}
 		}
