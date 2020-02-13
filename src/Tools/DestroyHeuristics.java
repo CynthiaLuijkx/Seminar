@@ -16,6 +16,11 @@ public class DestroyHeuristics {
 					Request request = new Request(instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay]), group);	
 					solution.removeRequest(request, solution, slots);
 				 }
+				 else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay])) {
+					 Request request = new Request(instance.getFromRDutyNrToRDuty().get(solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay]), group);	
+					solution.removeRequest(request, solution, slots);
+						 
+				 }
 			}
 		    
 		  }
