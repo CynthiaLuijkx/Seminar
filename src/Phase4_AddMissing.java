@@ -130,7 +130,7 @@ public class Phase4_AddMissing {
 			}
 
 			int tries = 0;
-			while (missingDuties(schedulesCopy) > 0 && tries < 10000) {
+			while (missingDuties(schedulesCopy) > 0 && tries < 2000) {
 				int i = (int) (Math.random() * 7); // Pick a random weekday
 				if (originalMissing.get(i).size() > 0) {
 					int insertNr = (int) (Math.random() * originalMissing.get(i).size());
@@ -180,7 +180,7 @@ public class Phase4_AddMissing {
 				}
 
 			}
-			System.out.println(missingDuties(schedulesCopy));
+			//System.out.println(missingDuties(schedulesCopy));
 			if(missingDuties(schedulesCopy) < minimumMissed) {
 				minimumMissed = missingDuties(schedulesCopy);
 				bestSchedules.clear();
