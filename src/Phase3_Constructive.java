@@ -21,7 +21,10 @@ public class Phase3_Constructive {
 	private Map<Integer, Duty> dutyNrToDuty; 
 	private Set<Schedule> finalSchedules = new HashSet<Schedule>(); 
 	private Map<Integer, Integer> prevOfThisType = new HashMap<Integer, Integer>(); 
-	private int[] numberOfThisChecked; 
+	private int[] numberOfThisChecked ; 
+	private String[] completeSolution; 
+	private ArrayList<ContractGroup> groups; 
+	private int totalDays = 0; 
 
 	public Phase3_Constructive(Instance instance, HashMap<ContractGroup, String[]> solutionMIP ) {
 		this.dutyNrToDuty = instance.getFromDutyNrToDuty(); 
@@ -30,6 +33,22 @@ public class Phase3_Constructive {
 		this.toSchedule = new ArrayList<HashMap<String, ArrayList<Integer>>>(); 
 		this.alrScheduled = new ArrayList<HashMap<String, ArrayList<Integer>>>(); 
 		this.instance = instance; 
+
+		this.groups = new ArrayList<ContractGroup>(instance.getContractGroups()); 
+		Collections.sort(groups, (a,b) -> a.getTc() - b.getTc());
+
+		for(ContractGroup group: groups) {
+			totalDays += this.solutionMIP.get(group).length; 
+		}
+
+		this.completeSolution = new String[totalDays]; 
+		int currentIndex = 0; 
+		for(ContractGroup group: groups) {
+			for(int i = 0; i< this.solutionMIP.get(group).length; i++) {
+				this.completeSolution[i+currentIndex] = this.solutionMIP.get(group)[i]; 
+			}
+			currentIndex += this.solutionMIP.get(group).length; 
+		}
 
 		for(int i= 0; i<7; i++) {
 			this.alrScheduled.add(new HashMap<String, ArrayList<Integer>>()); 
@@ -70,11 +89,15 @@ public class Phase3_Constructive {
 		}
 
 		this.allDuties = new ArrayList<HashMap<String, ArrayList<Integer>>>(this.toSchedule); 
-		solve(); 
+
+		Integer[] finalSolution = solve(); 
+		this.solutionHeur = getIndividualSolutions(finalSolution); 
+
 
 		for(ContractGroup group: solutionHeur.keySet()) {
-			this.finalSchedules.add(getSchedule(group)); 
-			System.out.println(Arrays.toString(solutionHeur.get(group))); 
+			//this.finalSchedules.add(getSchedule(group)); 
+			printSolution(group); 
+			//System.out.println(Arrays.toString(solutionHeur.get(group))); 
 			System.out.println(Arrays.toString(calculateOverTime(group))); 
 			System.out.println(Arrays.toString(calculateAvOverTime(calculateOverTime(group)))); 
 		}
@@ -98,110 +121,139 @@ public class Phase3_Constructive {
 		return newList; 
 	}
 
-	public void solve() {
-		//while(!allDutiesPlanned) {
-		ArrayList<ContractGroup> groups = new ArrayList<ContractGroup>(instance.getContractGroups()); 
-		Collections.sort(groups, (a,b) -> a.getTc() - b.getTc());
-		outmostLoop:
-			for(ContractGroup group:groups) {
-				System.out.println("Checking contract group: " + group.getNr()); 
+	public Integer[] solve() {
 
-				Map<Integer, ArrayList<Integer>> otherPos = new HashMap<Integer, ArrayList<Integer>>(); 
-				String[] solution = solutionMIP.get(group); 
-				this.numberOfThisChecked = new int[solution.length]; 
-				Integer[] sol = new Integer[solution.length]; 
-				this.solutionHeur.put(group, sol); 
-				HashMap<Integer, Integer> prevOfThisType =  getPrevOfThisType(group); 
-				int change = 0; 
-				boolean allDutiesPContractGroupPlanned = false; 
-				boolean goBack = false; 
-				int current = 0; 
+		String[] solution = this.completeSolution; 
+		Map<Integer, ArrayList<Integer>> otherPos = new HashMap<Integer, ArrayList<Integer>>(); 
+		this.numberOfThisChecked = new int[solution.length]; 
+		Integer[] sol = new Integer[solution.length]; 
+		HashMap<Integer, Integer> prevOfThisType =  getPrevOfThisType(solution); 
+		HashMap<Integer, String> skipped = new HashMap<Integer, String>(); 
 
-				while(!allDutiesPContractGroupPlanned) {
-					ArrayList<Integer> possibleDuties = null; 
-					boolean normalDuty = false; 
-					if(goBack) {
-						goBack(change, current + change, solution, sol); 
+		int change = 0; 
+		boolean allDutiesPContractGroupPlanned = false; 
+		boolean goBack = false; 
+		int current = 0; 
+		int maxDay = 0; 
+		Integer[] maxSol = null; 
+		while(!allDutiesPContractGroupPlanned) {
 
-						if(solution[current].equals("ATV") ||solution[current].contains("R") ) {
-							current--; 
-							normalDuty = false; 
-						}else {
-							possibleDuties = otherPos.get(current);  
-							normalDuty = true; 
-						}
-					}else {
-						boolean feas = true;
-						if(solution[current].equals("ATV")) {	
-							sol[current] = 1; 
-						}else if(solution[current].equals("Rest")) {
-							sol[current] = 2; 
-						}else if(solution[current].substring(0, 1).equals("R")){
-							sol[current] = this.getReserveDutyType(solution[current].substring(1), current).getNr(); 
-							feas = checkFeasibility(sol, current); 
-						}else {
-							possibleDuties = new ArrayList<Integer>(this.toSchedule.get(current%7).get(solution[current]));
-							normalDuty = true; 
-						}
+			if(current>maxDay) {
+				maxDay = current; 
+				maxSol = sol; 
+			}
+			ArrayList<Integer> possibleDuties = null; 
+			boolean normalDuty = false; 
 
-						if(!feas) {
-							change = 1; 
-							current -= change; 
-							goBack = true;
-						}else if(!normalDuty) {
-							current++; 
-						}
+			/*
+			 * Two possibilities here, either we are going back in time from point t to t_ because it was infeasible,
+			 * or we continue from t to t+1. 
+			 * 
+			 * If we are going back, goBack is true. Then we are going to reschedule everything from t_ onwards. 
+			 * In this case the possibleDuties at t_ decreases by one as the previous value of t_ was deemed infeasible.
+			 * The possible duties are retrieved from a Map that stores the set of possible duties at point t_
+			 * 
+			 * In case we continue to t+1, we set the possible duties as all the possible duties that are not scheduled yet
+			 */
+
+			if(goBack) {
+				goBack(change, current + change, solution, sol); 
+				if(solution[current].equals("ATV") ||solution[current].contains("R") ) {
+					current--; 
+					normalDuty = false; 
+				}else {
+					possibleDuties = otherPos.get(current);  
+					normalDuty = true; 
+				}
+			}else {
+
+				boolean feas = true;
+				if(solution[current].equals("ATV")) {	
+					sol[current] = 1; 
+				}else if(solution[current].equals("Rest")) {
+					sol[current] = 2; 
+				}else if(solution[current].substring(0, 1).equals("R")){
+					sol[current] = this.getReserveDutyType(solution[current].substring(1), current).getNr(); 
+					feas = checkFeasibility(sol, current); 
+				}else {
+					possibleDuties = new ArrayList<Integer>(this.toSchedule.get(current%7).get(solution[current]));
+					normalDuty = true; 
+				}
+
+				if(!feas) {
+					change = 1; 
+					current -= change; 
+					goBack = true;
+				}else if(!normalDuty) {
+					current++; 
+				}
+
+			}
+
+			// If it is a normal duty (not a ATV, Rest or reserve duty) then we check if any of the duties can be placed inn the schedule 
+			if(normalDuty) {
+				boolean possDay = false; 
+				for(int i = 0; i<possibleDuties.size(); i++) {
+					sol[current] = possibleDuties.get(i); 
+					if(checkFeasibility(sol, current)) {
+						possibleDuties.remove(i); 
+						otherPos.put(current, possibleDuties); 
+						this.toSchedule.get(current%7).get(solution[current]).remove(sol[current]); 
+						possDay = true; 
+						current++; 
+						goBack = false; 
+						break; 
 					}
-
-					if(normalDuty) {
-
-						boolean possDay = false; 
-						for(int i = 0; i<possibleDuties.size(); i++) {
-							sol[current] = possibleDuties.get(i); 
-							if(checkFeasibility(sol, current)) {
-								possibleDuties.remove(i); 
-								otherPos.put(current, possibleDuties); 
-								this.toSchedule.get(current%7).get(solution[current]).remove(sol[current]); 
-								possDay = true; 
-								current++; 
-								goBack = false; 
-								break; 
-							}
-							else {
-								sol[current]= null; 
-							}
-						}
-						if(!possDay) {
-							this.numberOfThisChecked[current]++; 
-							int nPosPrev = otherPos.containsKey(current-1)? otherPos.get(current - 1).size() : 1; 
-
-							if(this.numberOfThisChecked[current] >= nPosPrev* possibleDuties.size()) {
-								if(prevOfThisType.get(current) == null) {
-									change = 1; 
-								}
-								else {
-									change = current - prevOfThisType.get(current);
-								}
-								this.numberOfThisChecked[current] = 0; 
-
-							}
-							else {
-								change = 1; 
-							}
-							current -= change; 
-							goBack = true; 
-						}
-					}
-
-					if(current == solution.length) {
-						allDutiesPContractGroupPlanned = true; 
-					}else if(current == -1) {
-						System.out.println("No feasible Solution for contract group: " + group.getNr() );
-						break outmostLoop; 
+					else {
+						sol[current]= null; 
 					}
 				}
+
+				/*
+				 * If it is not possible to place any duty from the possible duties in the schedule, then we need to go back in time 
+				 * 
+				 * We also keep track of how often we could not place a duty on this day. 
+				 * If this number exceeds the number of possible duties of the previous day, 
+				 * then we go back to the previous point t, which was on the same weekday and had to schedule the same duty type 
+				 * 
+				 */
+				if(!possDay) {
+					this.numberOfThisChecked[current]++; 
+					int nPosPrev = otherPos.containsKey(current-1)? otherPos.get(current - 1).size() : 1; 
+
+					if(nPosPrev == 0) {
+						if(prevOfThisType.containsKey(current - 1)) {
+							change = current - prevOfThisType.get(current - 1); 
+						}else {
+							change = 1; 
+						}
+					}
+					else if(this.numberOfThisChecked[current] >= nPosPrev* possibleDuties.size()) {
+						if(prevOfThisType.get(current) == null) {
+							change = 1; 
+						}
+						else {
+							change = current - prevOfThisType.get(current);
+						}
+						this.numberOfThisChecked[current] = 0; 
+					}
+					else {
+						change = 1; 
+					}
+					current -= change; 
+					goBack = true; 
+
+				}
 			}
-		//}
+
+			if(current == solution.length) {
+				allDutiesPContractGroupPlanned = true; 
+			}else if(current == -1) {
+				System.out.println("No feasible Solution");
+				break; 
+			}
+		}
+		return sol;
 	}
 
 	/**
@@ -432,7 +484,7 @@ public class Phase3_Constructive {
 		return new Schedule(group, overTime, minHours, Arrays.stream(this.solutionHeur.get(group)).mapToInt(Integer::intValue).toArray()); 
 	}
 
-	public HashMap<Integer, Integer> getPrevOfThisType(ContractGroup group){
+	public HashMap<Integer, Integer> getPrevOfThisType(String[] solution){
 		HashMap<Integer, Integer> prevOfThisType = new HashMap<Integer, Integer> (); 
 		ArrayList<HashMap<String, Integer>> lastOfThisType = new ArrayList<HashMap<String, Integer>>(); 
 
@@ -440,7 +492,6 @@ public class Phase3_Constructive {
 			lastOfThisType.add(new HashMap<String, Integer>()); 
 		}
 
-		String[] solution = this.solutionMIP.get(group); 
 		for(int i =0; i< solution.length; i++) {
 
 			if(lastOfThisType.get(i%7).containsKey(solution[i])) {
@@ -462,7 +513,36 @@ public class Phase3_Constructive {
 				}
 				this.toSchedule.get(i%7).get(solution[i]).add(0, sol[i]); 
 			}
-			sol[i] = null; 
+			//sol[i] = null; 
 		}
+	}
+
+	public Map<ContractGroup, Integer[]> getIndividualSolutions(Integer[] sol){
+		Map<ContractGroup, Integer[]> result = new HashMap<ContractGroup, Integer[]>(); 
+		int currentIndex = 0; 
+		for(ContractGroup group: groups) {
+			Integer[] solPGroup = new Integer[this.solutionMIP.get(group).length]; 
+			for(int i=0; i<solPGroup.length; i++) {
+				solPGroup[i] = sol[currentIndex + i]; 
+			}
+			currentIndex += solPGroup.length; 
+			result.put(group, solPGroup); 
+		}
+		return result; 
+	}
+
+	public void printSolution(ContractGroup group) {
+		System.out.println("Contract Group: " + group.getNr()); 
+		for(int w = 0; w < this.solutionHeur.get(group).length/7 ; w++) {
+			for(int j = 0; j< 7; j++) {
+				System.out.print(this.solutionMIP.get(group)[w*7 + j] +" ");
+			}
+			System.out.println(""); 
+			for(int j = 0; j< 7; j++) {
+				System.out.print(this.solutionHeur.get(group)[w*7 + j]+" ");
+			}
+			System.out.println(""); 
+		}
+
 	}
 }

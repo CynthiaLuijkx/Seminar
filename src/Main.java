@@ -20,11 +20,11 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
-		double violationBound = 0.9;
-		double violationBound3Days = 0.9;
+		double violationBound = 0.45;
+		double violationBound3Days = 0.45;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
@@ -59,25 +59,29 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getUB();
+		int numberOfDrivers = instance.getUB() - 50;
+		System.out.println(instance.getUB()); 
+		System.out.println(instance.getLB()); 
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
 		
-		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
-		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+		Phase3_Constructive conHeur = new Phase3_Constructive(instance, mip.getSolution()); 
 		
-		for(Schedule schedule : solution.keySet()) {
-			System.out.println(solution.get(schedule) + " " + schedule.toString());
-		}
+//		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
+//		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+		
+//		for(Schedule schedule : solution.keySet()) {
+//			System.out.println(solution.get(schedule) + " " + schedule.toString());
+//		}
 		
 		int treshold = 0; //bigger than or equal 
-		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
+		//Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
 		//phase4.runILP();
 		//phase4.runRelaxFix();
-		phase4.runAllCombinations(depot);
+		//phase4.runAllCombinations(depot);
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
@@ -163,7 +167,7 @@ public class Main
 		scReserve.close();
 
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, fromDutyNrToDuty, contractGroups, 
-				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32);
+				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32, dutyTypes);
 
 	}
 
@@ -315,3 +319,4 @@ public class Main
 		return output;
 	}
 }
+
