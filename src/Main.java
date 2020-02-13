@@ -20,7 +20,7 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		double violationBound = 0.45;
@@ -59,7 +59,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getUB() - 50;
+		int numberOfDrivers = instance.getLB() + 15;
 		System.out.println(instance.getUB()); 
 		System.out.println(instance.getLB()); 
 		instance.setNrDrivers(numberOfDrivers);
@@ -69,6 +69,16 @@ public class Main
 		instance.setBasicSchedules(mip.getSolution());
 		
 		Phase3_Constructive conHeur = new Phase3_Constructive(instance, mip.getSolution()); 
+		
+		Set<Schedule> schedules = conHeur.getSchedule(); 
+		
+		HashMap<ContractGroup, Schedule> con3_Schedules = new HashMap<ContractGroup, Schedule>(); 
+		for(Schedule schedule:schedules) {
+			con3_Schedules.put(schedule.getC(), schedule); 
+		}
+		
+		int iterations_phase5 = 1; 
+		Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, con3_Schedules, 0); 
 		
 //		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
 //		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();

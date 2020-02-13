@@ -95,7 +95,7 @@ public class Phase3_Constructive {
 
 
 		for(ContractGroup group: solutionHeur.keySet()) {
-			//this.finalSchedules.add(getSchedule(group)); 
+			this.finalSchedules.add(getSchedule(group)); 
 			printSolution(group); 
 			//System.out.println(Arrays.toString(solutionHeur.get(group))); 
 			System.out.println(Arrays.toString(calculateOverTime(group))); 
