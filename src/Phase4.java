@@ -92,7 +92,7 @@ public class Phase4 {
 			if(fixedSchedules.get(schedule) == 1) {
 				System.out.println(schedule.toString());
 				schedules.add(schedule);
-				objValue = objValue + Math.max(0, schedule.getPlusMin() - schedule.getMinMin());
+				objValue = objValue + schedule.getOvertime();
 			}
 		}
 		long end = System.nanoTime();

@@ -156,7 +156,7 @@ public class Phase4_ILP {
 		IloLinearNumExpr objective = this.cplex.linearNumExpr();
 		for(IloNumVar var : this.variables) {
 			Schedule schedule = this.varToSchedule.get(var);
-			objective.addTerm(Math.max(0, schedule.getPlusMin() - schedule.getMinMin()), var);
+			objective.addTerm(schedule.getOvertime(), var);
 		}
 		for(IloNumVar var : this.dutyIncludedPenalty) {
 			//objective.addTerm(var, 1);

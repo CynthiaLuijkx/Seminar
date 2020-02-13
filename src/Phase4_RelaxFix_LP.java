@@ -210,7 +210,7 @@ public class Phase4_RelaxFix_LP {
 	public void initObjective() throws IloException {
 		IloLinearNumExpr objective = this.cplex.linearNumExpr();
 		for(Schedule curSchedule : this.schedules) {
-			objective.addTerm(Math.max(0, curSchedule.getPlusMin() - curSchedule.getMinMin()), this.scheduleToVar.get(curSchedule));
+			objective.addTerm(curSchedule.getOvertime(), this.scheduleToVar.get(curSchedule));
 		}
 		this.cplex.addMinimize(objective);
 	}

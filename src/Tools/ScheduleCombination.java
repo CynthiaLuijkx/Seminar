@@ -66,7 +66,7 @@ public class ScheduleCombination {
 	public int calculateCost() {
 		int cost = 0;
 		for(Schedule schedule : schedules) {
-			cost = cost + Math.max(0,  schedule.getPlusMin()-schedule.getMinMin());
+			cost = cost + Math.max(0,  schedule.getOvertime());
 		}
 		return cost;
 	}

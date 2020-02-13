@@ -1,17 +1,20 @@
 package Tools;
 import java.util.Arrays;
 
+/**
+ * This class corresponds to a feasible schedule for a specific contractgroup.
+ * @author Mette Wagenvoort
+ *
+ */
 public class Schedule 
 {
 	private final ContractGroup c;
-	private final int minMin;
-	private final int plusMin;
+	private final int overTime;
 	private final int[] schedule;
 	
-	public Schedule(ContractGroup c, int minMin, int plusMin, int[] schedule) {
+	public Schedule(ContractGroup c, int overTime, int[] schedule) {
 		this.c = c;
-		this.minMin = minMin;
-		this.plusMin = plusMin;
+		this.overTime = overTime;
 		this.schedule = schedule;
 	}
 
@@ -19,12 +22,8 @@ public class Schedule
 		return c;
 	}
 
-	public int getMinMin() {
-		return minMin;
-	}
-
-	public int getPlusMin() {
-		return plusMin;
+	public int getOvertime() {
+		return overTime;
 	}
 
 	public int[] getSchedule() {
@@ -32,14 +31,16 @@ public class Schedule
 	}
 	
 	public Schedule copy() {
-		ContractGroup c = this.c;
-		int minMin = this.minMin;
-		int plusMin = this.plusMin; 
-		int[] schedule = new int[this.schedule.length];
-		for(int i = 0; i < this.schedule.length; i++) {
-			schedule[i] = this.schedule[i];
+		int[] copySchedule = new int[schedule.length];
+		for (int i = 0; i < copySchedule.length; i++) {
+			copySchedule[i] = schedule[i];
 		}
-		return new Schedule(c, minMin, plusMin, schedule);
+		return new Schedule(c, overTime, copySchedule);
+	}
+
+	@Override
+	public String toString() {
+		return "Schedule [c=" + c + ", overTime=" + overTime + ", schedule=" + Arrays.toString(schedule) + "]";
 	}
 
 	@Override
@@ -47,8 +48,7 @@ public class Schedule
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((c == null) ? 0 : c.hashCode());
-		result = prime * result + minMin;
-		result = prime * result + plusMin;
+		result = prime * result + overTime;
 		result = prime * result + Arrays.hashCode(schedule);
 		return result;
 	}
@@ -67,25 +67,10 @@ public class Schedule
 				return false;
 		} else if (!c.equals(other.c))
 			return false;
-		if (minMin != other.minMin)
+		if (overTime != other.overTime)
 			return false;
-		if (plusMin != other.plusMin)
+		if (!Arrays.equals(schedule, other.schedule))
 			return false;
-		boolean arrayEqual = true;
-		for(int i = 0; i < schedule.length; i++) {
-			if(schedule[i] != other.schedule[i]) {
-				arrayEqual = false;
-			}
-		}
-		if (arrayEqual) {
-			return false;
-		}
 		return true;
-	}
-
-	@Override
-	public String toString() {
-		return "Schedule [c=" + c + ", minMin=" + minMin + ", plusMin=" + plusMin + ", schedule="
-				+ Arrays.toString(schedule) + "]";
 	}
 }
