@@ -23,7 +23,8 @@ public class Main
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
-		double violationBound = 0.9;
+		int restTwoWeek = 72 * 60;
+		double violationBound = 0.7;
 		double violationBound3Days = 0.9;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
@@ -66,8 +67,8 @@ public class Main
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
 		
-		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
-		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin, restTwoWeek);
+		colGen.executeColumnGeneration();
 		
 		for(Schedule schedule : solution.keySet()) {
 			System.out.println(solution.get(schedule) + " " + schedule.toString());

@@ -1,20 +1,24 @@
 package Tools;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * This class contains a label for the labelling pricing algorithm.
+ * @author Mette Wagenvoort
+ *
+ */
 public class Label 
 {
 	private final double redCosts;
-	private final int totOvertime;
-	private final int totMinus;
+	private final int totMinWorked;
 	private final int[] schedule;
 	private final List<Set<Integer>> duties;
-
-	public Label(double redCosts, int totOvertime, int totMinus, int[] schedule, List<Set<Integer>> duties) {
+	
+	public Label(double redCosts, int totMinWorked, int[] schedule, List<Set<Integer>> duties) {
 		this.redCosts = redCosts;
-		this.totOvertime = totOvertime;
-		this.totMinus = totMinus;
+		this.totMinWorked = totMinWorked;
 		this.schedule = schedule;
 		this.duties = duties;
 	}
@@ -23,12 +27,8 @@ public class Label
 		return redCosts;
 	}
 
-	public int getTotOvertime() {
-		return totOvertime;
-	}
-
-	public int getTotMinus() {
-		return totMinus;
+	public int getTotMinWorked() {
+		return totMinWorked;
 	}
 
 	public int[] getSchedule() {
@@ -41,57 +41,7 @@ public class Label
 
 	@Override
 	public String toString() {
-		return "Label [redCosts=" + redCosts + ", totOvertime=" + totOvertime + ", totMinus=" + totMinus + ", schedule="
-				+ Arrays.toString(schedule) + "]";
-	}
-
-	/**
-	 * This method returns true if this label dominates the other label.
-	 * @param other			another label
-	 * @return				a boolean denoting whether this label dominated the other label or not
-	 */	
-	public boolean dominates(Label other) {
-		if (this.redCosts <= other.getRedCosts()) {
-			boolean containsAll = true;
-			for(int i = 0; i < 7; i++) {
-				for(Integer dutyNr : this.duties.get(i)) {
-					if(!other.duties.get(i).contains(dutyNr)) {
-						containsAll = false;
-						break;
-					}
-				}
-			}
-			if (containsAll && this.totOvertime <= other.getTotOvertime()) {
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * This method returns true if this label dominates the other label.
-	 * @param other			another label
-	 * @return				a boolean denoting whether this label dominated the other label or not
-	 */
-	public boolean dominates2(Label other) {
-		if (this.redCosts <= other.getRedCosts() && this.totOvertime <= other.getTotOvertime() && 
-				this.duties.containsAll(other.getDuties()) && other.getDuties().containsAll(this.duties) &&
-				(this.redCosts < other.getRedCosts() || this.totOvertime < other.getTotOvertime())) {
-			return true;
-		}
-		return false;
-	}
-
-	public int compareToArcCosts(Label l2) {
-		if (this.redCosts < l2.getRedCosts()) {
-			return -1;
-		} else if (this.redCosts > l2.getRedCosts()) {
-			return 1;
-		} else {
-			return 0;
-		}
+		return "Label [redCosts=" + redCosts + ", totMinWorked=" + totMinWorked + ", schedule="
+				+ Arrays.toString(schedule) + ", duties=" + duties + "]";
 	}
 }

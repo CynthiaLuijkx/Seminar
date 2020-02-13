@@ -1,12 +1,10 @@
 package Tools;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Simple class that can be used to model directed graphs, where
@@ -27,7 +25,7 @@ import java.util.Set;
 
 public class DirectedGraph<V,A>
 {
-	private final HashMap<Integer, Set<V>> nodes;
+	private final List<V> nodes;
 	private final List<DirectedGraphArc<V,A>> arcs;
 	private final Map<V,List<DirectedGraphArc<V,A>>> outArcs;
 	private final Map<V,List<DirectedGraphArc<V,A>>> inArcs;
@@ -37,7 +35,7 @@ public class DirectedGraph<V,A>
 	 */
 	public DirectedGraph()
 	{
-		this.nodes = new HashMap<>();
+		this.nodes = new ArrayList<>();
 		this.arcs = new ArrayList<>();
 		this.outArcs = new LinkedHashMap<>();
 		this.inArcs = new LinkedHashMap<>();
@@ -48,7 +46,7 @@ public class DirectedGraph<V,A>
 	 * @param node the data associated with the node that is added
 	 * @throws IllegalArgumentException if the node is already in the graph or is null
 	 */
-	public void addNode(V node, Integer t) throws IllegalArgumentException
+	public void addNode(V node) throws IllegalArgumentException
 	{
 		if (node == null)
 		{
@@ -60,15 +58,17 @@ public class DirectedGraph<V,A>
 		}
 		else
 		{
-			if (!nodes.containsKey(t)) {
-				nodes.put(t, new HashSet<>());
-			}
-			nodes.get(t).add(node);
+			nodes.add(node);
 			inArcs.put(node, new ArrayList<>());
 			outArcs.put(node, new ArrayList<>());	
 		}
 	}
 	
+	/**
+	 * This method removes an arc from the graph by removing it from the set of arcs as well as from the set of in and out going arcs.
+	 * @param curArc					the arc to be removed
+	 * @throws IllegalArgumentException
+	 */
 	public void removeArc(DirectedGraphArc<V, A> curArc) throws IllegalArgumentException {
 		if (curArc == null) {
 			throw new IllegalArgumentException("Unable to remove null fromt the graph");
@@ -81,13 +81,19 @@ public class DirectedGraph<V,A>
 		}
 	}
 	
-	public void removeNode(V node, Integer t) throws IllegalArgumentException {
+	/**
+	 * This method removes a node from a graph by removing it from the list of nodes as well as removing all adjacent arcs from the set of arcs
+	 * and the set of in and out going arcs.
+	 * @param node						the node to be removed
+	 * @throws IllegalArgumentException
+	 */
+	public void removeNode(V node) throws IllegalArgumentException {
 		if (node == null) {
 			throw new IllegalArgumentException("Unable to remove null from the graph");
 		} else if (!inArcs.containsKey(node)) {
 			throw new IllegalArgumentException("Unable to remove a nonexistent node from the graph");
 		} else {
-			nodes.get(t).remove(node);
+			nodes.remove(node);
 			for (DirectedGraphArc<V, A> in : inArcs.get(node)) {
 				outArcs.get(in.getFrom()).remove(in);
 				arcs.remove(in);
@@ -125,9 +131,9 @@ public class DirectedGraph<V,A>
 	 * Gives a list of all nodes currently in the graph
 	 * @return the nodes in the graph
 	 */
-	public Map<Integer, Set<V>> getNodes()
+	public List<V> getNodes()
 	{
-		return Collections.unmodifiableMap(nodes);
+		return Collections.unmodifiableList(nodes);
 	}
 	
 	/**
@@ -177,11 +183,7 @@ public class DirectedGraph<V,A>
 	 */
 	public int getNumberOfNodes()
 	{
-		int nNodes = 0;
-		for (int t : nodes.keySet()) {
-			nNodes += nodes.get(t).size();
-		}
-		return nNodes;
+		return nodes.size();
 	}
 	
 	/**

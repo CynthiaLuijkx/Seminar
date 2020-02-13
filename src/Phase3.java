@@ -9,19 +9,30 @@ import Tools.Instance;
 import Tools.Schedule;
 import ilog.concert.IloException;
 
+/**
+ * This class executes Phase 3: Column generation
+ * @author Mette Wagenvoort
+ *
+ */
 public class Phase3 
 {
 	private final Instance instance;
-	private final int consecWeek;
-	private final int twoWeek;
+	private final int minBreakBetweenShifts;
+	private final int consecFreeWeekly;
+	private final int freeTwoWeeks;
 	
-	public Phase3(Instance instance, int consecWeek, int twoWeek) {
+	public Phase3(Instance instance, int minBreakBetweenShifts, int consecWeek, int twoWeek) {
 		this.instance = instance;
-		this.consecWeek = consecWeek;
-		this.twoWeek = twoWeek;
+		this.minBreakBetweenShifts = minBreakBetweenShifts;
+		this.consecFreeWeekly = consecWeek;
+		this.freeTwoWeeks = twoWeek;
 	}
 	
-	public HashMap<Schedule, Double> executeColumnGeneration() throws IloException {
+	/**
+	 * This method executes the column generation algorithm.
+	 * @throws IloException
+	 */
+	public Map<Schedule, Double> executeColumnGeneration() throws IloException {
 		/*
 		 * Until no more schedules with negative reduced costs:
 		 * 		Solve RMP
@@ -42,7 +53,7 @@ public class Phase3
 		List<HashMap<Integer, Double>> dualsDuties = model.getDuals1();
 		
 		int iteration = 1;
-		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, consecWeek, twoWeek);
+		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, minBreakBetweenShifts, consecFreeWeekly, freeTwoWeeks);
 		
 		boolean negRedCosts = true;
 		while (negRedCosts) {
@@ -54,8 +65,10 @@ public class Phase3
 			
 			// Solve the pricing problem
 			pricing.updateDualCosts(dualValuesContractGroup, dualsDuties);
-			Map<ContractGroup, Set<Schedule>> newSchedules = pricing.executeLabelling();
+			Map<ContractGroup, Set<Schedule>> newSchedules = pricing.executePulse();
+//			Map<ContractGroup, Set<Schedule>> newSchedules = pricing.executeLabelling();
 			
+			// Check whether schedules were already included
 			for (ContractGroup c : instance.getContractGroups()) {
 				int count = 0;
 				for (Schedule curSchedule : newSchedules.get(c)) {
@@ -95,7 +108,5 @@ public class Phase3
 
 			iteration++;
 		}
-		model.makeSolution();
-		return model.getSolution();
 	}
 }
