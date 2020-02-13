@@ -124,7 +124,7 @@ public class Phase4_ILP {
 				}
 			}
 			//Penalty
-			IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
+			IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
 			constraint.addTerm(penalty,1);
 			this.dutyIncludedPenalty.add(penalty);
 			this.penaltyToDay.put(penalty, 6);
@@ -179,7 +179,7 @@ public class Phase4_ILP {
 			unscheduledPerWeekday.add(duties);
 		}
 		for(IloNumVar var : this.dutyIncludedPenalty) {
-			if(this.cplex.getValue(var) > 0.1) {
+			if(this.cplex.getValue(var) > 0) {
 				unscheduledPerWeekday.get(this.penaltyToDay.get(var)).add(this.penaltyToDuty.get(var));
 			}
 		}

@@ -9,17 +9,21 @@ public class Phase4_AddMissing {
 	private final ILPSolution ilpSolution;
 	private final Instance instance;
 	private final ArrayList<List<Duty>> originalDuplicates;
+	private final List<Schedule> newSchedules;
 	
+	public List<Schedule> getNewSchedules() {
+		return newSchedules;
+	}
+
 	public Phase4_AddMissing(ILPSolution ilpSolution, Instance instance) {
 		this.ilpSolution = ilpSolution;
 		this.instance = instance;
 		this.originalDuplicates = determineDuplicates();
 		
-		this.swapDuplicatesWithMissing();
-		for(Schedule schedule : ilpSolution.getSchedules()) {
+		this.newSchedules = this.swapDuplicatesWithMissing();
+		for(Schedule schedule : newSchedules) {
 			System.out.println(schedule.toString());
 		}
-		determineDuplicates();
 	}
 	
 	public ArrayList<List<Duty>> determineDuplicates() {
@@ -96,70 +100,69 @@ public class Phase4_AddMissing {
 		
 		return copy;
 	}
+	
+	public List<Schedule> createSchedulesCopies(){
+		List<Schedule> copies = new ArrayList<>();
+		for(Schedule schedule : ilpSolution.getSchedules()) {
+			Schedule copy = schedule.copy();
+			copies.add(copy);
+		}
+		return copies; 
+	}
 
-	public void swapDuplicatesWithMissing() {
+	public List<Schedule> swapDuplicatesWithMissing() {
 		ArrayList<List<Duty>> duplicatesCopy = this.createDuplicateCopy();
-		ArrayList<Set<Duty>> duplicatesTaken = new ArrayList<>();
-		ArrayList<Set<Duty>> insertedDuties = new ArrayList<>();
-		ArrayList<Set<Duty>> triedDuties = new ArrayList<>();
-		for (int i = 0; i < 7; i++) {
-			Set<Duty> dutiesTaken = new HashSet<>();
-			Set<Duty> dutiesInserted = new HashSet<>();
-			Set<Duty> dutiesTried = new HashSet<>();
-			duplicatesTaken.add(dutiesTaken);
-			insertedDuties.add(dutiesInserted);
-			triedDuties.add(dutiesTried);
-		}
-		int totalInserted = 0;
-		boolean allDutiesTried = true;
-		for (int i = 0; i < 7; i++) {
-			if (triedDuties.get(i).size() != ilpSolution.getUnscheduledPerWeekday().get(i).size()) {
-				allDutiesTried = false;
-			}
-		}
-		while (!allDutiesTried) {
-			allDutiesTried = true;
+		List<Schedule> schedulesCopy = this.createSchedulesCopies();
+		
+		for (int n = 0; n < 100; n++) {// Trials
+			schedulesCopy = this.createSchedulesCopies();
+			ArrayList<Set<Duty>> duplicatesTaken = new ArrayList<>();
+			ArrayList<Set<Duty>> insertedDuties = new ArrayList<>();
 			for (int i = 0; i < 7; i++) {
-				if (triedDuties.get(i).size() != ilpSolution.getUnscheduledPerWeekday().get(i).size()) {
-					allDutiesTried = false;
-				}
+				Set<Duty> dutiesTaken = new HashSet<>();
+				Set<Duty> dutiesInserted = new HashSet<>();
+				duplicatesTaken.add(dutiesTaken);
+				insertedDuties.add(dutiesInserted);
 			}
-			int i = (int) (Math.random() * 7);
-			for (Duty toInsert : ilpSolution.getUnscheduledPerWeekday().get(i)) {
-				triedDuties.get(i).add(toInsert);
-				if (!insertedDuties.get(i).contains(toInsert)) {
-					for (Duty toDelete : duplicatesCopy.get(i)) {
-						if (!insertedDuties.get(i).contains(toInsert) && toInsert.getType().equals(toDelete.getType())
-								&& !duplicatesTaken.get(i).contains(toDelete)) {
-							List<Schedule> schedulesChecked = new ArrayList<>();
-							while (schedulesChecked.size() != ilpSolution.getSchedules().size()) {
-								int random = (int) (Math.random() * ilpSolution.getSchedules().size());
 
-								if (!schedulesChecked.contains(ilpSolution.getSchedules().get(random))) {
-									schedulesChecked.add(ilpSolution.getSchedules().get(random));
-									int[] scheduleArray = ilpSolution.getSchedules().get(random).getSchedule();
+			int tries = 0;
+			while (missingDuties(schedulesCopy) > 0 && tries < 10000) {
+				int i = (int) (Math.random() * 7); // Pick a random weekday
+				if (ilpSolution.getUnscheduledPerWeekday().get(i).size() > 0) {
+					int insertNr = (int) (Math.random() * ilpSolution.getUnscheduledPerWeekday().get(i).size());
+					Duty toInsert = ilpSolution.getUnscheduledPerWeekday().get(i).get(insertNr);
+					if (!insertedDuties.get(i).contains(toInsert)) {
+						if (duplicatesCopy.get(i).size() > 0) {
+							int deleteNr = (int) (Math.random() * duplicatesCopy.get(i).size());
+							Duty toDelete = duplicatesCopy.get(i).get(deleteNr); // Pick a random duplicate to delete
+							if (toInsert.getType().equals(toDelete.getType())
+									&& !duplicatesTaken.get(i).contains(toDelete)) {
+								List<Schedule> schedulesChecked = new ArrayList<>();
+								while (schedulesChecked.size() != schedulesCopy.size()) {
+									int random = (int) (Math.random() * schedulesCopy.size());
 
-									for (int t = 0; t < scheduleArray.length / 7; t++) {// Could save time by saving
-																						// where this duplicate is
-																						// located
-										if (!insertedDuties.get(i).contains(toInsert)
-												&& !duplicatesTaken.get(i).contains(toDelete)) {
-											int current = (t * 7) + i;
-											if (scheduleArray[current] == toDelete.getNr()) {
+									if (!schedulesChecked.contains(schedulesCopy.get(random))) {
+										schedulesChecked.add(schedulesCopy.get(random));
+										int[] scheduleArray = schedulesCopy.get(random).getSchedule();
 
-												if (restTimeFeasible(scheduleArray, current, toInsert.getStartTime(),
-														toInsert.getEndTime())) {
-													scheduleArray[t * 7 + i] = toInsert.getNr();
-													// System.out.println("Trying to swap:" + " " + (i) + " " + random +
-													// " "
-													// + toInsert.getNr() + " " + toDelete.getNr());
-													if (scheduleIsFeasible(scheduleArray)) {
-														System.out.println("Swapped:" + " " + (i) + " " + random + " "
-																+ toInsert.getNr() + " " + toDelete.getNr());
-														duplicatesTaken.get(i).add(toDelete);
-														insertedDuties.get(i).add(toInsert);
-													} else {
-														scheduleArray[t * 7 + i] = toDelete.getNr();
+										for (int t = 0; t < scheduleArray.length / 7; t++) {// Could save time by saving
+																							// where this duplicate is
+																							// located
+											if (!insertedDuties.get(i).contains(toInsert)
+													&& !duplicatesTaken.get(i).contains(toDelete)) {
+												int current = (t * 7) + i;
+												if (scheduleArray[current] == toDelete.getNr()) {
+
+													if (restTimeFeasible(scheduleArray, current,
+															toInsert.getStartTime(), toInsert.getEndTime())) {
+														scheduleArray[t * 7 + i] = toInsert.getNr();
+														if (scheduleIsFeasible(scheduleArray)) {
+															// System.out.println("Swapped:" + " " + (i) + " " + random+ " "+ toInsert.getNr() + " " + toDelete.getNr());
+															duplicatesTaken.get(i).add(toDelete);
+															insertedDuties.get(i).add(toInsert);
+														} else {
+															scheduleArray[t * 7 + i] = toDelete.getNr();
+														}
 													}
 												}
 											}
@@ -167,33 +170,40 @@ public class Phase4_AddMissing {
 									}
 								}
 							}
+							tries++;
 						}
 					}
 				}
+
+			}
+			System.out.println(missingDuties(schedulesCopy));
+			if(missingDuties(schedulesCopy) == 0) {
+				break;
 			}
 		}
-
+		return schedulesCopy;
 	}
 
 	public boolean scheduleIsFeasible(int[] schedule) {
 		// 7 feasibility
 		if(!isFeasible7(schedule)) {
-			System.out.println("7 check failed");
+		//	System.out.println("7 check failed");
 			return false;
 		}
 		if(!isFeasible14(schedule)) {
-			System.out.println("14 check failed");
+		//	System.out.println("14 check failed");
 			return false;
 		}
 		return true;
 	}
 	
 	public boolean isFeasible7(int[] schedule) {
-		for (int s = 0; s <= schedule.length - 1; s++) {
+		//Over the whole array (make changes here if you want it to loop over less)
+		for (int s = 0; s <= schedule.length - 1; s++) {// s is the starting day
 			
 			// Don't have to check if it's a rest/ATV day
 			if (schedule[s] != 1 && schedule[s] != 2) {
-				boolean rangeFeasible = false;
+				boolean rangeFeasible = false; //My addition, rest is from the method found in the pricing problem
 				int start = 0;
 				// Get the start time of this duty. We are counting from this point onwards.
 				if (instance.getFromDutyNrToDuty().containsKey(schedule[s])) {
@@ -396,4 +406,104 @@ public class Phase4_AddMissing {
 			return false;
 		}
 	}
+
+	public boolean overTimeFeasible() {
+		return true;
+	}
+	
+	public int calculateCosts(Schedule schedule) {
+		//Array of every week
+		int[] weeklyHours = new int[schedule.getSchedule().length / 7];
+		//For every week
+		for (int i = 0; i < weeklyHours.length; i++) {
+			int totMin = 0;
+			//For all the days in that week 
+			for (int j = 0; j < 7; j++) {
+				if (schedule.getSchedule()[i * 7 + j] == 1 || instance.getFromRDutyNrToRDuty().containsKey(schedule.getSchedule()[i * 7 + j])) {
+					totMin += schedule.getC().getAvgDaysPerWeek() * 60;
+					//ATV/Reserve duty 
+				} else if (instance.getFromDutyNrToDuty().containsKey(schedule.getSchedule()[i * 7 + j])) {
+					totMin += instance.getFromDutyNrToDuty().get(schedule.getSchedule()[i * 7 + j]).getPaidMin();
+					//Paid minutes
+				}
+			}
+			weeklyHours[i] = totMin;
+		}
+		
+		int totMinWorked = 0;		
+		int totOvertime = 0;
+		for (int i = 0; i < weeklyHours.length; i++) {
+			totMinWorked += weeklyHours[i]; //Add the hours worked that week 
+			//Add the hours worked that week 
+			if (totMinWorked > weeklyHours.length * schedule.getC().getAvgDaysPerWeek() * schedule.getC().getAvgHoursPerDay() * 60) {
+				return Integer.MAX_VALUE;
+			}
+			int totMin = 0;
+			for (int j = 0; j < 13; j++) {//Next 13 weeks
+				totMin = weeklyHours[(i+j)%weeklyHours.length];
+			}
+			
+			totOvertime += Math.max(0, totMin - 13 * schedule.getC().getAvgDaysPerWeek() * schedule.getC().getAvgHoursPerDay() * 60);
+		}
+		return totOvertime;
+	}
+	
+	
+	public int missingDuties(List<Schedule> schedulesCopy) {
+		int counter = 0;
+		for (int s = 0; s < 7; s++) {
+			if(s == 0) {
+				for(Duty duty : instance.getSunday()) {
+					int included = 0;
+					for(Schedule schedule : schedulesCopy) {
+						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
+							if(schedule.getSchedule()[(7*w) + s] == duty.getNr()) {
+								included++;
+							}
+						}
+					}
+					if(included < 1) {
+						counter++;
+					}
+				}
+			}
+			else if(s == 6) {
+				for(Duty duty : instance.getSaturday()) {
+					int included = 0;
+					for(Schedule schedule : schedulesCopy) {
+						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
+							if(schedule.getSchedule()[(7*w) + s] == duty.getNr()) {
+								included++;
+							}
+						}
+					}
+					if(included < 1) {
+						counter++;
+					}
+				}
+			}
+			else {
+				for(Duty duty : instance.getWorkingDays()) {
+					int included = 0;
+					for(Schedule schedule : schedulesCopy) {
+						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
+							//System.out.println(duty.getNr() + " " +  schedule.getSchedule()[(7*w) + s]);
+							if(schedule.getSchedule()[(7*w)+ s] == duty.getNr()) {
+								included++;
+							}
+						}
+					}
+					if(included < 1) {
+						counter++;
+					}
+				}
+			}
+		}
+		return counter;
+	}
 }
+	
+	
+
+
+
