@@ -14,12 +14,12 @@ public class DestroyHeuristics {
 				 int dutyDay = random.nextInt(group.getTc());
 				 if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay])){
 					
-					 Request request = new Request(instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay]), group, dutyDay, solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay]);	
+					 Request request = new Request(instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay]), group, dutyDay);	
 					 //System.out.println(request.toString());
 					 solution.removeRequest(request, solution, slots, dutyDay);
 				 }
 				 else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay])) {
-					Request request = new Request(instance.getFromRDutyNrToRDuty().get(solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay]), group, dutyDay, solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay]);	
+					Request request = new Request(instance.getFromRDutyNrToRDuty().get(solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[dutyDay]), group, dutyDay);	
 					// System.out.println(request.toString());
 					solution.removeRequest(request, solution, slots, dutyDay);
 						 

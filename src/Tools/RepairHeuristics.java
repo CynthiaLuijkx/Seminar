@@ -9,18 +9,17 @@ public class RepairHeuristics {
 		this.placements = new ArrayList<Placement>();
 		this.feasCheck = new FeasCheck(instance); 
 		this.penaltiesFeas = new double[6]; //feasibilty7, feasibility14, overTimeFeasible, restTimeFeasible, ATVfeasible, Quarterly
-		this.penaltiesFeas[0] = 1000;
+		this.penaltiesFeas[0] = 10000;
 		this.penaltiesFeas[1] = 1000;
-		this.penaltiesFeas[2] = 10000; //more strict
+		this.penaltiesFeas[2] = 100000; //more strict
 		this.penaltiesFeas[3] = 1000;
-		this.penaltiesFeas[4] = 10000; //more strict
+		this.penaltiesFeas[4] = 100000; //more strict
 		this.penaltiesFeas[5] = 1;
 	}
 	public List<Placement> updatePlacements(Request request, Solution solution, double[] newOvertime){
 		List<Placement> list = new ArrayList<Placement>();
 		for(ContractGroup group: solution.getNewSchedule().keySet()) {
-			
-		for(int i = request.getWeekday(); i < solution.getNewSchedule().get(group).getLSSchedule().getSchedule().length; i+=7) {
+			for(int i = request.getWeekday(); i < solution.getNewSchedule().get(group).getLSSchedule().getSchedule().length; i+=7) {
 			double costOfPlacement = 0;
 			if(solution.getNewSchedule().get(group).getLSSchedule().getSchedule()[i] == 2) {
 				int[] check = solution.getNewSchedule().get(group).getLSSchedule().getSchedule();
@@ -31,21 +30,18 @@ public class RepairHeuristics {
 				checkFeasibility[2] = this.feasCheck.overTimeFeasible(check, request.getGroup());
 				checkFeasibility[3] = this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime());
 				checkFeasibility[4] = this.feasCheck.checkATVDays(check, request.getGroup());
-				//System.out.println(checkFeasibility);
-				
-				double[] changedOverTime = newOvertime;
-				changedOverTime[group.getNr()-1] = this.feasCheck.QuaterlyOvertime(check, group);
 				
 				for(int j =0; j < checkFeasibility.length; j++) {
 					if(checkFeasibility[j] == false) {
 						costOfPlacement += this.penaltiesFeas[j];
 					}
 				}
-				costOfPlacement += changedOverTime[group.getNr()-1];
-				
+				costOfPlacement += newOvertime[group.getNr()-1] - this.feasCheck.QuaterlyOvertime(check, group) ;
+				//System.out.println(costOfPlacement);
+				list.add(new Placement(request, new TimeSlot(group,i), costOfPlacement));
+				check[i] = 2;
 			}
-			list.add(new Placement(request, new TimeSlot(group,i), costOfPlacement));
-			}
+		  }
 		}
 		
 		return list;

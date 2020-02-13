@@ -8,4 +8,5 @@ public class TimeSlot {
 		this.group = c;
 		this.day = t;
 	}
+	
 }

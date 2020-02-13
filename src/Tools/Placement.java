@@ -9,6 +9,7 @@ public class Placement{
 	public Placement(Request request, TimeSlot slot, double cost) {
 		this.request = request;
 		this.timeslot = slot;
+		this.cost = cost;
 		
 	}
 	

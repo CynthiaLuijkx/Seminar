@@ -55,10 +55,10 @@ public class Phase5_ALNS {
 			for(Request request: tempSol.getRequests()) {
 				List<Placement> placements = new ArrayList<Placement>();
 				placements = this.repairHeuristics.updatePlacements(request, tempSol, newOvertime);
-			
 				requestWithPlacements.add(placements);
+				System.out.println(placements.toString());
 			}
-			System.out.println(requestWithPlacements.toString());
+			//System.out.println(requestWithPlacements.toString());
 			n++;
 		}
 		return new Solution(null, this.globalSchedule, instance);

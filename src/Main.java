@@ -81,7 +81,7 @@ public class Main
 		}
 		
 		int iterations_phase5 = 1; 
-		Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, con3_Schedules, 0); 
+		Phase5_ALNS alns = new Phase5_ALNS(iterations_phase5, instance, con3_Schedules, 0); 
 		
 //		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
 //		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
