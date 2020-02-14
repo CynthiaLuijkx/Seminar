@@ -131,11 +131,6 @@ public class PricingProblem_Phase3
 								Pulse newPulse = new Pulse(curPulse.getRedCosts() + curArc.getData().getDualCosts(), curPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
 										schedule, newDuties, curPulse);
 								// If final node, store the pulse that is (potentially) feasible
-//								for (DirectedGraphArc<Node, ArcData> outArc : graph.getOutArcs(curArc.getTo())) {
-//									if (!newPulse.getDuties().get(outArc.getTo().getDayNr()%7).contains(outArc.getTo().getDutyNr())) {
-//										this.pulse(graph, c, outArc, newPulse);
-//									}
-//								}
 								Set<DirectedGraphArc<Node, ArcData>> evaluated = new HashSet<>();
 								int nArcs = graph.getOutArcs(curArc.getTo()).size();
 								while (evaluated.size() < nArcs) {
@@ -151,12 +146,6 @@ public class PricingProblem_Phase3
 								}
 							}
 						}
-						else {
-							System.out.println("Specific overtime");
-						}
-					}
-					else {
-						System.out.println("Overtime");
 					}
 				}
 			}
