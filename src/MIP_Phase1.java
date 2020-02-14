@@ -47,6 +47,7 @@ public class MIP_Phase1
 	private Set<IloNumVar> consecutiveRest;
 	private Set<IloNumVar> earlyToLate;
 	private Set<IloNumVar> partTime;
+	private Set<IloNumVar> fivePerWeek;
 	
 	//Output
 	private final HashMap<ContractGroup, String[]> solution;
@@ -78,9 +79,9 @@ public class MIP_Phase1
 		initConstraint2(); //All combinations ticked off 
 		initConstraint3(); //Max one meal duty per two weeks
 		initConstraint4(); //ATV duties 
-		initConstraint5(); //Rest of 11 hours
+		initConstraint5(); //Rest of 11 hours violations
 		initConstraint6(); //Minimum of one rest day per two weeks
-		initConstraint7(); //Rest of 32 hours
+		initConstraint7(); //Rest of 32 hours violations
 		initConstraint8(); //Sunday maximum 
 		initConstraint9(); //3 day violations
 		
@@ -93,6 +94,7 @@ public class MIP_Phase1
 		initSoft6(); //Min consecutive rest + ATV 
 		initSoft7(); //Early to late duty 
 		initSoft8(); //Parttimers should work as little other duties as possible 
+		initSoft9(); //Maximum of 5 duties per calendar week 
 		
 		initObjective();
 		
@@ -200,6 +202,7 @@ public class MIP_Phase1
 		this.consecutiveRest = new HashSet<>();
 		this.earlyToLate = new HashSet<>();
 		this.partTime = new HashSet<>();
+		this.fivePerWeek = new HashSet<>();
 	}
 	
 	public void initConstraint1() throws IloException { //Max one duty per day
@@ -624,9 +627,9 @@ public class MIP_Phase1
 
 				for (Integer day : daysToCover) { // Sum over all days
 					for (IloNumVar decVar : this.daysPerGroup.get(group).get(day)) {
-					//	if (!this.decVarToCombination.get(decVar).getType().equals("ATV")) { // Exclude ATV days
+						if (!this.decVarToCombination.get(decVar).getType().equals("ATV")) { // Exclude ATV days
 							constraint.addTerm(decVar, 1);
-					//	}
+						}
 					}
 				}
 				// Add the penalty
@@ -905,6 +908,29 @@ public class MIP_Phase1
 		}
 	}
 	
+	public void initSoft9() throws IloException { // Max 5 duties per calendar week
+		for (ContractGroup group : this.instance.getContractGroups()) {// For all contract groups
+			for (int s = 0; s < group.getTc()/7; s++) { // For all weeks
+
+				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+
+				for(int t = 7*s; t < (7*s)+7; t++) {// Sum over all days of the week
+					for (IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {
+							constraint.addTerm(decVar, 1);
+					}
+				
+				}
+				// Add the penalty
+				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE, IloNumVarType.Int);
+				penalty.setName(group.groupNumberToString() + "MaxDuties_W" + s);
+				this.fivePerWeek.add(penalty);
+
+				constraint.addTerm(penalty, -1);
+				this.cplex.addLe(constraint, 5, group.groupNumberToString() + "MaxDuties_W" + s);
+			}
+		}
+	}
+	
 	public void initObjective() throws IloException {
 		//Edit this later 
 		IloLinearNumExpr objective = this.cplex.linearNumExpr();
@@ -936,6 +962,9 @@ public class MIP_Phase1
 		
 		for(IloNumVar pt : this.partTime) {
 			objective.addTerm(pt, -penalties.getPartTimeParam());
+		}
+		for(IloNumVar five : this.fivePerWeek) {
+			objective.addTerm(five,  -penalties.getFivePerWeekParam());
 		}
 		
 		this.cplex.addMaximize(objective);
