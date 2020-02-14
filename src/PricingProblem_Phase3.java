@@ -3,6 +3,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import Tools.ArcData;
@@ -30,7 +31,9 @@ public class PricingProblem_Phase3
 	
 	private Set<Schedule> finalSchedules;
 	
-	private int maxSchedules = 5;
+	private int maxSchedules = 1;
+	
+	private Random random;
 	
 	public PricingProblem_Phase3(Instance instance, int minBreakBetweenShifts, int consecWeek, int twoWeek) {
 		this.instance = instance;
@@ -38,6 +41,7 @@ public class PricingProblem_Phase3
 		this.consecFreeWeekly = consecWeek;
 		this.freeTwoWeeks = twoWeek;
 		initGraphs();
+		this.random = new Random(1000);
 	}
 	
 	/**
@@ -55,12 +59,34 @@ public class PricingProblem_Phase3
 			}
 			Pulse initPulse = new Pulse(0, 0, new int[instance.getBasicSchedules().get(c).length], initDuties, null);
 			
+			Set<Schedule> toAdd = new HashSet<>();
+			
+//			Node cur = graphs.get(c).getNodes().get(0);
+//			while (graphs.get(c).getOutArcs(cur).size() == 1) {
+//				DirectedGraphArc<Node, ArcData> curArc = graphs.get(c).getOutArcs(cur).get(0);
+//				List<Set<Integer>> newDuties = new ArrayList<>();
+//				int[] schedule = this.copyIntArray(initPulse.getSchedule());
+//				schedule[curArc.getTo().getDayNr()] = curArc.getTo().getDutyNr();
+//				for (int i = 0; i < 7; i++) {
+//					newDuties.add(this.copySet(initPulse.getDuties().get(i)));
+//				}
+//				if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
+//					newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
+//				}
+//				initPulse = new Pulse(initPulse.getRedCosts() + curArc.getData().getDualCosts(), initPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
+//						schedule, newDuties, initPulse);
+//				cur = curArc.getTo();
+//			}
 			// Execute the recursive pulse algorithm
 			for (DirectedGraphArc<Node, ArcData> outArc : graphs.get(c).getOutArcs(graphs.get(c).getNodes().get(0))) {
 				pulse(graphs.get(c), c, outArc, initPulse);
+				for (Schedule sched : finalSchedules) {
+					toAdd.add(sched);
+				}
+				finalSchedules = new HashSet<>();
 			}
 			
-			negRedCostsSchedules.put(c, finalSchedules);
+			negRedCostsSchedules.put(c, toAdd);
 		}
 		
 		return negRedCostsSchedules;
@@ -90,7 +116,7 @@ public class PricingProblem_Phase3
 					// Check whether the overtime will not exceed using basic SP
 					if (curPulse.getTotMinWorked() + curArc.getData().getPaidMin() + this.overtimeSP.get(c).get(graph.getNodes().indexOf(curArc.getTo())) <= maxMin) {
 						// Check whether the overtime will not exceed using the advanced SP
-						Path SP = this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, true, curPulse.getDuties());
+						Path SP = this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, false, curPulse.getDuties());
 						if (SP != null && (curPulse.getTotMinWorked() + curArc.getData().getPaidMin() + SP.getCosts()) <= maxMin) {
 							// Check whether the reduced costs will be negative using the advanced SP
 							SP = this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, true, curPulse.getDuties());
@@ -105,13 +131,32 @@ public class PricingProblem_Phase3
 								Pulse newPulse = new Pulse(curPulse.getRedCosts() + curArc.getData().getDualCosts(), curPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
 										schedule, newDuties, curPulse);
 								// If final node, store the pulse that is (potentially) feasible
-								for (DirectedGraphArc<Node, ArcData> outArc : graph.getOutArcs(curArc.getTo())) {
+//								for (DirectedGraphArc<Node, ArcData> outArc : graph.getOutArcs(curArc.getTo())) {
+//									if (!newPulse.getDuties().get(outArc.getTo().getDayNr()%7).contains(outArc.getTo().getDutyNr())) {
+//										this.pulse(graph, c, outArc, newPulse);
+//									}
+//								}
+								Set<DirectedGraphArc<Node, ArcData>> evaluated = new HashSet<>();
+								int nArcs = graph.getOutArcs(curArc.getTo()).size();
+								while (evaluated.size() < nArcs) {
+									DirectedGraphArc<Node, ArcData> outArc = graph.getOutArcs(curArc.getTo()).get(random.nextInt(nArcs));
 									if (!newPulse.getDuties().get(outArc.getTo().getDayNr()%7).contains(outArc.getTo().getDutyNr())) {
-										this.pulse(graph, c, outArc, newPulse);
+										if (!evaluated.contains(outArc)) {
+											this.pulse(graph, c, outArc, newPulse);
+											evaluated.add(outArc);
+										}
+									} else {
+										evaluated.add(outArc);
 									}
 								}
 							}
 						}
+						else {
+							System.out.println("Specific overtime");
+						}
+					}
+					else {
+						System.out.println("Overtime");
 					}
 				}
 			}
@@ -604,11 +649,11 @@ public class PricingProblem_Phase3
 			System.out.println("Number of Nodes: " + newGraph.getNumberOfNodes());
 			System.out.println("Number of Arcs: " + newGraph.getNumberOfArcs());
 			
-			this.shrinkGraphShortestPath(newGraph, c);
-			
-			System.out.println("Shortest Path Node and Arc Removal: ");
-			System.out.println("Number of Nodes: " + newGraph.getNumberOfNodes());
-			System.out.println("Number of Arcs: " + newGraph.getNumberOfArcs());
+//			this.shrinkGraphShortestPath(newGraph, c);
+//			
+//			System.out.println("Shortest Path Node and Arc Removal: ");
+//			System.out.println("Number of Nodes: " + newGraph.getNumberOfNodes());
+//			System.out.println("Number of Arcs: " + newGraph.getNumberOfArcs());
 			
 			graphs.put(c, newGraph);
 			
