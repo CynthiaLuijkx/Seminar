@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import Tools.*;
@@ -15,17 +16,14 @@ public class Phase4 {
 		this.instance = instance;
 	}
 	
-	public void runILP() throws IloException {
+	public List<Schedule> runILP() throws IloException {
 		long start = System.nanoTime();
 		Phase4_ILP ilp = new Phase4_ILP(this.inputSolution, this.instance);
-		HashMap<Schedule, Double> intSolution = ilp.getSolution();
-		for(Schedule schedule : intSolution.keySet()) {
-			if(intSolution.get(schedule) > 0) {
-				System.out.println(schedule.toString());
-			}
-		}
 		long end = System.nanoTime();
 		System.out.println("ILP runTime: " + (end-start)/1000000000.0);
+		List<Schedule> ilpSolution = ilp.getSolution();
+		Phase4_AddMissing addMissing = new Phase4_AddMissing(ilpSolution, this.instance);
+		return addMissing.getNewSchedules();
 	}
 	
 	public void runRelaxFix() throws IloException {
@@ -86,22 +84,25 @@ public class Phase4 {
 			relaxedSchedules.removeAll(toRemove);
 		}
 		
+		List<Schedule> schedules = new ArrayList<>();
 		int objValue = 0;
 		for(Schedule schedule : fixedSchedules.keySet()) {
 			if(fixedSchedules.get(schedule) == 1) {
 				System.out.println(schedule.toString());
-				objValue = objValue + Math.max(0, schedule.getPlusMin() - schedule.getMinMin());
+				schedules.add(schedule);
+				objValue = objValue + schedule.getOvertime();
 			}
 		}
 		long end = System.nanoTime();
 		System.out.println("Relax&Fix runTime: " + (end-start)/1000000000.0);
 		System.out.println("Objective: " + objValue);
-		
+		Phase4_AddMissing addMissing = new Phase4_AddMissing(schedules, this.instance);		
 	}
 	
 	public void runAllCombinations(String depot) {
 		long start = System.nanoTime();
 		Set<ScheduleCombination> allCombinations = this.getAllCombinations(depot);
+		System.out.println(allCombinations.size());
 		int minimum = Integer.MAX_VALUE;
 		ScheduleCombination minimumCombi = null;
 		for (ScheduleCombination combi : allCombinations) {
@@ -114,12 +115,14 @@ public class Phase4 {
 			}
 		}
 		System.out.println("Objective: " + minimum);
+		List<Schedule> schedules = new ArrayList<>();
 		for (Schedule schedule : minimumCombi.getSchedules()) {
 			System.out.println(schedule.toString());
+			schedules.add(schedule);
 		}
-		
 		long end = System.nanoTime();
 		System.out.println("All Combinations runTime: " + (end-start)/1000000000.0);
+		Phase4_AddMissing addMissing = new Phase4_AddMissing(schedules, this.instance);	
 	}
 	
 	public Set<ScheduleCombination> getAllCombinations(String depot){
@@ -191,11 +194,4 @@ public class Phase4 {
 		return output;
 			
 	}
-
-
-
-
-
 }
-
-

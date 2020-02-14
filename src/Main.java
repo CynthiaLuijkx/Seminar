@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import Tools.Duty;
 import Tools.Instance;
 import Tools.ReserveDutyType;
 import Tools.Schedule;
+import Tools.ScheduleVis;
 import Tools.Violation;
 import ilog.concert.IloException;
 
@@ -22,7 +24,8 @@ public class Main
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
-		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
+		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
+		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
@@ -50,6 +53,7 @@ public class Main
 
 		System.out.println("Instance " + depot + " initialised");
 
+
 		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound, violationBound3Days); 
 		System.out.println("Violations Determined"); 
 
@@ -60,15 +64,24 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() + 17;
+		int numberOfDrivers = instance.getLB() + 20;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
 		
-		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin, restTwoWeek);
-		colGen.executeColumnGeneration();
+		long phase3Start = System.nanoTime();
+		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
+		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+		long phase3End = System.nanoTime();
+		System.out.println("Phase 3 runtime: " + (phase3End-phase3Start)/1000000000.0);
+		
+		int treshold = 0; //bigger than or equal 
+		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
+		List<Schedule> newSchedules = phase4.runILP();
+		new ScheduleVis(newSchedules.get(1).getSchedule(), ""+newSchedules.get(0).getC().getNr() , instance);
+
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets

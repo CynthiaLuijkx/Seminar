@@ -33,14 +33,14 @@ public class Phase3
 	 * This method executes the column generation algorithm.
 	 * @throws IloException
 	 */
-	public void executeColumnGeneration() throws IloException {
+	public HashMap<Schedule, Double> executeColumnGeneration() throws IloException {
 		/*
 		 * Until no more schedules with negative reduced costs:
 		 * 		Solve RMP
 		 * 		Update dual costs on the arcs
 		 * 		Solve the pricing problem
 		 */
-		
+		HashMap<Schedule, Double> solution = new HashMap<>();
 		Set<Schedule> addedSchedules = new HashSet<>();
 		
 		RMP_Phase3 model = new RMP_Phase3(instance);
@@ -56,11 +56,8 @@ public class Phase3
 		int iteration = 1;
 		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, minBreakBetweenShifts, consecFreeWeekly, freeTwoWeeks);
 		
-		long startTotal = System.nanoTime();
-		
 		boolean negRedCosts = true;
 		while (negRedCosts) {
-			
 			model.clean();
 			
 			long start = System.nanoTime();
@@ -105,6 +102,7 @@ public class Phase3
 			// Solve the RMP again
 			model.solve();
 			long end = System.nanoTime();
+
 			System.out.println("-------------------------------------------");
 			System.out.println("Restricted Model:");
 			System.out.println("-------------------------------------------");
@@ -113,6 +111,8 @@ public class Phase3
 			System.out.println("Running time: " + (end-start)/1000000000.0);
 			System.out.println("Of which pricing: " + (intermediate-start)/1000000000.0);
 			System.out.println("Of which RMP: " + (end-intermediate)/1000000000.0);
+			model.makeSolution();
+			solution = model.getSolution();
 			
 			dualValuesContractGroup = model.getDuals2();
 			dualsDuties = model.getDuals1();
@@ -123,10 +123,10 @@ public class Phase3
 			for (int i = 0; i < dualValuesContractGroup.length; i++) {
 				System.out.println(dualValuesContractGroup[i]);
 			}
-
 			iteration++;
+			
 		}
-		long endTotal = System.nanoTime();
-		System.out.println("Terminated in : " + (endTotal - startTotal)/1000000000.0);
+		System.out.println("Terminated");
+		return solution;
 	}
 }

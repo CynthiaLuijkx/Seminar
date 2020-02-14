@@ -13,6 +13,7 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloObjective;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
+import ilog.cplex.IloCplex.UnknownObjectException;
 
 public class RMP_Phase3 {
 
@@ -27,6 +28,9 @@ public class RMP_Phase3 {
 	private final Instance instance; //use the instance
 	private final int penaltyOver; //penalty for overtime
 	private final int penaltyMinus; //penalty for minus hours
+	private final HashMap<IloNumVar, Schedule> varToSchedule; //what schedule corresponds to this IloNumVar
+	
+	private final HashMap<Schedule, Double> solution;
 
 	//Constructor of the class
 	public RMP_Phase3(Instance instance) throws IloException{
@@ -45,12 +49,15 @@ public class RMP_Phase3 {
 		this.dummies2 = new IloNumVar[instance.getContractGroups().size()];
 
 		this.variables = new ArrayList<>();
+		this.varToSchedule = new HashMap<>();
 
 		//add variables, constraints and objective
 		addVariables();
 		addConstraints1();
 		addConstraints2();
 		addObjective();
+		
+		this.solution = new HashMap<>(); 
 
 		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0); //the gap should be closed till it is 0%
 		this.cplex.setOut(null);
@@ -124,7 +131,7 @@ public class RMP_Phase3 {
 	}
 	//Method that creates the objective
 	public void addObjective() throws IloException {
-		double bigNumber = 100;
+		double bigNumber = 100000;
 		IloNumExpr obj = this.cplex.constant(0);
 		//add all dummies with a high cost
 		for (int t = 0; t < this.dummiesDuties.size(); t++) {
@@ -145,7 +152,7 @@ public class RMP_Phase3 {
 			for(Integer dutyNumber: this.dummiesDuties.get(i).keySet()) {
 				IloNumExpr lhs = cplex.constant(0); 
 				lhs = cplex.sum(lhs, this.dummiesDuties.get(i).get(dutyNumber));
-				this.constraints1.get(i).put(dutyNumber, cplex.addEq(1, lhs, "Duty_" + dutyNumber + "_on day_" + i));
+				this.constraints1.get(i).put(dutyNumber, cplex.addGe(lhs, 1, "Duty_" + dutyNumber + "_on day_" + i));
 			}
 		}
 	}
@@ -235,6 +242,7 @@ public class RMP_Phase3 {
 		//add the schedule as a variable
 		IloNumVar var = this.cplex.numVar(column, 0, Double.POSITIVE_INFINITY);
 		this.variables.add(var);
+		this.varToSchedule.put(var, schedule);
 //		this.cplex.exportModel("model.lp");
 	}
 
@@ -260,5 +268,15 @@ public class RMP_Phase3 {
 		}
 
 		return solution1;
+	}
+	
+	public void makeSolution() throws UnknownObjectException, IloException{
+		for(IloNumVar var : this.variables) {
+			this.solution.put(this.varToSchedule.get(var), this.cplex.getValue(var));
+		}
+	}
+	
+	public HashMap<Schedule, Double> getSolution() {
+		return this.solution;
 	}
 }

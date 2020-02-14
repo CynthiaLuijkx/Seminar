@@ -54,9 +54,10 @@ public class PricingProblem_Phase3
 		redCostsSP = new HashMap<ContractGroup, List<Double>>();
 		
 		for (ContractGroup c : instance.getContractGroups()) {
+			Map<Node, Path> distances = this.shortestPathBackward(graphs.get(c), graphs.get(c).getNumberOfNodes()-1, 0, true);
 			List<Double> redCosts = new ArrayList<>();
 			for (int i = 0; i < graphs.get(c).getNumberOfNodes(); i++) {
-				redCosts.add(this.shortestPath(graphs.get(c), i, graphs.get(c).getNumberOfNodes()-1, true).getCosts());
+				redCosts.add(distances.get(graphs.get(c).getNodes().get(i)).getCosts());
 			}
 			redCostsSP.put(c, redCosts);
 		}
@@ -71,22 +72,6 @@ public class PricingProblem_Phase3
 			
 			Set<Schedule> toAdd = new HashSet<>();
 			
-//			Node cur = graphs.get(c).getNodes().get(0);
-//			while (graphs.get(c).getOutArcs(cur).size() == 1) {
-//				DirectedGraphArc<Node, ArcData> curArc = graphs.get(c).getOutArcs(cur).get(0);
-//				List<Set<Integer>> newDuties = new ArrayList<>();
-//				int[] schedule = this.copyIntArray(initPulse.getSchedule());
-//				schedule[curArc.getTo().getDayNr()] = curArc.getTo().getDutyNr();
-//				for (int i = 0; i < 7; i++) {
-//					newDuties.add(this.copySet(initPulse.getDuties().get(i)));
-//				}
-//				if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
-//					newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
-//				}
-//				initPulse = new Pulse(initPulse.getRedCosts() + curArc.getData().getDualCosts(), initPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
-//						schedule, newDuties, initPulse);
-//				cur = curArc.getTo();
-//			}
 			// Execute the recursive pulse algorithm
 			for (DirectedGraphArc<Node, ArcData> outArc : graphs.get(c).getOutArcs(graphs.get(c).getNodes().get(0))) {
 				pulse(graphs.get(c), c, outArc, initPulse);
@@ -465,7 +450,24 @@ public class PricingProblem_Phase3
 		Map<Node, Path> distances = new HashMap<>();
 		
 		// Initialise for the from node
+		List<Node> initPath = new ArrayList<>();
+		initPath.add(graph.getNodes().get(from));
+		distances.put(graph.getNodes().get(from), new Path(0, initPath));
 		
+		// For all nodes, starting from the from node, update the paths
+		for (int i = from; i >= to; i--) {
+			for (DirectedGraphArc<Node, ArcData> inArc : graph.getInArcs(graph.getNodes().get(i))) {
+				if (distances.containsKey(inArc.getTo())) {
+					double newCosts = distances.get(inArc.getTo()).getCosts();
+					newCosts += inArc.getData().getDualCosts();
+					if (!distances.containsKey(inArc.getFrom()) || newCosts < distances.get(inArc.getFrom()).getCosts()) {
+						List<Node> newPath = this.copyNodeList(distances.get(inArc.getTo()).getSchedule());
+						newPath.add(inArc.getFrom());
+						distances.put(inArc.getFrom(), new Path(newCosts, newPath));
+					}
+				}
+			}
+		}
 		
 		return distances;
 	}
