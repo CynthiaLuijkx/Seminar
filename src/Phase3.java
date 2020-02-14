@@ -56,6 +56,8 @@ public class Phase3
 		int iteration = 1;
 		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, minBreakBetweenShifts, consecFreeWeekly, freeTwoWeeks);
 		
+		long startTotal = System.nanoTime();
+		
 		boolean negRedCosts = true;
 		while (negRedCosts) {
 			
@@ -124,6 +126,7 @@ public class Phase3
 
 			iteration++;
 		}
-		System.out.println("Terminated");
+		long endTotal = System.nanoTime();
+		System.out.println("Terminated in : " + (endTotal - startTotal)/1000000000.0);
 	}
 }

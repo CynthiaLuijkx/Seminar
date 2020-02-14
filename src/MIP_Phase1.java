@@ -624,9 +624,10 @@ public class MIP_Phase1
 
 				for (Integer day : daysToCover) { // Sum over all days
 					for (IloNumVar decVar : this.daysPerGroup.get(group).get(day)) {
-						if (!this.decVarToCombination.get(decVar).getType().equals("ATV")) { // Exclude ATV days
-							constraint.addTerm(decVar, 1);
-						}
+//						if (!this.decVarToCombination.get(decVar).getType().equals("ATV")) { // Exclude ATV days
+//							constraint.addTerm(decVar, 1);
+//						}
+						constraint.addTerm(decVar, 1);
 					}
 				}
 				// Add the penalty

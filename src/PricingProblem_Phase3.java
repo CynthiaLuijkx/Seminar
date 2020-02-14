@@ -28,6 +28,7 @@ public class PricingProblem_Phase3
 	
 	private HashMap<ContractGroup, DirectedGraph<Node, ArcData>> graphs;
 	private HashMap<ContractGroup, List<Double>> overtimeSP;
+	private HashMap<ContractGroup, List<Double>> redCostsSP;
 	
 	private Set<Schedule> finalSchedules;
 	
@@ -50,6 +51,15 @@ public class PricingProblem_Phase3
 	 */
 	public Map<ContractGroup, Set<Schedule>> executePulse() {
 		Map<ContractGroup, Set<Schedule>> negRedCostsSchedules = new HashMap<ContractGroup, Set<Schedule>>();
+		redCostsSP = new HashMap<ContractGroup, List<Double>>();
+		
+		for (ContractGroup c : instance.getContractGroups()) {
+			List<Double> redCosts = new ArrayList<>();
+			for (int i = 0; i < graphs.get(c).getNumberOfNodes(); i++) {
+				redCosts.add(this.shortestPath(graphs.get(c), i, graphs.get(c).getNumberOfNodes()-1, true).getCosts());
+			}
+			redCostsSP.put(c, redCosts);
+		}
 		
 		for (ContractGroup c : instance.getContractGroups()) {
 			List<Set<Integer>> initDuties = new ArrayList<>();
@@ -116,37 +126,39 @@ public class PricingProblem_Phase3
 					// Check whether the overtime will not exceed using basic SP
 					if (curPulse.getTotMinWorked() + curArc.getData().getPaidMin() + this.overtimeSP.get(c).get(graph.getNodes().indexOf(curArc.getTo())) <= maxMin) {
 						// Check whether the overtime will not exceed using the advanced SP
-						Path SP = this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, false, curPulse.getDuties());
-						if (SP != null && (curPulse.getTotMinWorked() + curArc.getData().getPaidMin() + SP.getCosts()) <= maxMin) {
-							// Check whether the reduced costs will be negative using the advanced SP
-							SP = this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, true, curPulse.getDuties());
-							if (SP != null && (curPulse.getRedCosts() + curArc.getData().getDualCosts() + SP.getCosts()) < 0) {
-								List<Set<Integer>> newDuties = new ArrayList<>();
-								for (int i = 0; i < 7; i++) {
-									newDuties.add(this.copySet(curPulse.getDuties().get(i)));
-								}
-								if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
-									newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
-								}
-								Pulse newPulse = new Pulse(curPulse.getRedCosts() + curArc.getData().getDualCosts(), curPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
-										schedule, newDuties, curPulse);
-								// If final node, store the pulse that is (potentially) feasible
-//								for (DirectedGraphArc<Node, ArcData> outArc : graph.getOutArcs(curArc.getTo())) {
-//									if (!newPulse.getDuties().get(outArc.getTo().getDayNr()%7).contains(outArc.getTo().getDutyNr())) {
-//										this.pulse(graph, c, outArc, newPulse);
+						if (curPulse.getRedCosts() + curArc.getData().getDualCosts() + this.redCostsSP.get(c).get(graph.getNodes().indexOf(curArc.getTo())) < 0) {
+							Path SP = this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, false, curPulse.getDuties());
+							if (SP != null && (curPulse.getTotMinWorked() + curArc.getData().getPaidMin() + SP.getCosts()) <= maxMin) {
+								// Check whether the reduced costs will be negative using the advanced SP
+								SP = this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, true, curPulse.getDuties());
+								if (SP != null && (curPulse.getRedCosts() + curArc.getData().getDualCosts() + SP.getCosts()) < 0) {
+									List<Set<Integer>> newDuties = new ArrayList<>();
+									for (int i = 0; i < 7; i++) {
+										newDuties.add(this.copySet(curPulse.getDuties().get(i)));
+									}
+									if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
+										newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
+									}
+									Pulse newPulse = new Pulse(curPulse.getRedCosts() + curArc.getData().getDualCosts(), curPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
+											schedule, newDuties, curPulse);
+									// If final node, store the pulse that is (potentially) feasible
+//									for (DirectedGraphArc<Node, ArcData> outArc : graph.getOutArcs(curArc.getTo())) {
+//										if (!newPulse.getDuties().get(outArc.getTo().getDayNr()%7).contains(outArc.getTo().getDutyNr())) {
+//											this.pulse(graph, c, outArc, newPulse);
+//										}
 //									}
-//								}
-								Set<DirectedGraphArc<Node, ArcData>> evaluated = new HashSet<>();
-								int nArcs = graph.getOutArcs(curArc.getTo()).size();
-								while (evaluated.size() < nArcs) {
-									DirectedGraphArc<Node, ArcData> outArc = graph.getOutArcs(curArc.getTo()).get(random.nextInt(nArcs));
-									if (!newPulse.getDuties().get(outArc.getTo().getDayNr()%7).contains(outArc.getTo().getDutyNr())) {
-										if (!evaluated.contains(outArc)) {
-											this.pulse(graph, c, outArc, newPulse);
+									Set<DirectedGraphArc<Node, ArcData>> evaluated = new HashSet<>();
+									int nArcs = graph.getOutArcs(curArc.getTo()).size();
+									while (evaluated.size() < nArcs) {
+										DirectedGraphArc<Node, ArcData> outArc = graph.getOutArcs(curArc.getTo()).get(random.nextInt(nArcs));
+										if (!newPulse.getDuties().get(outArc.getTo().getDayNr()%7).contains(outArc.getTo().getDutyNr())) {
+											if (!evaluated.contains(outArc)) {
+												this.pulse(graph, c, outArc, newPulse);
+												evaluated.add(outArc);
+											}
+										} else {
 											evaluated.add(outArc);
 										}
-									} else {
-										evaluated.add(outArc);
 									}
 								}
 							}
@@ -447,6 +459,15 @@ public class PricingProblem_Phase3
 		}
 		
 		return false;
+	}
+	
+	public Map<Node, Path> shortestPathBackward(DirectedGraph<Node, ArcData> graph, int from, int to, boolean costs) {
+		Map<Node, Path> distances = new HashMap<>();
+		
+		// Initialise for the from node
+		
+		
+		return distances;
 	}
 	
 	/**
