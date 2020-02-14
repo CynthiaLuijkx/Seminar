@@ -25,8 +25,8 @@ public class Main
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
-		double violationBound = 0.7;
-		double violationBound3Days = 0.7;
+		double violationBound = 0.3;
+		double violationBound3Days = 0.3;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
@@ -62,19 +62,19 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() +16;
+		int numberOfDrivers = instance.getLB() +20;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
 		
-		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin, restTwoWeek);
-		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
+		colGen.executeColumnGeneration();
 		
 		int treshold = 0; //bigger than or equal 
-		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
-		phase4.runILP();
+		//Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
+		//phase4.runILP();
 		//phase4.runRelaxFix();
 		//phase4.runAllCombinations(depot);
 	}

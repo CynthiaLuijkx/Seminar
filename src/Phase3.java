@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +33,7 @@ public class Phase3
 	 * This method executes the column generation algorithm.
 	 * @throws IloException
 	 */
-	public HashMap<Schedule, Double> executeColumnGeneration() throws IloException {
+	public void executeColumnGeneration() throws IloException {
 		/*
 		 * Until no more schedules with negative reduced costs:
 		 * 		Solve RMP
@@ -104,12 +105,15 @@ public class Phase3
 			System.out.println("Of which RMP: " + (end-intermediate)/1000000000.0);
 			
 			dualValuesContractGroup = model.getDuals2();
+			for(int i = 0; i < dualValuesContractGroup.length; i++) {
+				System.out.println(dualValuesContractGroup[i]);
+			}
 			dualsDuties = model.getDuals1();
+			
+			ArrayList<Double> solDummies1 = model.getSolutionDummies2();
+			ArrayList<ArrayList<Double>> solDummiesDuties = model.getSolutionDummiesDuties();
 
 			iteration++;
 		}
-		
-		model.makeSolution();
-		return model.getSolution();
 	}
 }
