@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -62,7 +63,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() +20;
+		int numberOfDrivers = instance.getLB() +18;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
@@ -70,13 +71,12 @@ public class Main
 		instance.setBasicSchedules(mip.getSolution());
 		
 		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
-		colGen.executeColumnGeneration();
+		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
 		
 		int treshold = 0; //bigger than or equal 
-		//Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
-		//phase4.runILP();
-		//phase4.runRelaxFix();
-		//phase4.runAllCombinations(depot);
+		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
+		List<Schedule> newSchedules = phase4.runILP();
+
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
