@@ -33,14 +33,14 @@ public class Phase3
 	 * This method executes the column generation algorithm.
 	 * @throws IloException
 	 */
-	public void executeColumnGeneration() throws IloException {
+	public HashMap<Schedule, Double> executeColumnGeneration() throws IloException {
 		/*
 		 * Until no more schedules with negative reduced costs:
 		 * 		Solve RMP
 		 * 		Update dual costs on the arcs
 		 * 		Solve the pricing problem
 		 */
-		
+		HashMap<Schedule, Double> solution = new HashMap<>();
 		Set<Schedule> addedSchedules = new HashSet<>();
 		
 		RMP_Phase3 model = new RMP_Phase3(instance);
@@ -58,6 +58,8 @@ public class Phase3
 		
 		boolean negRedCosts = true;
 		while (negRedCosts) {
+			model.clean();
+			
 			long start = System.nanoTime();
 			negRedCosts = false;
 			System.out.println("-------------------------------------------");
@@ -75,7 +77,7 @@ public class Phase3
 				for (Schedule curSchedule : newSchedules.get(c)) {
 					if (!addedSchedules.contains(curSchedule)) {
 						addedSchedules.add(curSchedule);
-						model.addSchedule(curSchedule);
+//						model.addSchedule(curSchedule);
 						count++;
 					}
 				}
@@ -90,11 +92,17 @@ public class Phase3
 				break;
 			}
 			
+			model = new RMP_Phase3(instance);
+			for (Schedule toAdd : addedSchedules) {
+				model.addSchedule(toAdd);
+			}
+			
 			long intermediate = System.nanoTime();
 			
 			// Solve the RMP again
 			model.solve();
 			long end = System.nanoTime();
+
 			System.out.println("-------------------------------------------");
 			System.out.println("Restricted Model:");
 			System.out.println("-------------------------------------------");
@@ -103,17 +111,22 @@ public class Phase3
 			System.out.println("Running time: " + (end-start)/1000000000.0);
 			System.out.println("Of which pricing: " + (intermediate-start)/1000000000.0);
 			System.out.println("Of which RMP: " + (end-intermediate)/1000000000.0);
+			model.makeSolution();
+			solution = model.getSolution();
 			
 			dualValuesContractGroup = model.getDuals2();
-			for(int i = 0; i < dualValuesContractGroup.length; i++) {
-				System.out.println(dualValuesContractGroup[i]);
-			}
 			dualsDuties = model.getDuals1();
 			
 			ArrayList<Double> solDummies1 = model.getSolutionDummies2();
 			ArrayList<ArrayList<Double>> solDummiesDuties = model.getSolutionDummiesDuties();
-
+			
+			for (int i = 0; i < dualValuesContractGroup.length; i++) {
+				System.out.println(dualValuesContractGroup[i]);
+			}
 			iteration++;
+			
 		}
+		System.out.println("Terminated");
+		return solution;
 	}
 }
