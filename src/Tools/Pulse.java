@@ -14,7 +14,7 @@ public class Pulse
 	private final double redCosts;
 	private final int totMinWorked;
 	private final int[] schedule;
-	private final List<Set<Node>> duties;
+	private final List<Set<Integer>> duties;
 	private final Pulse prevPulse;
 	
 	/**
@@ -25,7 +25,7 @@ public class Pulse
 	 * @param duties					the duties included in the pulse schedule
 	 * @param prevPulse					the previous pulse
 	 */
-	public Pulse(double redCosts, int totMinWorked, int[] schedule, List<Set<Node>> duties, Pulse prevPulse) {
+	public Pulse(double redCosts, int totMinWorked, int[] schedule, List<Set<Integer>> duties, Pulse prevPulse) {
 		this.redCosts = redCosts;
 		this.totMinWorked = totMinWorked;
 		this.schedule = schedule;
@@ -45,7 +45,7 @@ public class Pulse
 		return schedule;
 	}
 
-	public List<Set<Node>> getDuties() {
+	public List<Set<Integer>> getDuties() {
 		return duties;
 	}
 	

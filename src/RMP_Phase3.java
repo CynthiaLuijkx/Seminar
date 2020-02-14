@@ -62,8 +62,8 @@ public class RMP_Phase3 {
 		//this.cplex.exportModel("model.lp");
 		this.cplex.solve();
 		//Some printing
-//		System.out.println(cplex.getModel());
-//		System.out.println(cplex.getObjValue());
+		//		System.out.println(cplex.getModel());
+		//		System.out.println(cplex.getObjValue());
 		/*ArrayList<ArrayList<Double>> solution = getSolutionDummiesDuties();
 		ArrayList<ArrayList<Double>> solutionReserve = getSolutionDummiesReserve();
 		ArrayList<Double> solutionATV = getSolutionDummiesATV();
@@ -124,7 +124,7 @@ public class RMP_Phase3 {
 	}
 	//Method that creates the objective
 	public void addObjective() throws IloException {
-		double bigNumber = 1000000;
+		double bigNumber = 100;
 		IloNumExpr obj = this.cplex.constant(0);
 		//add all dummies with a high cost
 		for (int t = 0; t < this.dummiesDuties.size(); t++) {
@@ -145,7 +145,7 @@ public class RMP_Phase3 {
 			for(Integer dutyNumber: this.dummiesDuties.get(i).keySet()) {
 				IloNumExpr lhs = cplex.constant(0); 
 				lhs = cplex.sum(lhs, this.dummiesDuties.get(i).get(dutyNumber));
-				this.constraints1.get(i).put(dutyNumber, cplex.addEq(1, lhs));
+				this.constraints1.get(i).put(dutyNumber, cplex.addEq(1, lhs, "Duty " + dutyNumber + " on day " + i));
 			}
 		}
 	}
@@ -154,7 +154,7 @@ public class RMP_Phase3 {
 		for (int c = 0; c < this.dummies2.length; c++) {
 			IloNumExpr lhs = cplex.constant(0); 
 			lhs = cplex.sum(lhs, this.dummies2[c]);
-			this.constraints2[c] = cplex.addEq(lhs, 1);	
+			this.constraints2[c] = cplex.addEq(lhs, 1, "Contractgroup " + c);	
 		}
 	}
 	//Method that returns the dual values of the first type of constraints;
@@ -186,7 +186,7 @@ public class RMP_Phase3 {
 	public void addSchedule(Schedule schedule) throws IloException {
 		//add to the objective the cost corresponding to the schedule
 		//we add cost of overtime + minus time + contract time
-		IloColumn column = this.cplex.column(this.obj, schedule.getOvertime() * this.penaltyOver);
+		IloColumn column = this.cplex.column(this.obj, schedule.getOvertime() * this.penaltyOver - 1);
 
 		//for every day in the schedule, add the coefficient to the corresponding constraint of the duty that is schedules on that day
 		for(int t = 0; t < schedule.getSchedule().length; t++) {
@@ -238,27 +238,27 @@ public class RMP_Phase3 {
 		this.cplex.exportModel("model.lp");
 	}
 
-	/*public ArrayList<ArrayList<Double>> getSolutionDummiesDuties() throws IloException {
+	public ArrayList<ArrayList<Double>> getSolutionDummiesDuties() throws IloException {
 
 		ArrayList<ArrayList<Double>> solution1 = new ArrayList<ArrayList<Double>>();
 
 		for (int t = 0; t < this.dummiesDuties.size(); t++) {
 			solution1.add(new ArrayList<Double>());
 			for(Integer dutyNumber: this.dummiesDuties.get(t).keySet()) {
-			solution1.get(t).add(this.cplex.getValue(this.dummiesDuties.get(t).get(dutyNumber)));
+				solution1.get(t).add(this.cplex.getValue(this.dummiesDuties.get(t).get(dutyNumber)));
+			}
 		}
-	 }
 		return solution1;
 	}
 
 
-public ArrayList<Double> getSolutionDummies2() throws IloException {
+	public ArrayList<Double> getSolutionDummies2() throws IloException {
 
-	ArrayList<Double> solution1 = new ArrayList<Double>();
-	for (int t = 0; t < this.dummies2.length; t++) {
-		solution1.add(this.cplex.getValue(this.dummies2[t]));
+		ArrayList<Double> solution1 = new ArrayList<Double>();
+		for (int t = 0; t < this.dummies2.length; t++) {
+			solution1.add(this.cplex.getValue(this.dummies2[t]));
+		}
+
+		return solution1;
 	}
-
-	return solution1;
-}*/
 }

@@ -24,8 +24,8 @@ public class Main
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restTwoWeek = 72 * 60;
-		double violationBound = 0.7;
-		double violationBound3Days = 0.9;
+		double violationBound = 0.3;
+		double violationBound3Days = 0.3;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
@@ -60,7 +60,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getUB();
+		int numberOfDrivers = instance.getLB() + 20;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
@@ -69,16 +69,6 @@ public class Main
 		
 		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin, restTwoWeek);
 		colGen.executeColumnGeneration();
-		
-		for(Schedule schedule : solution.keySet()) {
-			System.out.println(solution.get(schedule) + " " + schedule.toString());
-		}
-		
-		int treshold = 0; //bigger than or equal 
-		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
-		//phase4.runILP();
-		//phase4.runRelaxFix();
-		phase4.runAllCombinations(depot);
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets

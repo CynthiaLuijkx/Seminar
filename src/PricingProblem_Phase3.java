@@ -30,7 +30,7 @@ public class PricingProblem_Phase3
 	
 	private Set<Schedule> finalSchedules;
 	
-	private int maxSchedules = 1;
+	private int maxSchedules = 5;
 	
 	public PricingProblem_Phase3(Instance instance, int minBreakBetweenShifts, int consecWeek, int twoWeek) {
 		this.instance = instance;
@@ -48,7 +48,7 @@ public class PricingProblem_Phase3
 		Map<ContractGroup, Set<Schedule>> negRedCostsSchedules = new HashMap<ContractGroup, Set<Schedule>>();
 		
 		for (ContractGroup c : instance.getContractGroups()) {
-			List<Set<Node>> initDuties = new ArrayList<>();
+			List<Set<Integer>> initDuties = new ArrayList<>();
 			finalSchedules = new HashSet<>();
 			for (int i = 0; i < 7; i++) {
 				initDuties.add(new HashSet<>());
@@ -90,13 +90,18 @@ public class PricingProblem_Phase3
 					// Check whether the overtime will not exceed using basic SP
 					if (curPulse.getTotMinWorked() + curArc.getData().getPaidMin() + this.overtimeSP.get(c).get(graph.getNodes().indexOf(curArc.getTo())) <= maxMin) {
 						// Check whether the overtime will not exceed using the advanced SP
-						if (curPulse.getTotMinWorked() + curArc.getData().getPaidMin() + 
-								this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, false, curPulse.getDuties()).getCosts() <= maxMin) {
+						Path SP = this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, true, curPulse.getDuties());
+						if (SP != null && (curPulse.getTotMinWorked() + curArc.getData().getPaidMin() + SP.getCosts()) <= maxMin) {
 							// Check whether the reduced costs will be negative using the advanced SP
-							if (curPulse.getRedCosts() + curArc.getData().getDualCosts() + 
-									this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, true, curPulse.getDuties()).getCosts() < 0) {
-								List<Set<Node>> newDuties = curPulse.getDuties();
-								newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo());
+							SP = this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, true, curPulse.getDuties());
+							if (SP != null && (curPulse.getRedCosts() + curArc.getData().getDualCosts() + SP.getCosts()) < 0) {
+								List<Set<Integer>> newDuties = new ArrayList<>();
+								for (int i = 0; i < 7; i++) {
+									newDuties.add(this.copySet(curPulse.getDuties().get(i)));
+								}
+								if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
+									newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
+								}
 								Pulse newPulse = new Pulse(curPulse.getRedCosts() + curArc.getData().getDualCosts(), curPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
 										schedule, newDuties, curPulse);
 								// If final node, store the pulse that is (potentially) feasible
@@ -439,7 +444,7 @@ public class PricingProblem_Phase3
 		return distances.get(graph.getNodes().get(to));
 	}
 	
-	public Path shortestPath(DirectedGraph<Node, ArcData> graph, int from, int to, boolean costs, List<Set<Node>> forbidden) {
+	public Path shortestPath(DirectedGraph<Node, ArcData> graph, int from, int to, boolean costs, List<Set<Integer>> forbidden) {
 		Map<Node, Path> distances = new HashMap<>();
 		
 		// Initialise for the from node
@@ -521,7 +526,7 @@ public class PricingProblem_Phase3
 							if (prevNode.getDutyNr() == 1) {
 								newGraph.addArc(prevNode, newNode, new ArcData(0, (int) Math.ceil(c.getAvgHoursPerDay() * 60)));
 							} else if (prevNode.getDutyNr() == 2) {
-								newGraph.addArc(prevNode, newNode, new ArcData(0, 0));
+								newGraph.addArc(prevNode, newNode, new ArcData(0, (int) Math.ceil(c.getAvgHoursPerDay() * 60)));
 							} else if (instance.getFromRDutyNrToRDuty().containsKey(prevNode.getDutyNr())) {
 								// Check the 11 hour constraint
 								if (instance.getFromRDutyNrToRDuty().get(newNode.getDutyNr()).getStartTime() + 
@@ -555,7 +560,7 @@ public class PricingProblem_Phase3
 						
 						for (Node prevNode : newGraph.getNodes()) {
 							if (prevNode.equals(source) && t == 0) {
-								newGraph.addArc(prevNode, newNode, new ArcData(0, (int) Math.ceil(c.getAvgHoursPerDay() * 60)));
+								newGraph.addArc(prevNode, newNode, new ArcData(0, duty.getPaidMin()));
 							} else if (prevNode.getDayNr() == t - 1) {
 								if (prevNode.getDutyNr() == 1 || prevNode.getDutyNr() == 2) {
 									// Always add from an ATV or rest day
