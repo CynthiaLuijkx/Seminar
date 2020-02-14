@@ -186,7 +186,7 @@ public class RMP_Phase3 {
 	public void addSchedule(Schedule schedule) throws IloException {
 		//add to the objective the cost corresponding to the schedule
 		//we add cost of overtime + minus time + contract time
-		IloColumn column = this.cplex.column(this.obj, schedule.getOvertime() * this.penaltyOver - 1);
+		IloColumn column = this.cplex.column(this.obj, schedule.getOvertime() * this.penaltyOver);
 
 		//for every day in the schedule, add the coefficient to the corresponding constraint of the duty that is schedules on that day
 		for(int t = 0; t < schedule.getSchedule().length; t++) {

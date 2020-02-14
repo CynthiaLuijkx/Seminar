@@ -31,7 +31,7 @@ public class PricingProblem_Phase3
 	
 	private Set<Schedule> finalSchedules;
 	
-	private int maxSchedules = 5;
+	private int maxSchedules = 1;
 	
 	private Random random;
 	
@@ -131,11 +131,11 @@ public class PricingProblem_Phase3
 								Pulse newPulse = new Pulse(curPulse.getRedCosts() + curArc.getData().getDualCosts(), curPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
 										schedule, newDuties, curPulse);
 								// If final node, store the pulse that is (potentially) feasible
-								for (DirectedGraphArc<Node, ArcData> outArc : graph.getOutArcs(curArc.getTo())) {
-									if (!newPulse.getDuties().get(outArc.getTo().getDayNr()%7).contains(outArc.getTo().getDutyNr())) {
-										this.pulse(graph, c, outArc, newPulse);
-									}
-								}
+//								for (DirectedGraphArc<Node, ArcData> outArc : graph.getOutArcs(curArc.getTo())) {
+//									if (!newPulse.getDuties().get(outArc.getTo().getDayNr()%7).contains(outArc.getTo().getDutyNr())) {
+//										this.pulse(graph, c, outArc, newPulse);
+//									}
+//								}
 								Set<DirectedGraphArc<Node, ArcData>> evaluated = new HashSet<>();
 								int nArcs = graph.getOutArcs(curArc.getTo()).size();
 								while (evaluated.size() < nArcs) {
