@@ -16,16 +16,14 @@ public class Phase4 {
 		this.instance = instance;
 	}
 	
-	public void runILP() throws IloException {
+	public List<Schedule> runILP() throws IloException {
 		long start = System.nanoTime();
 		Phase4_ILP ilp = new Phase4_ILP(this.inputSolution, this.instance);
 		long end = System.nanoTime();
 		System.out.println("ILP runTime: " + (end-start)/1000000000.0);
 		List<Schedule> ilpSolution = ilp.getSolution();
-		for(Schedule schedule : ilpSolution) {
-			System.out.println(schedule.toString());
-		}
 		Phase4_AddMissing addMissing = new Phase4_AddMissing(ilpSolution, this.instance);
+		return addMissing.getNewSchedules();
 	}
 	
 	public void runRelaxFix() throws IloException {
