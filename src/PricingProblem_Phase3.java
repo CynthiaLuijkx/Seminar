@@ -421,12 +421,20 @@ public class PricingProblem_Phase3
 							consec += Math.min(start, instance.getFromRDutyNrToRDuty().get(schedule[(t+14)%schedule.length]).getStartTime());
 						}
 					} else {
-						if (schedule[(t+i+1)%schedule.length] == 1 || schedule[(t+i+1)%schedule.length] == 2) {
-							consec += 24 * 60;
-						} else if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i+1)%schedule.length])) {
+						if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i+1)%schedule.length])) {
 							consec += instance.getFromDutyNrToDuty().get(schedule[(t+i+1)%schedule.length]).getStartTime();
-						} else {
+						} else if (instance.getFromRDutyNrToRDuty().containsKey(schedule[(t+i+1)%schedule.length])) {
 							consec += instance.getFromRDutyNrToRDuty().get(schedule[(t+i+1)%schedule.length]).getStartTime();
+						} else {
+							int j = 1;
+							while (schedule[(t+i+j)%schedule.length] == 1 || schedule[(t+i+j)%schedule.length] == 2) {
+								if (i+j == 13) {
+									consec += start;
+									break;
+								}
+								consec += 24 * 60;
+								j++;
+							}
 						}
 					}
 					
