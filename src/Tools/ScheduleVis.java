@@ -192,6 +192,7 @@ public class ScheduleVis extends JPanel {
 						endTime = duty.getEndTime(); 
 					}else {
 						Duty duty = this.instance.getFromDutyNrToDuty().get(dutynr); 
+						c = new Color(111,175,240); 
 						dutyType = duty.getType() + (dutynr -820400); 
 						startTime = duty.getStartTime(); 
 						endTime = duty.getEndTime(); 
