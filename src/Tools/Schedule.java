@@ -69,8 +69,11 @@ public class Schedule
 			return false;
 		if (overTime != other.overTime)
 			return false;
-		if (!Arrays.equals(schedule, other.schedule))
-			return false;
+		for(int i = 0; i < schedule.length; i++) {
+			if(schedule[i] != other.schedule[i]){
+				return false;
+			}
+		}
 		return true;
 	}
 }
