@@ -58,6 +58,9 @@ public class Phase3
 		
 		boolean negRedCosts = true;
 		while (negRedCosts) {
+			
+			model.clean();
+			
 			long start = System.nanoTime();
 			negRedCosts = false;
 			System.out.println("-------------------------------------------");
@@ -75,7 +78,7 @@ public class Phase3
 				for (Schedule curSchedule : newSchedules.get(c)) {
 					if (!addedSchedules.contains(curSchedule)) {
 						addedSchedules.add(curSchedule);
-						model.addSchedule(curSchedule);
+//						model.addSchedule(curSchedule);
 						count++;
 					}
 				}
@@ -88,6 +91,11 @@ public class Phase3
 			
 			if (!negRedCosts) {
 				break;
+			}
+			
+			model = new RMP_Phase3(instance);
+			for (Schedule toAdd : addedSchedules) {
+				model.addSchedule(toAdd);
 			}
 			
 			long intermediate = System.nanoTime();
@@ -109,8 +117,13 @@ public class Phase3
 			
 			ArrayList<Double> solDummies1 = model.getSolutionDummies2();
 			ArrayList<ArrayList<Double>> solDummiesDuties = model.getSolutionDummiesDuties();
+			
+			for (int i = 0; i < dualValuesContractGroup.length; i++) {
+				System.out.println(dualValuesContractGroup[i]);
+			}
 
 			iteration++;
 		}
+		System.out.println("Terminated");
 	}
 }

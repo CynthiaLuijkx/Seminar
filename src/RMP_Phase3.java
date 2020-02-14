@@ -145,7 +145,7 @@ public class RMP_Phase3 {
 			for(Integer dutyNumber: this.dummiesDuties.get(i).keySet()) {
 				IloNumExpr lhs = cplex.constant(0); 
 				lhs = cplex.sum(lhs, this.dummiesDuties.get(i).get(dutyNumber));
-				this.constraints1.get(i).put(dutyNumber, cplex.addEq(1, lhs, "Duty " + dutyNumber + " on day " + i));
+				this.constraints1.get(i).put(dutyNumber, cplex.addEq(1, lhs, "Duty_" + dutyNumber + "_on day_" + i));
 			}
 		}
 	}
@@ -154,7 +154,7 @@ public class RMP_Phase3 {
 		for (int c = 0; c < this.dummies2.length; c++) {
 			IloNumExpr lhs = cplex.constant(0); 
 			lhs = cplex.sum(lhs, this.dummies2[c]);
-			this.constraints2[c] = cplex.addEq(lhs, 1, "Contractgroup " + c);	
+			this.constraints2[c] = cplex.addEq(lhs, 1, "Contractgroup_" + c);	
 		}
 	}
 	//Method that returns the dual values of the first type of constraints;
@@ -235,7 +235,7 @@ public class RMP_Phase3 {
 		//add the schedule as a variable
 		IloNumVar var = this.cplex.numVar(column, 0, Double.POSITIVE_INFINITY);
 		this.variables.add(var);
-		this.cplex.exportModel("model.lp");
+//		this.cplex.exportModel("model.lp");
 	}
 
 	public ArrayList<ArrayList<Double>> getSolutionDummiesDuties() throws IloException {
