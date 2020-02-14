@@ -16,7 +16,7 @@ public class RepairHeuristics {
 		this.penaltiesFeas[4] = 100000; //more strict
 		this.penaltiesFeas[5] = 1;
 	}
-	public List<Placement> updatePlacements(Request request, Solution solution, double[] newOvertime){
+	public List<Placement> setPlacements(Request request, Solution solution, double[] newOvertime){
 		List<Placement> list = new ArrayList<Placement>();
 		for(ContractGroup group: solution.getNewSchedule().keySet()) {
 			for(int i = request.getWeekday(); i < solution.getNewSchedule().get(group).getLSSchedule().getSchedule().length; i+=7) {

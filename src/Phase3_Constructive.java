@@ -8,23 +8,28 @@ import java.util.Set;
 import java.util.Stack;
 
 import Tools.*; 
-
+/**
+ * This class finds a feasible solution from the basic schedule
+ * @author Shuo
+ *
+ */
 public class Phase3_Constructive {
 
-	private Map<ContractGroup, String[]> solutionMIP; 
+	private Map<ContractGroup, String[]> solutionMIP; //Solution of the MIP
 	private ArrayList<HashMap<String, ArrayList<Integer>>> toSchedule; 
 	private ArrayList<HashMap<String, ArrayList<Integer>>> allDuties; 
 	private ArrayList<HashMap<String, ArrayList<Integer>>> alrScheduled; 
-	private Map<ContractGroup, int[]> solutionHeur; 
+	private Map<ContractGroup, int[]> solutionHeur; //for every contract group, we get a schedule
 	private Instance instance; 
-	private Map<Integer, Duty> dutyNrToDuty; 
-	private Set<Schedule> finalSchedules = new HashSet<Schedule>(); 
+	private Map<Integer, Duty> dutyNrToDuty; //get the duty from the duty number
+	private Set<Schedule> finalSchedules = new HashSet<Schedule>();  //set with all schedules 
 	private Map<Integer, Integer> prevOfThisType = new HashMap<Integer, Integer>(); 
 	private int[] numberOfThisChecked ; 
-	private String[] completeSolution; 
-	private ArrayList<ContractGroup> groups; 
-	private int totalDays = 0; 
+	private String[] completeSolution; //array with all duty types on every day of the schedules 
+	private ArrayList<ContractGroup> groups; //list of all contract groups
+	private int totalDays = 0; //all days that need to be scheduled
 
+	//Constructor of the class
 	public Phase3_Constructive(Instance instance, HashMap<ContractGroup, String[]> solutionMIP ) {
 		this.dutyNrToDuty = instance.getFromDutyNrToDuty(); 
 		this.solutionHeur = new  HashMap<ContractGroup, int[]>(); 
@@ -34,52 +39,52 @@ public class Phase3_Constructive {
 		this.instance = instance; 
 
 		this.groups = new ArrayList<ContractGroup>(instance.getContractGroups()); 
-		Collections.sort(groups, (a,b) -> a.getTc() - b.getTc());
+		Collections.sort(groups, (a,b) -> a.getTc() - b.getTc()); //sort the list
 
 		for(ContractGroup group: groups) {
-			totalDays += this.solutionMIP.get(group).length; 
+			totalDays += this.solutionMIP.get(group).length; //all days that need to be filled with duties 
 		}
 
-		this.completeSolution = new String[totalDays]; 
+		this.completeSolution = new String[totalDays]; //array of duty types that need to be scheduled on certain days
 		int currentIndex = 0; 
 		for(ContractGroup group: groups) {
 			for(int i = 0; i< this.solutionMIP.get(group).length; i++) {
-				this.completeSolution[i+currentIndex] = this.solutionMIP.get(group)[i]; 
+				this.completeSolution[i+currentIndex] = this.solutionMIP.get(group)[i]; //add the duty type
 			}
-			currentIndex += this.solutionMIP.get(group).length; 
+			currentIndex += this.solutionMIP.get(group).length; //continue to the next contract group
 		}
 
-		for(int i= 0; i<7; i++) {
-			this.alrScheduled.add(new HashMap<String, ArrayList<Integer>>()); 
-			this.toSchedule.add(new HashMap<String, ArrayList<Integer>>()); 
+		for(int i= 0; i<7; i++) { //for every day of the week
+			this.alrScheduled.add(new HashMap<String, ArrayList<Integer>>());  //list of duties that still need to be scheduled for a certain day of the week
+			this.toSchedule.add(new HashMap<String, ArrayList<Integer>>());  //list of duties that are already scheduled for a certain day of the week
 			for(String dutyType : instance.getDutyTypes()) {
-				if(i==0) {
-					if(instance.getDutiesPerTypeSun().containsKey(dutyType)) {
-						this.toSchedule.get(i).put(dutyType, getNumbersFromDuty(instance.getDutiesPerTypeSun().get(dutyType))); 
-						this.alrScheduled.get(i).put(dutyType, new ArrayList<Integer>()); 	
-						if(dutyType.substring(dutyType.length()-1, dutyType.length()).equals("L")) {
+				if(i==0) { 
+					if(instance.getDutiesPerTypeSun().containsKey(dutyType)) { //if the duty type needs to be scheduled on Sunday
+						this.toSchedule.get(i).put(dutyType, getNumbersFromDuty(instance.getDutiesPerTypeSun().get(dutyType))); //need to schedule this type on Sunday 
+						this.alrScheduled.get(i).put(dutyType, new ArrayList<Integer>()); //add for every duty type a list 
+						if(dutyType.substring(dutyType.length()-1, dutyType.length()).equals("L")) { //check if it is a late duty as we want to know the ending time and sort them
 							Collections.sort(this.toSchedule.get(i).get(dutyType), (a,b) -> this.dutyNrToDuty.get(b).getEndTime() - this.dutyNrToDuty.get(a).getEndTime()); 
-						}else {
+						}else { //sort the other duty types on start time
 							Collections.sort(this.toSchedule.get(i).get(dutyType), (a,b) -> this.dutyNrToDuty.get(a).getStartTime() - this.dutyNrToDuty.get(b).getStartTime()); 
 						}
 					}
-				}else if(i==6) {
-					if(instance.getDutiesPerTypeSat().containsKey(dutyType)) {
-						this.toSchedule.get(i).put(dutyType, getNumbersFromDuty(instance.getDutiesPerTypeSat().get(dutyType))); 
+				}else if(i==6) { 
+					if(instance.getDutiesPerTypeSat().containsKey(dutyType)) {// if the duty type needs to be scheduled on Saturday
+						this.toSchedule.get(i).put(dutyType, getNumbersFromDuty(instance.getDutiesPerTypeSat().get(dutyType))); //need to schedule this type on Saturday 
 						this.alrScheduled.get(i).put(dutyType, new ArrayList<Integer>()); 
-						if(dutyType.substring(dutyType.length()-1, dutyType.length()).equals("L")) {
+						if(dutyType.substring(dutyType.length()-1, dutyType.length()).equals("L")) { //check if it is a late duty as we want to know the ending time and sort them
 							Collections.sort(this.toSchedule.get(i).get(dutyType), (a,b) -> this.dutyNrToDuty.get(b).getEndTime() - this.dutyNrToDuty.get(a).getEndTime()); 
-						}else {
+						}else { //sort the other duty types on start time
 							Collections.sort(this.toSchedule.get(i).get(dutyType), (a,b) -> this.dutyNrToDuty.get(a).getStartTime() - this.dutyNrToDuty.get(b).getStartTime()); 
 						}
 					}
 				}else {
-					if(instance.getDutiesPerTypeW().containsKey(dutyType)) {
-						this.toSchedule.get(i).put(dutyType, getNumbersFromDuty(instance.getDutiesPerTypeW().get(dutyType))); 
+					if(instance.getDutiesPerTypeW().containsKey(dutyType)) { //if the duty type needs to be scheduled on working day
+						this.toSchedule.get(i).put(dutyType, getNumbersFromDuty(instance.getDutiesPerTypeW().get(dutyType))); //need to schedule this type on a working day
 						this.alrScheduled.get(i).put(dutyType, new ArrayList<Integer>()); 
-						if(dutyType.substring(dutyType.length()-1, dutyType.length()).equals("L")) {
+						if(dutyType.substring(dutyType.length()-1, dutyType.length()).equals("L")) { //check if it is a late duty we want to know the ending time and sort them 
 							Collections.sort(this.toSchedule.get(i).get(dutyType), (a,b) -> this.dutyNrToDuty.get(b).getEndTime() - this.dutyNrToDuty.get(a).getEndTime()); 
-						}else {
+						}else { //sort the other duty types on start time
 							Collections.sort(this.toSchedule.get(i).get(dutyType), (a,b) -> this.dutyNrToDuty.get(a).getStartTime() - this.dutyNrToDuty.get(b).getStartTime()); 
 						}
 					}
@@ -87,10 +92,10 @@ public class Phase3_Constructive {
 			}
 		}
 
-		this.allDuties = new ArrayList<HashMap<String, ArrayList<Integer>>>(this.toSchedule); 
+		this.allDuties = new ArrayList<HashMap<String, ArrayList<Integer>>>(this.toSchedule); //add all duties 
 
 		int[] finalSolution = solve(); 
-		this.solutionHeur = getIndividualSolutions(finalSolution); 
+		this.solutionHeur = getIndividualSolutions(finalSolution); //get the indiviual solutions of each contract group
 
 
 		for(ContractGroup group: solutionHeur.keySet()) {
@@ -119,29 +124,29 @@ public class Phase3_Constructive {
 		}
 		return newList; 
 	}
-
+	//Method solves the constructive heuristic
 	public int[] solve() {
 
-		String[] solution = this.completeSolution; 
-		Map<Integer, ArrayList<Integer>> otherPos = new HashMap<Integer, ArrayList<Integer>>(); 
+		String[] solution = this.completeSolution; //solution contains all days with strings  
+		Map<Integer, ArrayList<Integer>> otherPos = new HashMap<Integer, ArrayList<Integer>>();   //list of all possibilities at that index
 		this.numberOfThisChecked = new int[solution.length]; 
-		int[] sol = new int[solution.length]; 
+		int[] sol = new int[solution.length]; //the schedule that will be returned in the end
 		HashMap<Integer, Integer> prevOfThisType =  getPrevOfThisType(solution); 
 		HashMap<Integer, String> skipped = new HashMap<Integer, String>(); 
 
 		int change = 0; 
-		boolean allDutiesPContractGroupPlanned = false; 
-		boolean goBack = false; 
-		int current = 0; 
-		int maxDay = 0; 
+		boolean allDutiesPContractGroupPlanned = false; //boolean that is set to false will all duties are planned in every contract group
+		boolean goBack = false; //boolean that will be true if we need to go back to a different possibilities
+		int current = 0; //current index
+		int maxDay = 0;  //max day you got so far
 		int[] maxSol = null; 
-		while(!allDutiesPContractGroupPlanned) {
+		while(!allDutiesPContractGroupPlanned) { //as long as all duties are not planned
 
 			if(current>maxDay) {
 				maxDay = current; 
 				maxSol = sol; 
 			}
-			ArrayList<Integer> possibleDuties = null; 
+			ArrayList<Integer> possibleDuties = null; //possible duties you can get to 
 			boolean normalDuty = false; 
 
 			/*
@@ -154,7 +159,7 @@ public class Phase3_Constructive {
 			 * 
 			 * In case we continue to t+1, we set the possible duties as all the possible duties that are not scheduled yet
 			 */
-
+			//if we need to go back in the schedule
 			if(goBack) {
 				goBack(change, current + change, solution, sol); 
 				if(solution[current].equals("ATV") ||solution[current].contains("R") ) {
@@ -193,18 +198,19 @@ public class Phase3_Constructive {
 			if(normalDuty) {
 				boolean possDay = false; 
 				for(int i = 0; i<possibleDuties.size(); i++) {
-					sol[current] = possibleDuties.get(i); 
+					sol[current] = possibleDuties.get(i); //check the possibilities
+					//if it is feasible to add the possibility, remove the possibility from the set
 					if(checkFeasibility(sol, current)) {
 						possibleDuties.remove(i); 
 						otherPos.put(current, possibleDuties); 
-						this.toSchedule.get(current%7).get(solution[current]).remove(i); 
-						possDay = true; 
-						current++; 
-						goBack = false; 
+						this.toSchedule.get(current%7).get(solution[current]).remove(i);  //remove the schedule
+						possDay = true; //it is possible to add a duty this day
+						current++; //add another day
+						goBack = false; //do not need to go back in the schedule
 						break; 
 					}
 					else {
-						sol[current]= 0; 
+						sol[current]= 0; //else it is not feasible to add the duty 
 					}
 				}
 
@@ -216,6 +222,7 @@ public class Phase3_Constructive {
 				 * then we go back to the previous point t, which was on the same weekday and had to schedule the same duty type 
 				 * 
 				 */
+				//If it is not possible to add any duty, we need to go back in time
 				if(!possDay) {
 					this.numberOfThisChecked[current]++; 
 					int nPosPrev = otherPos.containsKey(current-1)? otherPos.get(current - 1).size() : 1; 
@@ -297,37 +304,38 @@ public class Phase3_Constructive {
 		if(current == 0) {
 			return true; 
 		}
-
+		//Check the rest of 11 hours: if we add this duty, do we have an 11 hour rest period before
 		if(current > 0) {
 			int endPrev = 0; 
 			int startCur = 0; 
-			if(sol[current-1] <=2) {
+			//Check how much break we had the previous day
+			if(sol[current-1] <= 2) { //if the previous day is an ATV day or a rest day
 				endPrev = -24*60;  
-			}else if(sol[current-1] <= 1000) {
+			}else if(sol[current-1] <= 1000) { //if the previous day is an reserve duty
 				ReserveDutyType prevDuty = this.instance.getFromRDutyNrToRDuty().get(sol[current-1]); 
 				endPrev = prevDuty.getEndTime(); 
-			}else {
+			}else { //if the previous day is a different duty type
 				Duty prevDuty = this.dutyNrToDuty.get(sol[current-1]); 
 				endPrev = prevDuty.getEndTime(); 
 			}
-
-			if(sol[current] <=2) {
+			
+			if(sol[current] <=2) {//if the day we are checking is a rest/ATV day
 				startCur = 24*60;  
-			}else if(sol[current] <= 1000) {
+			}else if(sol[current] <= 1000) { //if the day we are checking is a reserve duty
 				ReserveDutyType curDuty = this.instance.getFromRDutyNrToRDuty().get(sol[current]); 
 				startCur = curDuty.getStartTime(); 
-			}else {
+			}else { //if the day we are checking is a different type of duty
 				Duty curDuty = this.dutyNrToDuty.get(sol[current]); 
 				startCur = curDuty.getStartTime(); 
 			}
-
+			//add the time of rest
 			minbreak = startCur +  (24*60 -  endPrev)>= instance.getMinBreak(); 
 		}
-
+		//check whether we satisfy the weekly rest
 		if(current >=6) {
 			minWeekBreak = isFeasible7(sol, current); 
 		}
-
+		//check whether we satisfy the 2 weeks rest 
 		if(current >=13) {
 			min2WeekBreak = isFeasible14(sol, current); 
 		}
@@ -433,7 +441,7 @@ public class Phase3_Constructive {
 		}
 		return false; 
 	}
-
+	//calculate the overtime
 	public int[] calculateOverTime(ContractGroup group) {
 		int[] solutionPGroup = this.solutionHeur.get(group); 
 		int[] timeWorkPWeek = new int[solutionPGroup.length/7]; 
@@ -446,13 +454,16 @@ public class Phase3_Constructive {
 				}else if(this.instance.getFromRDutyNrToRDuty().containsKey(solutionPGroup[w*7+d])) {
 					hourspWeek += group.getAvgHoursPerDay()*60; 
 				}
+				else if(solutionPGroup[w*7+d] == 1) {
+					hourspWeek += group.getAvgHoursPerDay()*60;
+				}
 			}
 			timeWorkPWeek[w] = (int) (hourspWeek - group.getAvgDaysPerWeek()*group.getAvgHoursPerDay()*60); 
 		}
 
 		return timeWorkPWeek; 
 	}
-
+//calculate the average overtime
 	public int[] calculateAvOverTime(int[] timeWorkPWeek) {
 		int[] timePQuarter = new int[timeWorkPWeek.length/13 + 1]; 
 
@@ -483,16 +494,16 @@ public class Phase3_Constructive {
 		return new Schedule(group, overTime, minHours, this.solutionHeur.get(group)); 
 	}
 
+	//Save the last occurences of the type
 	public HashMap<Integer, Integer> getPrevOfThisType(String[] solution){
-		HashMap<Integer, Integer> prevOfThisType = new HashMap<Integer, Integer> (); 
-		ArrayList<HashMap<String, Integer>> lastOfThisType = new ArrayList<HashMap<String, Integer>>(); 
-
+		HashMap<Integer, Integer> prevOfThisType = new HashMap<Integer, Integer> ();//link the days to the specific days at which we had this duty type 
+		ArrayList<HashMap<String, Integer>> lastOfThisType = new ArrayList<HashMap<String, Integer>>();  //for every duty type, get the previous 
+		//add for every day
 		for(int i = 0; i<7; i++) {
 			lastOfThisType.add(new HashMap<String, Integer>()); 
 		}
-
+		//for the entire schedule
 		for(int i =0; i< solution.length; i++) {
-
 			if(lastOfThisType.get(i%7).containsKey(solution[i])) {
 				prevOfThisType.put(i,lastOfThisType.get(i%7).get(solution[i])); 
 				lastOfThisType.get(i%7).put(solution[i], i); 
@@ -503,7 +514,7 @@ public class Phase3_Constructive {
 
 		return prevOfThisType; 
 	}
-
+//Method that empties the schedule if we need to go back
 	public void goBack(int change, int current, String[] solution, int[] sol) {
 		for(int i = current - 1; i>=current - change; i--) {
 			if(!(solution[i].equals("ATV") ||solution[i].contains("R"))) {
@@ -515,7 +526,7 @@ public class Phase3_Constructive {
 			//sol[i] = null; 
 		}
 	}
-
+	//Method that return every schedule for each contract group
 	public Map<ContractGroup, int[]> getIndividualSolutions(int[] sol){
 		Map<ContractGroup, int[]> result = new HashMap<ContractGroup, int[]>(); 
 		int currentIndex = 0; 
@@ -529,7 +540,7 @@ public class Phase3_Constructive {
 		}
 		return result; 
 	}
-
+//Method to print the solution
 	public void printSolution(ContractGroup group) {
 		System.out.println("Contract Group: " + group.getNr()); 
 		for(int w = 0; w < this.solutionHeur.get(group).length/7 ; w++) {

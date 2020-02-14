@@ -21,7 +21,7 @@ public class Phase5_ALNS {
 	
 	public Phase5_ALNS (int iterations, Instance instance, Map<ContractGroup, Schedule> startSchedule, long seed){
 		this.minSizeNeighbourhood = 2;
-		this.maxSizeNeighbourhood = 25;
+		this.maxSizeNeighbourhood = 25; //cannot be more than the number of weeks in all schedules
 		this.nIterations = iterations;
 		this.instance = instance;
 		this.random = new Random(seed);
@@ -49,12 +49,13 @@ public class Phase5_ALNS {
 			int sizeNeighbourhood = this.random.nextInt(this.maxSizeNeighbourhood - this.minSizeNeighbourhood) + this.minSizeNeighbourhood;
 			System.out.println("-----------------------------------------------------------------------");
 			System.out.println("ITERATION " + n + ":");
-			this.destroyHeuristics.executeRandom(tempSol, sizeNeighbourhood, this.random, instance);
+			//this.destroyHeuristics.executeRandom(tempSol, sizeNeighbourhood, this.random, instance);
+			this.destroyHeuristics.executeRandomOvertime(tempSol, sizeNeighbourhood, this.random, instance);
 			double[] newOvertime = this.QuaterlyOvertime(tempSol);
 			List<List<Placement>> requestWithPlacements = new ArrayList<List<Placement>>();
 			for(Request request: tempSol.getRequests()) {
 				List<Placement> placements = new ArrayList<Placement>();
-				placements = this.repairHeuristics.updatePlacements(request, tempSol, newOvertime);
+				placements = this.repairHeuristics.setPlacements(request, tempSol, newOvertime);
 				requestWithPlacements.add(placements);
 				System.out.println(placements.toString());
 			}

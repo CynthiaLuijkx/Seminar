@@ -32,7 +32,9 @@ public class Request {
 	}
 
 	public Request(int dutyNumber, ContractGroup group, int day) {
+		
 		this.dutyNumber = dutyNumber;
+		
 		this.group = group;
 		this.day = day;
 		this.weekday = day%7;
