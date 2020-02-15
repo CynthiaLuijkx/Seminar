@@ -120,6 +120,8 @@ public class MIP_Phase1
 		this.cplex.solve();
 	}
 	
+	//Source: https://orinanobworld.blogspot.com/2013/01/finding-all-mip-optima-cplex-solution.html
+	//Source: https://www.ibm.com/support/knowledgecenter/SSSA5P_12.7.1/ilog.odms.cplex.help/CPLEX/OverviewAPIs/topics/Soln_pool.html
 	public void populate() throws IloException{
 		this.cplex.setParam(IloCplex.IntParam.SolnPoolCapacity, 5);
 		this.cplex.setParam(IloCplex.IntParam.SolnPoolReplace, 1);
