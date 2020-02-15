@@ -57,6 +57,7 @@ public class Phase3
 		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, minBreakBetweenShifts, consecFreeWeekly, freeTwoWeeks);
 		
 		boolean negRedCosts = true;
+		boolean iteration1NoSchedule = false;
 		while (negRedCosts) {
 			model.clean();
 			
@@ -85,7 +86,13 @@ public class Phase3
 				if (count > 0) {
 					negRedCosts = true;
 				}
+				if(count < 1 && iteration == 1) {
+					iteration1NoSchedule = true;
+				}
 				System.out.println("Number of schedules added for contractgroup " + c.getNr() +": " + count);
+			}
+			if(iteration1NoSchedule) {
+				break;
 			}
 			
 			if (!negRedCosts) {

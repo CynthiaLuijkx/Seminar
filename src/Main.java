@@ -64,17 +64,19 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB()+15;
+		int numberOfDrivers = instance.getLB() +15;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		Set<Schedule> schedules = new HashSet<>();
-		int iteration = 0;
-		while (schedules.isEmpty() || iteration < 5) {
-			MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
-			mip.solve();
-			if (mip.isFeasible()) {
-				mip.populate();
+		int iteration = 1;
+		int maxIt = 5;
+		boolean scheduleForEveryGroup = false;
+		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
+		mip.solve();
+		if (mip.isFeasible()) {
+			mip.populate(maxIt);
+			while (scheduleForEveryGroup == false && iteration <= maxIt) {
 				mip.makeSolution(iteration);
 				instance.setBasicSchedules(mip.getSolution());
 
@@ -86,20 +88,33 @@ public class Main
 
 				int treshold = 0; // bigger than or equal
 				schedules = getSchedulesAboveTreshold(solution, treshold);
+				scheduleForEveryGroup = true;
+				for (ContractGroup c : instance.getContractGroups()) {
+					int included = 0;
+					for (Schedule schedule : schedules) {
+						if(schedule.getC() == c) {
+							included++;
+						}
+					}
+					if(included < 1) {
+						scheduleForEveryGroup = false;
+					}
+				}
 				iteration++;
-			} else {
-				System.out.println("Basic schedule cannot be made.");
-				break;
 			}
+			
+			if(iteration == maxIt || schedules.size() == 0) {
+				System.out.println("No feasible schedules found on all " + maxIt + " basic schedules");
+			}
+			else {
+				Phase4 phase4 = new Phase4(schedules, instance);
+				List<Schedule> newSchedules = phase4.runILP();
+				new ScheduleVis(newSchedules.get(1).getSchedule(), ""+newSchedules.get(0).getC().getNr() , instance);
+			}
+		} else {
+			System.out.println("Basic schedule cannot be made.");
 		}
-		if(iteration == 20 || schedules.isEmpty()) {
-			System.out.println("No feasible schedules found on all 5 basic schedules");
-		}
-		else {
-			Phase4 phase4 = new Phase4(schedules, instance);
-			List<Schedule> newSchedules = phase4.runILP();
-			new ScheduleVis(newSchedules.get(1).getSchedule(), ""+newSchedules.get(0).getC().getNr() , instance);
-		}
+		
 
 	}
 

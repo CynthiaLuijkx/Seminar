@@ -121,15 +121,15 @@ public class MIP_Phase1
 	
 	//Source: https://orinanobworld.blogspot.com/2013/01/finding-all-mip-optima-cplex-solution.html
 	//Source: https://www.ibm.com/support/knowledgecenter/SSSA5P_12.7.1/ilog.odms.cplex.help/CPLEX/OverviewAPIs/topics/Soln_pool.html
-	public void populate() throws IloException{
-		this.cplex.setParam(IloCplex.IntParam.SolnPoolCapacity, 5);
+	public void populate(int nsol) throws IloException{
+		this.cplex.setParam(IloCplex.IntParam.SolnPoolCapacity, nsol);
 		this.cplex.setParam(IloCplex.IntParam.SolnPoolReplace, 1);
 		//this.cplex.setParam(IloCplex.DoubleParam.SolnPoolGap, 0);
 		this.cplex.setParam(IloCplex.DoubleParam.SolnPoolAGap, 0.5);
-		this.cplex.setParam(IloCplex.IntParam.SolnPoolIntensity, 1);
+		//this.cplex.setParam(IloCplex.IntParam.SolnPoolIntensity, 1);
 		//this.cplex.setParam(IloCplex.IntParam.PopulateLim, 2100000000);
 		this.cplex.populate();
-		System.out.println(cplex.getSolnPoolNsolns());
+		System.out.println("Solution pool size: " + cplex.getSolnPoolNsolns());
 	}
 	
 	public boolean isFeasible() throws IloException {
@@ -141,6 +141,7 @@ public class MIP_Phase1
 	}
 	
 	public void makeSolution(int i) throws UnknownObjectException, IloException{
+		this.solution.clear();
 		for(ContractGroup group : this.instance.getContractGroups()) {
 			String[] solutionArray = new String[group.getTc()];
 			System.out.println(group.toString());
@@ -154,7 +155,7 @@ public class MIP_Phase1
 						System.out.print(solutionArray[t] + " ");
 					}
 				}
-				if(this.cplex.getValue(this.restDaysPerGroup.get(group)[t]) > 0) {
+				if(this.cplex.getValue(this.restDaysPerGroup.get(group)[t], i) > 0) {
 					solutionArray[t] = "Rest";
 					System.out.print(solutionArray[t] + " ");
 				}
