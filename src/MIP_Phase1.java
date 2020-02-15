@@ -103,6 +103,7 @@ public class MIP_Phase1
 		this.cplex.exportModel("MIP_Phase1.lp");
 		//this.cplex.setOut(null);
 		solve();
+		populate();
 		System.out.println("Objective Value: " + this.cplex.getObjValue());
 		
 		this.solution = new HashMap<>();
@@ -117,6 +118,17 @@ public class MIP_Phase1
 	
 	public void solve() throws IloException {
 		this.cplex.solve();
+	}
+	
+	public void populate() throws IloException{
+		this.cplex.setParam(IloCplex.IntParam.SolnPoolCapacity, 5);
+		this.cplex.setParam(IloCplex.IntParam.SolnPoolReplace, 1);
+		//this.cplex.setParam(IloCplex.DoubleParam.SolnPoolGap, 0);
+		this.cplex.setParam(IloCplex.DoubleParam.SolnPoolAGap, 0.5);
+		//this.cplex.setParam(IloCplex.IntParam.SolnPoolIntensity, 4);
+		//this.cplex.setParam(IloCplex.IntParam.PopulateLim, 2100000000);
+		this.cplex.populate();
+		System.out.println(cplex.getSolnPoolNsolns());
 	}
 	
 	public boolean isFeasible() throws IloException {
