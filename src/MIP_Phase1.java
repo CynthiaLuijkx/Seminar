@@ -101,13 +101,9 @@ public class MIP_Phase1
 		//System.out.println(this.cplex.getModel());
 		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0);
 		this.cplex.exportModel("MIP_Phase1.lp");
-		//this.cplex.setOut(null);
-		solve();
-		populate();
-		System.out.println("Objective Value: " + this.cplex.getObjValue());
+		//this.cplex.setOut(null);	
 		
 		this.solution = new HashMap<>();
-		makeSolution();
 	}
 	
 	public void clearModel() throws IloException {
@@ -118,6 +114,9 @@ public class MIP_Phase1
 	
 	public void solve() throws IloException {
 		this.cplex.solve();
+		if(this.isFeasible()) {
+			System.out.println("Objective Value: " + this.cplex.getObjValue());
+		}
 	}
 	
 	//Source: https://orinanobworld.blogspot.com/2013/01/finding-all-mip-optima-cplex-solution.html
@@ -127,7 +126,7 @@ public class MIP_Phase1
 		this.cplex.setParam(IloCplex.IntParam.SolnPoolReplace, 1);
 		//this.cplex.setParam(IloCplex.DoubleParam.SolnPoolGap, 0);
 		this.cplex.setParam(IloCplex.DoubleParam.SolnPoolAGap, 0.5);
-		//this.cplex.setParam(IloCplex.IntParam.SolnPoolIntensity, 4);
+		this.cplex.setParam(IloCplex.IntParam.SolnPoolIntensity, 1);
 		//this.cplex.setParam(IloCplex.IntParam.PopulateLim, 2100000000);
 		this.cplex.populate();
 		System.out.println(cplex.getSolnPoolNsolns());
@@ -139,6 +138,31 @@ public class MIP_Phase1
 	
 	public HashMap<ContractGroup, String[]> getSolution() {
 		return this.solution;
+	}
+	
+	public void makeSolution(int i) throws UnknownObjectException, IloException{
+		for(ContractGroup group : this.instance.getContractGroups()) {
+			String[] solutionArray = new String[group.getTc()];
+			System.out.println(group.toString());
+			for(int t = 0; t < solutionArray.length; t++) {
+				if(t % 7 == 0 && t > 0) {
+					System.out.println(" ");
+				}
+				for(IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {
+					if(this.cplex.getValue(decVar, i) > 0) {
+						solutionArray[t] = this.decVarToCombination.get(decVar).getType();
+						System.out.print(solutionArray[t] + " ");
+					}
+				}
+				if(this.cplex.getValue(this.restDaysPerGroup.get(group)[t]) > 0) {
+					solutionArray[t] = "Rest";
+					System.out.print(solutionArray[t] + " ");
+				}
+			}
+			System.out.println("");
+			System.out.println("--------------");
+			this.solution.put(group, solutionArray);
+		}
 	}
 	
 	public void makeSolution() throws UnknownObjectException, IloException {

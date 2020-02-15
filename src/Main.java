@@ -64,23 +64,42 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() +17;
+		int numberOfDrivers = instance.getLB()+15;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
-		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
-		instance.setBasicSchedules(mip.getSolution());
-		
-		long phase3Start = System.nanoTime();
-		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
-		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
-		long phase3End = System.nanoTime();
-		System.out.println("Phase 3 runtime: " + (phase3End-phase3Start)/1000000000.0);
-		
-		int treshold = 0; //bigger than or equal 
-		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
-		List<Schedule> newSchedules = phase4.runILP();
-		new ScheduleVis(newSchedules.get(1).getSchedule(), ""+newSchedules.get(0).getC().getNr() , instance);
+		Set<Schedule> schedules = new HashSet<>();
+		int iteration = 0;
+		while (schedules.isEmpty() || iteration < 5) {
+			MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
+			mip.solve();
+			if (mip.isFeasible()) {
+				mip.populate();
+				mip.makeSolution(iteration);
+				instance.setBasicSchedules(mip.getSolution());
+
+				long phase3Start = System.nanoTime();
+				Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
+				HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+				long phase3End = System.nanoTime();
+				System.out.println("Phase 3 runtime: " + (phase3End - phase3Start) / 1000000000.0);
+
+				int treshold = 0; // bigger than or equal
+				schedules = getSchedulesAboveTreshold(solution, treshold);
+				iteration++;
+			} else {
+				System.out.println("Basic schedule cannot be made.");
+				break;
+			}
+		}
+		if(iteration == 20 || schedules.isEmpty()) {
+			System.out.println("No feasible schedules found on all 5 basic schedules");
+		}
+		else {
+			Phase4 phase4 = new Phase4(schedules, instance);
+			List<Schedule> newSchedules = phase4.runILP();
+			new ScheduleVis(newSchedules.get(1).getSchedule(), ""+newSchedules.get(0).getC().getNr() , instance);
+		}
 
 	}
 
