@@ -93,21 +93,18 @@ public class MIP_Phase1
 		initSoft5(); //Min consecutive similar duties
 		initSoft6(); //Min consecutive rest + ATV 
 		initSoft7(); //Early to late duty 
-		initSoft8(); //Parttimers should work as little other duties as possible 
+		//initSoft8(); //Parttimers should work as little other duties as possible 
 		initSoft9(); //Maximum of 5 duties per calendar week 
+		initSoft10(); 
 		
 		initObjective();
 		
 		//System.out.println(this.cplex.getModel());
 		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0);
 		this.cplex.exportModel("MIP_Phase1.lp");
-		//this.cplex.setOut(null);
-		solve();
-		populate();
-		System.out.println("Objective Value: " + this.cplex.getObjValue());
+		//this.cplex.setOut(null);	
 		
 		this.solution = new HashMap<>();
-		makeSolution();
 	}
 	
 	public void clearModel() throws IloException {
@@ -118,19 +115,22 @@ public class MIP_Phase1
 	
 	public void solve() throws IloException {
 		this.cplex.solve();
+		if(this.isFeasible()) {
+			System.out.println("Objective Value: " + this.cplex.getObjValue());
+		}
 	}
 	
 	//Source: https://orinanobworld.blogspot.com/2013/01/finding-all-mip-optima-cplex-solution.html
 	//Source: https://www.ibm.com/support/knowledgecenter/SSSA5P_12.7.1/ilog.odms.cplex.help/CPLEX/OverviewAPIs/topics/Soln_pool.html
-	public void populate() throws IloException{
-		this.cplex.setParam(IloCplex.IntParam.SolnPoolCapacity, 5);
+	public void populate(int nsol) throws IloException{
+		this.cplex.setParam(IloCplex.IntParam.SolnPoolCapacity, nsol);
 		this.cplex.setParam(IloCplex.IntParam.SolnPoolReplace, 1);
 		//this.cplex.setParam(IloCplex.DoubleParam.SolnPoolGap, 0);
 		this.cplex.setParam(IloCplex.DoubleParam.SolnPoolAGap, 0.5);
-		//this.cplex.setParam(IloCplex.IntParam.SolnPoolIntensity, 4);
+		//this.cplex.setParam(IloCplex.IntParam.SolnPoolIntensity, 1);
 		//this.cplex.setParam(IloCplex.IntParam.PopulateLim, 2100000000);
 		this.cplex.populate();
-		System.out.println(cplex.getSolnPoolNsolns());
+		System.out.println("Solution pool size: " + cplex.getSolnPoolNsolns());
 	}
 	
 	public boolean isFeasible() throws IloException {
@@ -139,6 +139,32 @@ public class MIP_Phase1
 	
 	public HashMap<ContractGroup, String[]> getSolution() {
 		return this.solution;
+	}
+	
+	public void makeSolution(int i) throws UnknownObjectException, IloException{
+		this.solution.clear();
+		for(ContractGroup group : this.instance.getContractGroups()) {
+			String[] solutionArray = new String[group.getTc()];
+			System.out.println(group.toString());
+			for(int t = 0; t < solutionArray.length; t++) {
+				if(t % 7 == 0 && t > 0) {
+					System.out.println(" ");
+				}
+				for(IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {
+					if(this.cplex.getValue(decVar, i) > 0) {
+						solutionArray[t] = this.decVarToCombination.get(decVar).getType();
+						System.out.print(solutionArray[t] + " ");
+					}
+				}
+				if(this.cplex.getValue(this.restDaysPerGroup.get(group)[t], i) > 0) {
+					solutionArray[t] = "Rest";
+					System.out.print(solutionArray[t] + " ");
+				}
+			}
+			System.out.println("");
+			System.out.println("--------------");
+			this.solution.put(group, solutionArray);
+		}
 	}
 	
 	public void makeSolution() throws UnknownObjectException, IloException {
@@ -942,6 +968,46 @@ public class MIP_Phase1
 				constraint.addTerm(penalty, -1);
 				this.cplex.addLe(constraint, 5, group.groupNumberToString() + "MaxDuties_W" + s);
 			}
+		}
+	}
+	
+	public void initSoft10() throws IloException { //Don't exceed contract hours over the entire period 
+		for (ContractGroup group : this.instance.getContractGroups()) {
+			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+			for (int t = 0; t < group.getTc(); t++) {
+
+				for (IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {// Loop over all decVars
+					// ATV days
+					String type = this.decVarToCombination.get(decVar).getType();
+					if (type.equals("ATV")) {
+						constraint.addTerm(decVar, group.getAvgHoursPerDay()*60);
+					}
+
+					// Normal duties
+					else {
+						Character ch = type.charAt(0);
+						// Normal duties
+						if (!ch.equals('R')) {
+							if (t % 7 == 0) {// Sunday
+								constraint.addTerm(decVar, this.instance.getAvgMinSun().get(type));
+							} else if (t % 7 == 6) {// Saturday
+								constraint.addTerm(decVar, this.instance.getAvgMinSat().get(type));
+							} else {// Working days
+								constraint.addTerm(decVar, this.instance.getAvgMinW().get(type));
+							}
+						}
+
+						// Reserve duties
+						if (ch.equals('R')) {
+							constraint.addTerm(decVar, group.getAvgHoursPerDay()*60);
+						}
+					}
+				}
+			}
+			int rhs = (int) (60*group.getAvgHoursPerDay() * group.getAvgDaysPerWeek() * (group.getTc() / 7));
+			//int extraHoursPerWeek = 2;
+			//rhs = rhs + (int) ((group.getTc() / 7) * 60 * extraHoursPerWeek); //Add extra hours per week 
+			cplex.addLe(constraint, rhs);
 		}
 	}
 	

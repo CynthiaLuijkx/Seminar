@@ -22,7 +22,7 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
@@ -64,23 +64,64 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() +17;
+		int numberOfDrivers = instance.getLB() +35;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
+		Set<Schedule> schedules = new HashSet<>();
+		int iteration = 1;
+		int maxIt = 5;
+		boolean scheduleForEveryGroup = false;
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
-		instance.setBasicSchedules(mip.getSolution());
+		mip.solve();
+		if (mip.isFeasible()) {
+			//mip.populate(maxIt);
+			//while (scheduleForEveryGroup == false && iteration <= maxIt) {
+				mip.makeSolution(); //When not using populate 
+				//mip.makeSolution(iteration); //When using populate
+				instance.setBasicSchedules(mip.getSolution());
+				
+				for(ContractGroup c : instance.getContractGroups()) {
+				//	new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr());
+				}
+
+				long phase3Start = System.nanoTime();
+				Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
+				HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+				long phase3End = System.nanoTime();
+				System.out.println("Phase 3 runtime: " + (phase3End - phase3Start) / 1000000000.0);
+
+				int treshold = 0; // bigger than or equal
+				schedules = getSchedulesAboveTreshold(solution, treshold);
+				scheduleForEveryGroup = true;
+				for (ContractGroup c : instance.getContractGroups()) {
+					int included = 0;
+					for (Schedule schedule : schedules) {
+						if(schedule.getC() == c) {
+							included++;
+						}
+					}
+					if(included < 1) {
+						scheduleForEveryGroup = false;
+					}
+				}
+				iteration++;
+			//}
+			
+			if(iteration == maxIt || schedules.size() == 0) {
+				System.out.println("No feasible schedules found on all " + maxIt + " basic schedules");
+			}
+			else {
+				Phase4 phase4 = new Phase4(schedules, instance);
+				List<Schedule> newSchedules = phase4.runILP();
+				for(Schedule schedule : newSchedules) {
+					new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance);
+				}
+			}
+		} else {
+			System.out.println("Basic schedule cannot be made.");
+		}
 		
-		long phase3Start = System.nanoTime();
-		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
-		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
-		long phase3End = System.nanoTime();
-		System.out.println("Phase 3 runtime: " + (phase3End-phase3Start)/1000000000.0);
-		
-		int treshold = 0; //bigger than or equal 
-		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
-		List<Schedule> newSchedules = phase4.runILP();
-		new ScheduleVis(newSchedules.get(1).getSchedule(), ""+newSchedules.get(0).getC().getNr() , instance);
 
 	}
 
