@@ -269,6 +269,5 @@ public class Instance
 			int averageMin = (int) Math.ceil(totalMin/this.dutiesPerTypeSun.get(dutyType).size());
 			this.avgMinSun.put(dutyType, averageMin);
 		}
-		
 	}
 }
