@@ -347,7 +347,7 @@ public class Phase4_AddMissing {
 								} else {
 									int j = 1;
 									while (schedule[(s+i+j)%schedule.length] == 1 || schedule[(s+i+j)%schedule.length] == 2) {
-										if (i+j == 13) {
+										if (i+j == 14) {
 											consec += start;
 											break;
 										}
