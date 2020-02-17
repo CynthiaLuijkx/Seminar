@@ -1,7 +1,7 @@
 package Tools;
 import Tools.TimeSlot;
 
-public class Placement{
+public class Placement implements Comparable<Placement>{
 	private final Request request;
 	private final TimeSlot timeslot;
 	private double cost;
@@ -9,6 +9,7 @@ public class Placement{
 	public Placement(Request request, TimeSlot slot, double cost) {
 		this.request = request;
 		this.timeslot = slot;
+		this.cost = cost; 
 		
 	}
 	
@@ -32,11 +33,23 @@ public class Placement{
 	}
 
 
-
+	
 	public Request getRequest() {
 		return request;
 	}
 
+	@Override
+	public int compareTo(Placement o) {
+		if(this.getCost() > o.getCost()) {
+			return -1; 
+		}else if (this.getCost() > o.getCost()) {
+			return 1; 
+		}else {
+			return 0; 
+		}
+	}
 	
-	
+	public Placement duplicate() {
+		return new Placement(this.request, this.timeslot, this.cost); 
+	}
 }

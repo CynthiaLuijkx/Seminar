@@ -1,7 +1,7 @@
 package Tools;
 import java.util.Arrays;
 
-public class Schedule 
+public class Schedule implements Cloneable 
 {
 	private final ContractGroup c;
 	private final int minMin;
@@ -27,7 +27,7 @@ public class Schedule
 		return plusMin;
 	}
 
-	public int[] getSchedule() {
+	public int[] getScheduleArray() {
 		return schedule;
 	}
 
@@ -76,5 +76,9 @@ public class Schedule
 	public String toString() {
 		return "Schedule [c=" + c + ", minMin=" + minMin + ", plusMin=" + plusMin + ", schedule="
 				+ Arrays.toString(schedule) + "]";
+	}
+	
+	public Schedule clone() {
+		return new Schedule(this.c, this.minMin,this.plusMin, this.schedule.clone()); 
 	}
 }

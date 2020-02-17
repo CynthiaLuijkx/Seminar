@@ -195,9 +195,9 @@ public class RMP_Phase3 {
 		IloColumn column = this.cplex.column(this.obj, Math.max(0, schedule.getPlusMin() - schedule.getMinMin() * this.penaltyOver));
 
 		//for every day in the schedule, add the coefficient to the corresponding constraint of the duty that is schedules on that day
-		for (int t = 0; t < schedule.getSchedule().length; t++) {
-			if (instance.getFromDutyNrToDuty().containsKey(schedule.getSchedule()[t])) {
-				IloColumn coefficient = this.cplex.column(this.constraints1.get(t % 7).get(schedule.getSchedule()[t]),
+		for (int t = 0; t < schedule.getScheduleArray().length; t++) {
+			if (instance.getFromDutyNrToDuty().containsKey(schedule.getScheduleArray()[t])) {
+				IloColumn coefficient = this.cplex.column(this.constraints1.get(t % 7).get(schedule.getScheduleArray()[t]),
 						1);
 				column = column.and(coefficient);
 			}

@@ -11,6 +11,7 @@ import Tools.Duty;
 import Tools.Instance;
 import Tools.ReserveDutyType;
 import Tools.Schedule;
+import Tools.ScheduleVis;
 import Tools.Violation;
 import ilog.concert.IloException;
 
@@ -78,7 +79,9 @@ public class Main
 		HashMap<ContractGroup, Schedule> con3_Schedules = new HashMap<ContractGroup, Schedule>(); 
 		for(Schedule schedule:schedules) {
 			con3_Schedules.put(schedule.getC(), schedule); 
+			//new ScheduleVis(schedule.getScheduleArray(), ""+schedule.getC().getNr() , instance); 
 		}
+		
 		
 		int iterations_phase5 = 1; 
 		Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, con3_Schedules, 0); 

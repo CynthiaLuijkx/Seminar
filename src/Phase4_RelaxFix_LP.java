@@ -114,8 +114,8 @@ public class Phase4_RelaxFix_LP {
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 			int alreadyCovered = 0; 
 			for(Schedule curSchedule : this.schedules) {
-				for(int w = 0; w < curSchedule.getSchedule().length/7; w++) {//For every week
-					if(curSchedule.getSchedule()[7*w] == duty.getNr()) {
+				for(int w = 0; w < curSchedule.getScheduleArray().length/7; w++) {//For every week
+					if(curSchedule.getScheduleArray()[7*w] == duty.getNr()) {
 						constraint.addTerm(this.scheduleToVar.get(curSchedule), 1);
 						break;
 					}
@@ -123,8 +123,8 @@ public class Phase4_RelaxFix_LP {
 			}
 			for(Schedule fixedSchedule : this.fixedSchedules.keySet()) {
 				if(this.fixedSchedules.get(fixedSchedule) == 1) {
-					for(int w = 0; w < fixedSchedule.getSchedule().length/7; w++) {//For every week
-						if(fixedSchedule.getSchedule()[7*w] == duty.getNr()) {
+					for(int w = 0; w < fixedSchedule.getScheduleArray().length/7; w++) {//For every week
+						if(fixedSchedule.getScheduleArray()[7*w] == duty.getNr()) {
 							this.cplex.sum(constraint, this.cplex.constant(1));
 							alreadyCovered++;
 							break;
@@ -138,8 +138,8 @@ public class Phase4_RelaxFix_LP {
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 			int alreadyCovered = 0;
 			for(Schedule curSchedule : this.schedules) {
-				for(int w = 0; w < curSchedule.getSchedule().length/7; w++) {//For every week
-					if(curSchedule.getSchedule()[7*w + 6] == duty.getNr()) {
+				for(int w = 0; w < curSchedule.getScheduleArray().length/7; w++) {//For every week
+					if(curSchedule.getScheduleArray()[7*w + 6] == duty.getNr()) {
 						constraint.addTerm(this.scheduleToVar.get(curSchedule), 1);
 						break;
 					}
@@ -147,8 +147,8 @@ public class Phase4_RelaxFix_LP {
 			}
 			for(Schedule fixedSchedule : this.fixedSchedules.keySet()) {
 				if(this.fixedSchedules.get(fixedSchedule) == 1) {
-					for(int w = 0; w < fixedSchedule.getSchedule().length/7; w++) {//For every week
-						if(fixedSchedule.getSchedule()[7*w + 6] == duty.getNr()) {
+					for(int w = 0; w < fixedSchedule.getScheduleArray().length/7; w++) {//For every week
+						if(fixedSchedule.getScheduleArray()[7*w + 6] == duty.getNr()) {
 							this.cplex.sum(constraint, this.cplex.constant(1));
 							alreadyCovered++;
 							break;
@@ -163,8 +163,8 @@ public class Phase4_RelaxFix_LP {
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 				int alreadyCovered = 0;
 				for (Schedule curSchedule : this.schedules) {
-					for (int w = 0; w < curSchedule.getSchedule().length / 7; w++) {// For every week
-						if (curSchedule.getSchedule()[7 * w + s] == duty.getNr()) {
+					for (int w = 0; w < curSchedule.getScheduleArray().length / 7; w++) {// For every week
+						if (curSchedule.getScheduleArray()[7 * w + s] == duty.getNr()) {
 							constraint.addTerm(this.scheduleToVar.get(curSchedule), 1);
 							break;
 						}
@@ -173,8 +173,8 @@ public class Phase4_RelaxFix_LP {
 				
 				for(Schedule fixedSchedule : this.fixedSchedules.keySet()) {
 					if(this.fixedSchedules.get(fixedSchedule) == 1) {
-						for(int w = 0; w < fixedSchedule.getSchedule().length/7; w++) {//For every week
-							if(fixedSchedule.getSchedule()[7*w + s] == duty.getNr()) {
+						for(int w = 0; w < fixedSchedule.getScheduleArray().length/7; w++) {//For every week
+							if(fixedSchedule.getScheduleArray()[7*w + s] == duty.getNr()) {
 								this.cplex.sum(constraint, this.cplex.constant(1));
 								alreadyCovered++;
 								break;

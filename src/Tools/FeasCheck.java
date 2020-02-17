@@ -3,7 +3,7 @@ package Tools;
 public class FeasCheck {
 
 	public Instance instance; 
-	
+
 	public FeasCheck(Instance instance) {
 		this.instance = instance; 
 	}
@@ -20,7 +20,7 @@ public class FeasCheck {
 		if( endDay - startDay < 6) {
 			throw new IllegalArgumentException("not more than 14 days between bounds"); 
 		}
-		
+
 		//Over the whole array (make changes here if you want it to loop over less)
 		for (int k = startDay; k <endDay; k++) {// s is the starting day
 			int s = (k + schedule.length) % schedule.length; 
@@ -96,7 +96,7 @@ public class FeasCheck {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Checks the feasibility of the complete schedule for the 14 * 24 hour constraint
 	 * @param schedule
@@ -105,7 +105,7 @@ public class FeasCheck {
 	public boolean isFeasible14(int[] schedule) {
 		return isFeasible14(schedule, 0, schedule.length); 
 	}
-	
+
 	/**
 	 * Checks the constraint of minimum 2 weekly rest, returns true is correct 
 	 * 
@@ -115,12 +115,12 @@ public class FeasCheck {
 	 * @return
 	 */
 	public boolean isFeasible14(int [] schedule, int startDay, int endDay) {
-		
-		
+
+
 		if( endDay - startDay < 13) {
 			throw new IllegalArgumentException("not more than 14 days between bounds"); 
 		}
-		
+
 		for (int k = startDay ; k <endDay; k++) {
 			int s = (k + schedule.length) % schedule.length; 
 			// Don't have to check if this day is an ATV or Rest day
@@ -141,7 +141,7 @@ public class FeasCheck {
 					if (!rangeFeasible) {
 						if ((schedule[(s + i) % schedule.length] == 1 || schedule[(s + i) % schedule.length] == 2)
 								&& (schedule[(s + i - 1) % schedule.length] != 1
-										&& schedule[(s + i - 1) % schedule.length] != 2)) {
+								&& schedule[(s + i - 1) % schedule.length] != 2)) {
 							int consec = 24 * 60;
 
 							// Day before
@@ -199,7 +199,7 @@ public class FeasCheck {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Checks whether adding a new duty at the current day is feasible with the min break between duties constraint
 	 * @param scheduleArray
@@ -253,7 +253,7 @@ public class FeasCheck {
 				feasibleWithNext = true;
 			}
 		}
-		
+
 		if(feasibleWithNext && feasibleWithPrevious) {
 			return true;
 		}
@@ -281,7 +281,7 @@ public class FeasCheck {
 				}
 			}
 		}
-		
+
 		if(totMinWorkedOverSchedule > schedule.length/7 * c.getAvgDaysPerWeek() * c.getAvgHoursPerDay() * 60) {
 			return false;
 		}
@@ -298,13 +298,13 @@ public class FeasCheck {
 	 */
 	public boolean checkATVDays(int[] schedule, ContractGroup c) {
 		int nATVdays = 0; 
-		
+
 		for(int i = 0; i<schedule.length; i++) {
 			if(schedule[i] == 1) {
 				nATVdays++; 
 			}
 		}
-		
+
 		if(nATVdays >= c.getATVc()) {
 			return true; 
 		}else {
@@ -314,53 +314,53 @@ public class FeasCheck {
 	public double QuaterlyOvertime(Solution sol) {
 		double overtime = 0;
 		for(ContractGroup group: sol.getNewSchedule().keySet()) {
-			overtime += QuaterlyOvertime(sol.getNewSchedule().get(group).getLSSchedule().getSchedule(), group); 
+			overtime += QuaterlyOvertime(sol.getNewSchedule().get(group).getSchedule().getScheduleArray(), group); 
 		}
-				
+
 		return overtime;
 	}
-	
+
 	public double QuaterlyOvertime(int[] solution, ContractGroup c) {
 		double overtime = 0;
-	
-			for(int empl = 0; empl < solution.length/7; empl++) {
-				double[] weeklyOvertime = this.setWeeklyOvertime(solution, c);
-				for(int i =0; i < 13; i++) { //need to loop over 13 weeks for overtime
-					if((empl + i) < solution.length/7){
-						if(weeklyOvertime[empl + i] > 0) {
+
+		for(int empl = 0; empl < solution.length/7; empl++) {
+			double[] weeklyOvertime = this.setWeeklyOvertime(solution, c);
+			for(int i =0; i < 13; i++) { //need to loop over 13 weeks for overtime
+				if((empl + i) < solution.length/7){
+					if(weeklyOvertime[empl + i] > 0) {
 						overtime = overtime + weeklyOvertime[empl +i];	
-						}
 					}
-					else {
-						int remainder = (empl + i) % solution.length/7;
-						if(weeklyOvertime[remainder] > 0) {
+				}
+				else {
+					int remainder = (empl + i) % solution.length/7;
+					if(weeklyOvertime[remainder] > 0) {
 						overtime = overtime + weeklyOvertime[remainder];		
-						}
 					}
 				}
 			}
+		}
 		return overtime;
 	}
- public double[] setWeeklyOvertime(int[] schedule, ContractGroup c) {
-	int sum = 0;
-	double[] weeklyOvertime = new double[schedule.length/7];
-	for(int  k = 0; k < (schedule.length/7); k++) {
-		sum = 0;
-		for(int i = 7*k; i < (7*k+6); i++) {
-			if(instance.getFromDutyNrToDuty().containsKey(schedule[i])) {
-				sum += instance.getFromDutyNrToDuty().get(schedule[i]).getPaidMin();
+	public double[] setWeeklyOvertime(int[] schedule, ContractGroup c) {
+		int sum = 0;
+		double[] weeklyOvertime = new double[schedule.length/7];
+		for(int  k = 0; k < (schedule.length/7); k++) {
+			sum = 0;
+			for(int i = 7*k; i < (7*k+6); i++) {
+				if(instance.getFromDutyNrToDuty().containsKey(schedule[i])) {
+					sum += instance.getFromDutyNrToDuty().get(schedule[i]).getPaidMin();
+				}
+				else if(instance.getFromRDutyNrToRDuty().containsKey(schedule[i])) {
+					sum += c.getAvgHoursPerDay()*60;
+				}
+				else if(schedule[i] == 1) {
+					sum += c.getAvgHoursPerDay()*60;
+				}
 			}
-			else if(instance.getFromRDutyNrToRDuty().containsKey(schedule[i])) {
-				sum += c.getAvgHoursPerDay()*60;
-			}
-			else if(schedule[i] == 1) {
-				sum += c.getAvgHoursPerDay()*60;
-			}
+
+			weeklyOvertime[k] = sum - (c.getAvgDaysPerWeek()*c.getAvgHoursPerDay()*60) ;
 		}
-	
-	weeklyOvertime[k] = sum - (c.getAvgDaysPerWeek()*c.getAvgHoursPerDay()*60) ;
-}
-	return weeklyOvertime;
-}
+		return weeklyOvertime;
+	}
 }
 

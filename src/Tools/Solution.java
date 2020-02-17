@@ -31,14 +31,14 @@ public class Solution {
 				int weekNumber = (int) Math.floor(dutyDay/7);
 				int sum = 0;
 				for(int k = 7*weekNumber; k < (7*weekNumber+6); k++) {
-					if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[k])) {
-						sum += instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[k]).getPaidMin();
+					if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(request.getGroup()).getSchedule().getScheduleArray()[k])) {
+						sum += instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(request.getGroup()).getSchedule().getScheduleArray()[k]).getPaidMin();
 					}
-					else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[k])) {
-						sum +=solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getC().getAvgHoursPerDay()*60;
+					else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(request.getGroup()).getSchedule().getScheduleArray()[k])) {
+						sum +=solution.getNewSchedule().get(request.getGroup()).getSchedule().getC().getAvgHoursPerDay()*60;
 					}
-					else if(solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[k] == 1) {
-						sum += solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getC().getAvgHoursPerDay()*60;
+					else if(solution.getNewSchedule().get(request.getGroup()).getSchedule().getScheduleArray()[k] == 1) {
+						sum += solution.getNewSchedule().get(request.getGroup()).getSchedule().getC().getAvgHoursPerDay()*60;
 					}
 					
 					
@@ -46,7 +46,7 @@ public class Solution {
 				
 				solution.getNewSchedule().get(request.getGroup()).getWeeklyOvertime()[weekNumber] = sum;				
 				
-			solution.getNewSchedule().get(request.getGroup()).getLSSchedule().getSchedule()[dutyDay] = 2;
+			solution.getNewSchedule().get(request.getGroup()).getSchedule().getScheduleArray()[dutyDay] = 2;
 			
 		this.requests.add(request);
 		}
@@ -69,9 +69,32 @@ public class Solution {
 		this.newSchedule = schedule;
 	}
 	
+	public void addRequest(Placement placement) {
+		LSschedule currentSchedule = this.getNewSchedule().get(placement.getTimeslot().getGroup()); 
+		currentSchedule.getSchedule().getScheduleArray()[placement.getTimeslot().getDay()] = placement.getRequest().getDutyNumber(); 
+		currentSchedule.setWeeklyOvertime(currentSchedule.getSchedule(), instance); 
+		this.requests.remove(placement.getRequest()); 
+	}
+	
+	
 	@Override
 	public String toString() {
 		return "Solution [ newSchedule=" + newSchedule + "]";
 	}
 	
+	
+	public double getObj() {
+		//Define Objective value! 
+		return 0.0; 
+	}
+	public Solution clone() {
+		
+		Map<ContractGroup, LSschedule> copy = new HashMap<ContractGroup, LSschedule>(); 
+		
+		for(ContractGroup group: this.newSchedule.keySet()) {
+			copy.put(group, this.newSchedule.get(group).clone()); 
+		}
+		
+		return new Solution(new HashSet<Request>(this.requests),copy, this.instance);
+	}
 }

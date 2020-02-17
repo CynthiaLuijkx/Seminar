@@ -16,18 +16,18 @@ public class Request {
 	public int getDay() {
 		return day;
 	}
-	public Request(Duty duty, ContractGroup group, int day, int number) {
+	public Request(Duty duty, ContractGroup group, int day) {
 		this.duty = duty;
 		this.group = group;
 		this.day = day;
-		this.dutyNumber = number;
+		this.dutyNumber = duty.getNr(); 
 		this.weekday = day%7;
 	}
-	public Request(ReserveDutyType rduty, ContractGroup group, int day, int number ) {
+	public Request(ReserveDutyType rduty, ContractGroup group, int day ) {
 		this.reserveDuty = rduty;
 		this.group = group;
 		this.day = day;
-		this.dutyNumber = number;
+		this.dutyNumber = rduty.getNr(); 
 		this.weekday = day%7;
 	}
 
@@ -39,7 +39,7 @@ public class Request {
 	}
 	public int getStartTime() {
 		int start = 0;
-		if(this.getDutyNumber() == 1) {
+		if(this.getDutyNumber() == 1||this.getDutyNumber() == 2) {
 			start = 24*60;
 		}
 		else if(this.getDutyNumber() < 1000) {
@@ -52,7 +52,7 @@ public class Request {
 	}
 	public int getEndTime() {
 		int end = 0;
-		if(this.getDutyNumber() == 1) {
+		if(this.getDutyNumber() == 1||this.getDutyNumber() == 2) {
 			end = 0;
 		}
 		else if(this.getDutyNumber() < 1000) {
@@ -81,13 +81,39 @@ public class Request {
 	public int getDutyNumber() {
 		return dutyNumber;
 	}
+	
 	public void addPlacement(Request request, TimeSlot slot, double cost) {
 		Placement placement = new Placement(request, slot, cost);
 		this.listOfPlacements.add(placement);
 	}
+	
+	public void addPlacement(Placement placement) {
+		this.listOfPlacements.add(placement); 
+	}
+	
+	public List<Placement> getPlacements(){
+		return this.listOfPlacements; 
+	}
+	
+	public void deletePlacement(Placement placement) {
+		this.listOfPlacements.remove(placement); 
+	}
+	
+	public void deletePlacements(ContractGroup group) {
+		for(Placement placement: this.listOfPlacements) {
+			if(placement.getTimeslot().getGroup().equals(group)) {
+				this.deletePlacement(placement);
+			}
+		}
+	}
+	
+	public void deleteAllPlacements() {
+		this.listOfPlacements.clear();
+	}
+	
 	@Override
 	public String toString() {
-		return "Request [duty=" + duty + ", group=" + group + "]";
+		return "Request [dutyNr=" + this.dutyNumber + ", group=" + group + "]";
 	}
 	
 		
