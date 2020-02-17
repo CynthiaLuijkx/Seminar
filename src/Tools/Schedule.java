@@ -28,7 +28,7 @@ public class Schedule implements Cloneable
 	}
 
 	/**
-	 * Returns the overtime
+	 * Returns the Overtime
 	 * @return
 	 */
 	public int getOvertime() {
