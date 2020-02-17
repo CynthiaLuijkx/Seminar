@@ -168,8 +168,12 @@ public class ScheduleVis extends JPanel {
 						endTime = 25*60; 
 					}else if(duties[j+ i*7].equals("P")) {
 						c = Color.yellow; 
-						startTime = 0; 
-						endTime = 24*60 ; 
+						startTime = 8*60; 
+						endTime = 20*60 ; 
+					}else if(duties[j+ i*7].equals("M")) {
+						c = new Color(221,160,221); 
+						startTime = 11*60 + 21; 
+						endTime = 18*60 + 34 ; 
 					}
 				}
 				else {

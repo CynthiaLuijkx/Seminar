@@ -77,8 +77,13 @@ public class Main
 		if (mip.isFeasible()) {
 			mip.populate(maxIt);
 			while (scheduleForEveryGroup == false && iteration <= maxIt) {
-				mip.makeSolution(iteration);
+				mip.makeSolution();
+				//mip.makeSolution(iteration);
 				instance.setBasicSchedules(mip.getSolution());
+				
+				for(ContractGroup c : instance.getContractGroups()) {
+					new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr());
+				}
 
 				long phase3Start = System.nanoTime();
 				Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
@@ -109,7 +114,9 @@ public class Main
 			else {
 				Phase4 phase4 = new Phase4(schedules, instance);
 				List<Schedule> newSchedules = phase4.runILP();
-				new ScheduleVis(newSchedules.get(1).getSchedule(), ""+newSchedules.get(0).getC().getNr() , instance);
+				for(Schedule schedule : newSchedules) {
+					new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance);
+				}
 			}
 		} else {
 			System.out.println("Basic schedule cannot be made.");
