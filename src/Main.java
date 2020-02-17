@@ -22,7 +22,7 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
@@ -64,12 +64,13 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getUB();
+		int numberOfDrivers = instance.getLB() + 18;
 		instance.setNrDrivers(numberOfDrivers);
-
+		
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
+		System.out.println("Nr. Sols: " + mip.nSolutions());
 		
 		long phase3Start = System.nanoTime();
 		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
@@ -81,7 +82,6 @@ public class Main
 		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
 		List<Schedule> newSchedules = phase4.runILP();
 		new ScheduleVis(newSchedules.get(1).getSchedule(), ""+newSchedules.get(0).getC().getNr() , instance);
-
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets

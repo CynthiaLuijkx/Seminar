@@ -127,6 +127,10 @@ public class MIP_Phase1
 		return this.solution;
 	}
 	
+	public int nSolutions() throws IloException {
+		return this.cplex.getSolnPoolNsolns();
+	}
+	
 	public void makeSolution() throws UnknownObjectException, IloException {
 		for(ContractGroup group : this.instance.getContractGroups()) {
 			String[] solutionArray = new String[group.getTc()];
