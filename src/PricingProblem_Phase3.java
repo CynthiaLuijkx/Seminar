@@ -154,7 +154,13 @@ public class PricingProblem_Phase3
 									}
 								}
 							}
+							else {
+							//	System.out.println("Specific overtime violated");
+							}
 						}
+					}
+					else {
+						//System.out.println("Overtime violated");
 					}
 				}
 			}
