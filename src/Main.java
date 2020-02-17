@@ -22,7 +22,7 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
@@ -64,7 +64,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() +15;
+		int numberOfDrivers = instance.getLB() +35;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
@@ -75,14 +75,14 @@ public class Main
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		mip.solve();
 		if (mip.isFeasible()) {
-			mip.populate(maxIt);
+			//mip.populate(maxIt);
 			while (scheduleForEveryGroup == false && iteration <= maxIt) {
-				mip.makeSolution();
-				//mip.makeSolution(iteration);
+				mip.makeSolution(); //When not using populate 
+				//mip.makeSolution(iteration); //When using populate
 				instance.setBasicSchedules(mip.getSolution());
 				
 				for(ContractGroup c : instance.getContractGroups()) {
-					new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr());
+				//	new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr());
 				}
 
 				long phase3Start = System.nanoTime();
