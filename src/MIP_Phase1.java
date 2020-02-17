@@ -93,8 +93,9 @@ public class MIP_Phase1
 		initSoft5(); //Min consecutive similar duties
 		initSoft6(); //Min consecutive rest + ATV 
 		initSoft7(); //Early to late duty 
-		initSoft8(); //Parttimers should work as little other duties as possible 
+		//initSoft8(); //Parttimers should work as little other duties as possible 
 		initSoft9(); //Maximum of 5 duties per calendar week 
+		initSoft10(); 
 		
 		initObjective();
 		
@@ -967,6 +968,46 @@ public class MIP_Phase1
 				constraint.addTerm(penalty, -1);
 				this.cplex.addLe(constraint, 5, group.groupNumberToString() + "MaxDuties_W" + s);
 			}
+		}
+	}
+	
+	public void initSoft10() throws IloException { //Don't exceed contract hours over the entire period 
+		for (ContractGroup group : this.instance.getContractGroups()) {
+			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+			for (int t = 0; t < group.getTc(); t++) {
+
+				for (IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {// Loop over all decVars
+					// ATV days
+					String type = this.decVarToCombination.get(decVar).getType();
+					if (type.equals("ATV")) {
+						constraint.addTerm(decVar, group.getAvgHoursPerDay()*60);
+					}
+
+					// Normal duties
+					else {
+						Character ch = type.charAt(0);
+						// Normal duties
+						if (!ch.equals('R')) {
+							if (t % 7 == 0) {// Sunday
+								constraint.addTerm(decVar, this.instance.getAvgMinSun().get(type));
+							} else if (t % 7 == 6) {// Saturday
+								constraint.addTerm(decVar, this.instance.getAvgMinSat().get(type));
+							} else {// Working days
+								constraint.addTerm(decVar, this.instance.getAvgMinW().get(type));
+							}
+						}
+
+						// Reserve duties
+						if (ch.equals('R')) {
+							constraint.addTerm(decVar, group.getAvgHoursPerDay()*60);
+						}
+					}
+				}
+			}
+			int rhs = (int) (60*group.getAvgHoursPerDay() * group.getAvgDaysPerWeek() * (group.getTc() / 7));
+			//int extraHoursPerWeek = 2;
+			//rhs = rhs + (int) ((group.getTc() / 7) * 60 * extraHoursPerWeek); //Add extra hours per week 
+			cplex.addLe(constraint, rhs);
 		}
 	}
 	
