@@ -31,6 +31,10 @@ public class Schedule implements Cloneable
 		return overTime;
 	}
 
+	/**
+	 * Returns the array with the duty numbers
+	 * @return
+	 */
 	public int[] getScheduleArray() {
 		return schedule;
 	}

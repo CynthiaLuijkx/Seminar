@@ -97,7 +97,6 @@ public class RepairHeuristics {
 		for(Placement placement:placements) {
 			copyPlacements.add(placement.duplicate()); 
 		}
-
 		return copyPlacements; 
 	}
 
@@ -149,6 +148,7 @@ public class RepairHeuristics {
 		return updatedPlacements; 
 	}
 
+	
 	public Solution regretRepair2(Solution solution, int q) {
 		
 		while(solution.getRequests().size()==0) {
@@ -184,9 +184,7 @@ public class RepairHeuristics {
 				updatePlacements(request, solution, bestPlacement.getTimeslot().getGroup(), bestPlacement.getTimeslot().getDay());
 			}
 		}
-
 		return solution; 
-
 	}
 
 	/**
@@ -205,7 +203,6 @@ public class RepairHeuristics {
 		}
 
 		while(solution.getRequests().size()!=0) { //until all requests are placed
-
 			if(allPlacements.size()== 0) {
 				System.out.println("Not all requests satisfied"); 
 				break; 
@@ -225,7 +222,6 @@ public class RepairHeuristics {
 					toRemove.add(placement); 
 				}
 			}
-
 			allPlacements.removeAll(toRemove); 
 
 			for(Request request: solution.getRequests()) {
@@ -235,7 +231,11 @@ public class RepairHeuristics {
 		return solution; 
 	}
 
-
+	/**
+	 * 
+	 * @param bestPlacement
+	 * @param solution
+	 */
 	public void deleteInvalidPlacements(Placement bestPlacement, Solution solution) {
 		for(Request request: solution.getRequests()) {
 			for(Placement placement : request.getPlacements()) {

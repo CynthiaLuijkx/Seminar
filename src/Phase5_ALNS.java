@@ -102,7 +102,7 @@ public class Phase5_ALNS {
 			
 			// find new solution
 			tempSol = this.executeDestroyAndRepair(tempSol, destroyHeuristicNr, repairHeuristicNr, sizeNeighbourhood);
-			this.repairHeuristics.greedyRepair(tempSol); 
+			//this.repairHeuristics.greedyRepair(tempSol); 
 			
 //			for(Request request: tempSol.getRequests()) {
 //				List<Placement> placements = new ArrayList<Placement>();
@@ -110,7 +110,7 @@ public class Phase5_ALNS {
 //			
 //				requestWithPlacements.add(placements);
 //			}
-			//System.out.println(requestWithPlacements.toString());
+//			System.out.println(requestWithPlacements.toString());
 			
 			n++;
 		}
