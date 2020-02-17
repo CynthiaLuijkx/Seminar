@@ -345,8 +345,15 @@ public class Phase4_AddMissing {
 									consec += instance.getFromDutyNrToDuty()
 											.get(schedule[(s + i + 1) % schedule.length]).getStartTime();
 								} else {
-									consec += instance.getFromRDutyNrToRDuty()
-											.get(schedule[(s + i + 1) % schedule.length]).getStartTime();
+									int j = 1;
+									while (schedule[(s+i+j)%schedule.length] == 1 || schedule[(s+i+j)%schedule.length] == 2) {
+										if (i+j == 13) {
+											consec += start;
+											break;
+										}
+										consec += 24 * 60;
+										j++;
+									}
 								}
 							}
 
