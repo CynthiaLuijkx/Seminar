@@ -27,7 +27,7 @@ public class DetermineViolations {
 	private Set<Violation3Days> violations3Days; 
 
 	private static int dailyRestMin = 11*60; 
-	private static int restDayMin = 32*60; 
+	private static int restDayMin = 36*60; 
 	private double violationBound; 
 	private double violationBound3Days;
 

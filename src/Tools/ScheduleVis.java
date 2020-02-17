@@ -21,27 +21,10 @@ public class ScheduleVis extends JPanel {
 	private int xBuffer; 
 	private String[] duties; 
 	private int heightDutyBlock; 
-	private HashMap<Integer, Duty> dutyNToDuty; 
 	private boolean basic; 
 	private int yBuffer; 
-
-
-	public static void main(String [] args) {
-		JFrame frame = new JFrame("CrewRoster"); 
-		int nWeeks = 2; 
-		int heightpWeek = 50; 
-		int widthpDay = 100; 
-		int xLegend = 100; 
-		int yBuffer = 50; 
-		String[] duties = new String[] {"V", "ATV",  "L", "V", "M", "L", "D","R", "ATV",  "L", "V", "W", "D", "D" }; 
-		JPanel canvas = new ScheduleVis(nWeeks, heightpWeek, widthpDay, xLegend, yBuffer, duties);
-		canvas.setSize(7*widthpDay + xLegend, nWeeks*heightpWeek );
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.add(canvas);
-		frame.pack();
-		frame.setVisible(true);
-	}
-
+	private int[] schedule; 
+	private Instance instance; 
 
 	public ScheduleVis(int nWeeks, int heightpWeek, int widthpDay, int xLegend, int yBuffer, String[] duties) {
 		this.nWeeks = nWeeks; 
@@ -53,19 +36,21 @@ public class ScheduleVis extends JPanel {
 		this.heightDutyBlock = 20; 
 		this.basic = true; 
 		this.yBuffer = yBuffer; 
+		this.schedule = null; 
 	}
 
-	public ScheduleVis(int nWeeks, int heightpWeek, int widthpDay, int xLegend, int yBuffer,  String[] duties, HashMap<Integer, Duty>dutyNToDuty) {
+	public ScheduleVis(int nWeeks, int heightpWeek, int widthpDay, int xLegend, int yBuffer,  int[] schedule, Instance instance) {
 		this.nWeeks = nWeeks; 
 		this.boundX = 7*100;  
 		this.heightpWeek = heightpWeek; 
 		this.widthpDay = widthpDay; 
 		this.xBuffer = xLegend; 
-		this.duties = duties; 
+		this.duties = null; 
 		this.heightDutyBlock = 20; 
 		this.basic = false; 
-		this.dutyNToDuty = dutyNToDuty; 
 		this.yBuffer = yBuffer; 
+		this.schedule = schedule ;
+		this.instance = instance; 
 	}
 
 	public ScheduleVis(String[] duties, String contractGroupNr ) {
@@ -80,6 +65,30 @@ public class ScheduleVis extends JPanel {
 				int xLegend = 100; 
 				int yBuffer = 50; 
 				JPanel canvas = new ScheduleVis(nWeeks, heightpWeek, widthpDay, xLegend, yBuffer, duties);
+				canvas.setPreferredSize(new Dimension(7*widthpDay + xLegend + 10, yBuffer + Math.max(15*heightpWeek ,nWeeks*heightpWeek) ));
+				JScrollPane scrollPane = new JScrollPane(canvas); 
+				scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+				JFrame frame = new JFrame("CrewRoster "+ contractGroupNr); 
+				frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				frame.setVisible(true);
+				frame.setLocationRelativeTo(null);
+			}
+		});
+	}
+
+	public ScheduleVis(int[] schedule, String contractGroupNr , Instance instance) {
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			public void run()
+			{
+				int nWeeks = schedule.length/7; 
+				System.out.println(nWeeks); 
+				int heightpWeek = 50; 
+				int widthpDay = 100; 
+				int xLegend = 100; 
+				int yBuffer = 50; 
+				JPanel canvas = new ScheduleVis(nWeeks, heightpWeek, widthpDay, xLegend, yBuffer, schedule, instance);
 				canvas.setPreferredSize(new Dimension(7*widthpDay + xLegend + 10, yBuffer + Math.max(15*heightpWeek ,nWeeks*heightpWeek) ));
 				JScrollPane scrollPane = new JScrollPane(canvas); 
 				scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -117,7 +126,9 @@ public class ScheduleVis extends JPanel {
 				int startTime = 0; 
 				int endTime = 0 ; 
 				int minpDay = 24*60; 
+				String dutyType = ""; 
 				if(basic) {
+					dutyType = duties[j+i*7]; 
 					//Check for each day what duty it is 
 					if(duties[j + i*7].equals("V")) {
 						startTime = 4*60 + 30; 
@@ -162,21 +173,48 @@ public class ScheduleVis extends JPanel {
 					}
 				}
 				else {
-					Duty duty = this.dutyNToDuty.get(Integer.parseInt(duties[j + i*7])); 
-					startTime = duty.getStartTime(); 
-					endTime = duty.getEndTime(); 
+					
+					int dutynr = schedule[j + i*7]; 
+					if(dutynr == 1) {
+						dutyType = "ATV"; 
+						c = new Color(255,192,203); 
+						startTime = 0; 
+						endTime = 24*60; 
+					}else if (dutynr == 2){
+						dutyType = "Rest"; 
+						c = new Color(152,251,152); 
+						startTime = 0; 
+						endTime = 24*60; 
+					}else if(dutynr <1000) {
+						ReserveDutyType duty = this.instance.getFromRDutyNrToRDuty().get(dutynr); 
+						dutyType = "R"+ duty.getType() + dutynr; 
+						startTime = duty.getStartTime(); 
+						endTime = duty.getEndTime(); 
+					}else {
+						Duty duty = this.instance.getFromDutyNrToDuty().get(dutynr); 
+						c = new Color(111,175,240); 
+						dutyType = duty.getType() + (dutynr -820400); 
+						startTime = duty.getStartTime(); 
+						endTime = duty.getEndTime(); 
+					}
+					
 				}
 				int duration = endTime - startTime; 
 				g.drawRect((startTime*widthpDay/minpDay) + xBuffer + j*widthpDay,yBuffer+  heightpWeek/2 + i* heightpWeek - heightDutyBlock/2 , duration*widthpDay/minpDay, heightDutyBlock);
 				g.setColor(c);
 				g.fillRect((startTime*widthpDay/minpDay) + xBuffer + j*widthpDay, yBuffer+ heightpWeek/2 + i* heightpWeek - heightDutyBlock/2 , duration*widthpDay/minpDay, heightDutyBlock);
-				
+
 				//Write type of duty 
 				g.setColor(Color.BLACK);
-				int nLetters = duties[j + i*7].length(); 
-				int xString = (startTime*widthpDay/minpDay) + xBuffer + j*widthpDay +  duration*widthpDay/(2*minpDay) - fontSize*nLetters/2; 
+				
+				int nLetters =  dutyType.length(); 
 				int yString = heightpWeek/2 + i* heightpWeek - heightDutyBlock/2 + fontSize ; 
-				g.drawString(duties[j + i*7],xString ,yBuffer+  yString);
+				fontSize = 10; 
+				int xString = (startTime*widthpDay/minpDay) + xBuffer + j*widthpDay +  duration*widthpDay/(2*minpDay) - fontSize*nLetters/2; 
+				
+				
+				g.drawString(dutyType,xString ,yBuffer+  yString);
+				fontSize = 15;
 			}	
 		}
 	}
