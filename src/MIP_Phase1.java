@@ -124,11 +124,12 @@ public class MIP_Phase1
 	//Source: https://www.ibm.com/support/knowledgecenter/SSSA5P_12.7.1/ilog.odms.cplex.help/CPLEX/OverviewAPIs/topics/Soln_pool.html
 	public void populate(int nsol) throws IloException{
 		this.cplex.setParam(IloCplex.IntParam.SolnPoolCapacity, nsol);
-		this.cplex.setParam(IloCplex.IntParam.SolnPoolReplace, 1);
+		//this.cplex.setParam(IloCplex.IntParam.SolnPoolReplace, 1);
 		//this.cplex.setParam(IloCplex.DoubleParam.SolnPoolGap, 0);
 		this.cplex.setParam(IloCplex.DoubleParam.SolnPoolAGap, 0.5);
 		//this.cplex.setParam(IloCplex.IntParam.SolnPoolIntensity, 1);
-		//this.cplex.setParam(IloCplex.IntParam.PopulateLim, 2100000000);
+		//this.cplex.setParam(IloCplex.IntParam.PopulateLim, 1);
+		this.cplex.setParam(IloCplex.DoubleParam.TimeLimit, 60);
 		this.cplex.populate();
 		System.out.println("Solution pool size: " + cplex.getSolnPoolNsolns());
 	}
@@ -980,7 +981,7 @@ public class MIP_Phase1
 					// ATV days
 					String type = this.decVarToCombination.get(decVar).getType();
 					if (type.equals("ATV")) {
-						constraint.addTerm(decVar, group.getAvgHoursPerDay()*60);
+						constraint.addTerm(decVar, (int) group.getAvgHoursPerDay()*60);
 					}
 
 					// Normal duties
@@ -999,7 +1000,7 @@ public class MIP_Phase1
 
 						// Reserve duties
 						if (ch.equals('R')) {
-							constraint.addTerm(decVar, group.getAvgHoursPerDay()*60);
+							constraint.addTerm(decVar, (int) group.getAvgHoursPerDay()*60);
 						}
 					}
 				}
