@@ -26,6 +26,11 @@ public class Instance
 	private final Set<ReserveDutyType> reserveDutyTypes;
 	private final HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty;
 	
+	
+	private final int minBreak = 11*60; 
+	private final int minWeekBreak = 32*60; 
+	private final int min2WeekBreak = 72*60; 
+	
 	private Set<Violation> violations11;
 	private Set<Violation> violations32;
 	private Set<Violation3Days> violations3Days;
@@ -219,6 +224,19 @@ public class Instance
 		this.violations3Days = violations3Days;
 	}
 
+	
+	public int getMinBreak() {
+		return minBreak;
+	}
+
+	public int getMinWeekBreak() {
+		return minWeekBreak;
+	}
+
+	public int getMin2WeekBreak() {
+		return min2WeekBreak;
+	}
+	
 	public Set<Violation3Days> getViolations3Days() {
 		return violations3Days;
 	}

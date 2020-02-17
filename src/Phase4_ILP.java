@@ -97,8 +97,8 @@ public class Phase4_ILP {
 		for(Duty duty : instance.getSunday()) {
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 			for(Schedule curSchedule : this.schedules) {
-				for(int w = 0; w < curSchedule.getSchedule().length/7; w++) {//For every week
-					if(curSchedule.getSchedule()[7*w] == duty.getNr()) {
+				for(int w = 0; w < curSchedule.getScheduleArray().length/7; w++) {//For every week
+					if(curSchedule.getScheduleArray()[7*w] == duty.getNr()) {
 						constraint.addTerm(this.scheduleToVar.get(curSchedule), 1);
 						break;
 					}
@@ -115,8 +115,8 @@ public class Phase4_ILP {
 		for(Duty duty : instance.getSaturday()) {
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 			for(Schedule curSchedule : this.schedules) {
-				for(int w = 0; w < curSchedule.getSchedule().length/7; w++) {//For every week
-					if(curSchedule.getSchedule()[7*w + 6] == duty.getNr()) {
+				for(int w = 0; w < curSchedule.getScheduleArray().length/7; w++) {//For every week
+					if(curSchedule.getScheduleArray()[7*w + 6] == duty.getNr()) {
 						constraint.addTerm(this.scheduleToVar.get(curSchedule), 1);
 						break;
 					}
@@ -134,8 +134,8 @@ public class Phase4_ILP {
 			for (int s = 1; s <= 5; s++) {
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 				for (Schedule curSchedule : this.schedules) {
-					for (int w = 0; w < curSchedule.getSchedule().length / 7; w++) {// For every week
-						if (curSchedule.getSchedule()[7 * w + s] == duty.getNr()) {
+					for (int w = 0; w < curSchedule.getScheduleArray().length / 7; w++) {// For every week
+						if (curSchedule.getScheduleArray()[7 * w + s] == duty.getNr()) {
 							constraint.addTerm(this.scheduleToVar.get(curSchedule), 1);
 							break;
 						}

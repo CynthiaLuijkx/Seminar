@@ -17,6 +17,7 @@ import Tools.Violation;
 import ilog.concert.IloException;
 
 import java.util.Locale;
+import java.util.Map;
 
 public class Main 
 {
@@ -50,7 +51,7 @@ public class Main
 
 		//Get all starting information
 		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound);
-
+		Schedule.setInstance(instance);
 		System.out.println("Instance " + depot + " initialised");
 
 
@@ -64,7 +65,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() +17;
+		int numberOfDrivers = instance.getLB() +25;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
@@ -80,8 +81,13 @@ public class Main
 		int treshold = 0; //bigger than or equal 
 		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
 		List<Schedule> newSchedules = phase4.runILP();
-		new ScheduleVis(newSchedules.get(1).getSchedule(), ""+newSchedules.get(0).getC().getNr() , instance);
-
+		new ScheduleVis(newSchedules.get(1).getScheduleArray(), ""+newSchedules.get(0).getC().getNr() , instance);
+		Map<ContractGroup, Schedule> mapSchedules = new HashMap<ContractGroup, Schedule>(); 
+		for(Schedule schedule: newSchedules) {
+			mapSchedules.put(schedule.getC(), schedule); 
+		}
+		int iterations_phase5 = 1; 
+		Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, mapSchedules, 0); 
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets

@@ -40,8 +40,8 @@ public class Phase4_AddMissing {
 				for(Duty duty : instance.getSunday()) {
 					int included = 0;
 					for(Schedule schedule :  schedules) {
-						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
-							if(schedule.getSchedule()[(7*w) + s] == duty.getNr()) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+							if(schedule.getScheduleArray()[(7*w) + s] == duty.getNr()) {
 								included++;
 							}
 						}
@@ -56,8 +56,8 @@ public class Phase4_AddMissing {
 				for(Duty duty : instance.getSaturday()) {
 					int included = 0;
 					for(Schedule schedule :  schedules) {
-						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
-							if(schedule.getSchedule()[(7*w) + s] == duty.getNr()) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+							if(schedule.getScheduleArray()[(7*w) + s] == duty.getNr()) {
 								included++;
 							}
 						}
@@ -72,9 +72,9 @@ public class Phase4_AddMissing {
 				for(Duty duty : instance.getWorkingDays()) {
 					int included = 0;
 					for(Schedule schedule :  schedules) {
-						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
 							//System.out.println(duty.getNr() + " " +  schedule.getSchedule()[(7*w) + s]);
-							if(schedule.getSchedule()[(7*w)+ s] == duty.getNr()) {
+							if(schedule.getScheduleArray()[(7*w)+ s] == duty.getNr()) {
 								included++;
 							}
 						}
@@ -106,7 +106,7 @@ public class Phase4_AddMissing {
 	public List<Schedule> createSchedulesCopies(){
 		List<Schedule> copies = new ArrayList<>();
 		for(Schedule schedule : ilpSolution) {
-			Schedule copy = schedule.copy();
+			Schedule copy = schedule.clone();
 			copies.add(copy);
 		}
 		return copies; 
@@ -147,7 +147,7 @@ public class Phase4_AddMissing {
 
 									if (!schedulesChecked.contains(schedulesCopy.get(random))) {
 										schedulesChecked.add(schedulesCopy.get(random));
-										int[] scheduleArray = schedulesCopy.get(random).getSchedule();
+										int[] scheduleArray = schedulesCopy.get(random).getScheduleArray();
 
 										for (int t = 0; t < scheduleArray.length / 7; t++) {// Could save time by saving
 																							// where this duplicate is
@@ -450,8 +450,8 @@ public class Phase4_AddMissing {
 				for(Duty duty : instance.getSunday()) {
 					int included = 0;
 					for(Schedule schedule : schedules) {
-						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
-							if(schedule.getSchedule()[(7*w) + s] == duty.getNr()) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+							if(schedule.getScheduleArray()[(7*w) + s] == duty.getNr()) {
 								included++;
 							}
 						}
@@ -465,8 +465,8 @@ public class Phase4_AddMissing {
 				for(Duty duty : instance.getSaturday()) {
 					int included = 0;
 					for(Schedule schedule : schedules) {
-						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
-							if(schedule.getSchedule()[(7*w) + s] == duty.getNr()) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+							if(schedule.getScheduleArray()[(7*w) + s] == duty.getNr()) {
 								included++;
 							}
 						}
@@ -480,9 +480,9 @@ public class Phase4_AddMissing {
 				for(Duty duty : instance.getWorkingDays()) {
 					int included = 0;
 					for(Schedule schedule : schedules) {
-						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
 							//System.out.println(duty.getNr() + " " +  schedule.getSchedule()[(7*w) + s]);
-							if(schedule.getSchedule()[(7*w)+ s] == duty.getNr()) {
+							if(schedule.getScheduleArray()[(7*w)+ s] == duty.getNr()) {
 								included++;
 							}
 						}
@@ -508,8 +508,8 @@ public class Phase4_AddMissing {
 				for(Duty duty : instance.getSunday()) {
 					int included = 0;
 					for(Schedule schedule : schedules) {
-						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
-							if(schedule.getSchedule()[(7*w) + s] == duty.getNr()) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+							if(schedule.getScheduleArray()[(7*w) + s] == duty.getNr()) {
 								included++;
 							}
 						}
@@ -524,8 +524,8 @@ public class Phase4_AddMissing {
 				for(Duty duty : instance.getSaturday()) {
 					int included = 0;
 					for(Schedule schedule : schedules) {
-						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
-							if(schedule.getSchedule()[(7*w) + s] == duty.getNr()) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+							if(schedule.getScheduleArray()[(7*w) + s] == duty.getNr()) {
 								included++;
 							}
 						}
@@ -540,9 +540,9 @@ public class Phase4_AddMissing {
 				for(Duty duty : instance.getWorkingDays()) {
 					int included = 0;
 					for(Schedule schedule : schedules) {
-						for(int w = 0; w < schedule.getSchedule().length/7; w++) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
 							//System.out.println(duty.getNr() + " " +  schedule.getSchedule()[(7*w) + s]);
-							if(schedule.getSchedule()[(7*w)+ s] == duty.getNr()) {
+							if(schedule.getScheduleArray()[(7*w)+ s] == duty.getNr()) {
 								included++;
 							}
 						}

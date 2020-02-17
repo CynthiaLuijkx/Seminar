@@ -103,7 +103,7 @@ public class MIP_Phase1
 		this.cplex.exportModel("MIP_Phase1.lp");
 		//this.cplex.setOut(null);
 		solve();
-		populate();
+		//populate();
 		System.out.println("Objective Value: " + this.cplex.getObjValue());
 		
 		this.solution = new HashMap<>();
