@@ -76,7 +76,7 @@ public class Main
 		mip.solve();
 		if (mip.isFeasible()) {
 			//mip.populate(maxIt);
-			while (scheduleForEveryGroup == false && iteration <= maxIt) {
+			//while (scheduleForEveryGroup == false && iteration <= maxIt) {
 				mip.makeSolution(); //When not using populate 
 				//mip.makeSolution(iteration); //When using populate
 				instance.setBasicSchedules(mip.getSolution());
@@ -106,7 +106,7 @@ public class Main
 					}
 				}
 				iteration++;
-			}
+			//}
 			
 			if(iteration == maxIt || schedules.size() == 0) {
 				System.out.println("No feasible schedules found on all " + maxIt + " basic schedules");

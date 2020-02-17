@@ -87,6 +87,24 @@ public class PricingProblem_Phase3
 				finalSchedules = new HashSet<>();
 			}
 			
+
+//			Node cur = graphs.get(c).getNodes().get(0);
+//			while (graphs.get(c).getOutArcs(cur).size() == 1) {
+//				DirectedGraphArc<Node, ArcData> curArc = graphs.get(c).getOutArcs(cur).get(0);
+//				List<Set<Integer>> newDuties = new ArrayList<>();
+//				int[] schedule = this.copyIntArray(initPulse.getSchedule());
+//				schedule[curArc.getTo().getDayNr()] = curArc.getTo().getDutyNr();
+//				for (int i = 0; i < 7; i++) {
+//					newDuties.add(this.copySet(initPulse.getDuties().get(i)));
+//				}
+//				if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
+//					newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
+//				}
+//				initPulse = new Pulse(initPulse.getRedCosts() + curArc.getData().getDualCosts(), initPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
+//						schedule, newDuties, initPulse);
+//				cur = curArc.getTo();
+//			}
+			
 			negRedCostsSchedules.put(c, toAdd);
 		}
 		
@@ -102,7 +120,6 @@ public class PricingProblem_Phase3
 	 * @param curPulse				the current pulse
 	 */
 	public void pulse(DirectedGraph<Node, ArcData> graph, ContractGroup c, DirectedGraphArc<Node, ArcData> curArc, Pulse curPulse) {
-		//System.out.println(c);
 		if (curArc.getTo().getDayNr() == curPulse.getSchedule().length) {
 			int totOvertime = this.isFeasibleSchedule(curPulse.getSchedule(), c);
 			if (totOvertime != Integer.MAX_VALUE) {
