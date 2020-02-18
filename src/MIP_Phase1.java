@@ -48,6 +48,8 @@ public class MIP_Phase1
 	private Set<IloNumVar> earlyToLate;
 	private Set<IloNumVar> partTime;
 	private Set<IloNumVar> fivePerWeek;
+	private Set<IloNumVar> ATVonWeekend;
+	private Set<IloNumVar> lonelyDuty;
 	
 	//Output
 	private final HashMap<ContractGroup, String[]> solution;
@@ -94,8 +96,10 @@ public class MIP_Phase1
 		initSoft6(); //Min consecutive rest + ATV 
 		initSoft7(); //Early to late duty 
 		//initSoft8(); //Parttimers should work as little other duties as possible 
-		initSoft9(); //Maximum of 5 duties per calendar week 
+		initSoft9(); //Maximum of 5 duties per calendar week on average
 		initSoft10(); 
+		initSoft11(); //Penalize ATV days on weekends 
+		initSoft12(); //Penalize lone duties
 		
 		initObjective();
 		
@@ -244,6 +248,8 @@ public class MIP_Phase1
 		this.earlyToLate = new HashSet<>();
 		this.partTime = new HashSet<>();
 		this.fivePerWeek = new HashSet<>();
+		this.ATVonWeekend = new HashSet<>();
+		this.lonelyDuty = new HashSet<>();
 	}
 	
 	public void initConstraint1() throws IloException { //Max one duty per day
@@ -591,7 +597,7 @@ public class MIP_Phase1
 						constraint.addTerm(decVarATV, 1);
 					}
 					//Add a penalty 
-					IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE, IloNumVarType.Int);
+					IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE, IloNumVarType.Int);
 					penalty.setName(group.groupNumberToString() + "ATVSpread_S" + s);
 					this.ATVSpreadPenalty.add(penalty);
 					constraint.addTerm(penalty, -1);
@@ -635,7 +641,7 @@ public class MIP_Phase1
 					}
 				}
 				//Add the penalty
-				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE, IloNumVarType.Int);
+				IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
 				penalty.setName(group.groupNumberToString() + "Reserve_S" + s);
 				this.reservePenalty.add(penalty);
 				
@@ -674,7 +680,7 @@ public class MIP_Phase1
 					}
 				}
 				// Add the penalty
-				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE, IloNumVarType.Int);
+				IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
 				penalty.setName(group.groupNumberToString() + "MaxDuties_S" + s);
 				this.tooManyConsecutiveDuties.add(penalty);
 
@@ -742,7 +748,7 @@ public class MIP_Phase1
 						}
 						//Add the penalty
 						if (feasible) {
-							IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE, IloNumVarType.Int);
+							IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
 							penalty.setName(
 									group.groupNumberToString() + "MaxConsecutiveDuties_I" + dutyType + "_S" + s);
 							this.consecutiveMaxPenalty.add(penalty);
@@ -949,26 +955,22 @@ public class MIP_Phase1
 		}
 	}
 	
-	public void initSoft9() throws IloException { // Max 5 duties per calendar week
+	public void initSoft9() throws IloException { // Max 5 duties per calendar week on average
 		for (ContractGroup group : this.instance.getContractGroups()) {// For all contract groups
-			for (int s = 0; s < group.getTc()/7; s++) { // For all weeks
-
-				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
-
-				for(int t = 7*s; t < (7*s)+7; t++) {// Sum over all days of the week
+			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+			
+			for (int t = 0; t < group.getTc(); t++) { // For all days				
 					for (IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {
 							constraint.addTerm(decVar, 1);
-					}
-				
-				}
-				// Add the penalty
-				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE, IloNumVarType.Int);
-				penalty.setName(group.groupNumberToString() + "MaxDuties_W" + s);
-				this.fivePerWeek.add(penalty);
-
-				constraint.addTerm(penalty, -1);
-				this.cplex.addLe(constraint, 5, group.groupNumberToString() + "MaxDuties_W" + s);
+					}				
 			}
+			// Add the penalty
+			IloNumVar penalty = this.cplex.numVar(0, Double.MAX_VALUE);
+			penalty.setName(group.groupNumberToString() + "Average5");
+			this.fivePerWeek.add(penalty);
+
+			constraint.addTerm(penalty, -1);
+			this.cplex.addLe(constraint, 5*group.getTc()/7, group.groupNumberToString() + "Average5");
 		}
 	}
 	
@@ -1011,6 +1013,62 @@ public class MIP_Phase1
 			cplex.addLe(constraint, rhs);
 		}
 	}
+
+	public void initSoft11() throws IloException { //Penalize ATV days on Saturdays and Sundays
+		IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+		for(ContractGroup group : this.instance.getContractGroups()) {
+			if(group.getDutyTypes().contains("ATV")) {
+				
+				for(int t = 0; t < group.getTc(); t++) {
+					if(t%7 == 0 || t%7 == 6) { //If it's a Saturday or a Sunday
+						IloNumVar decVarATV = this.decVarOfThisType(this.daysPerGroup.get(group).get(t), "ATV");
+						constraint.addTerm(decVarATV, 1);
+					}
+				}
+			}
+		}
+		IloNumVar penalty = this.cplex.numVar(0,  Double.MAX_VALUE);
+		this.ATVonWeekend.add(penalty);
+		
+		constraint.addTerm(penalty, -1);
+		this.cplex.addLe(constraint, 0, "ATV_On_Weekends");
+	}
+	
+	public void initSoft12() throws IloException {
+		for(ContractGroup group : this.instance.getContractGroups()) {
+			for(int s = 0; s < group.getTc(); s++) { //For every day 
+				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+				
+				//This day a rest day or ATV day
+				constraint.addTerm(this.restDaysPerGroup.get(group)[s], 1);
+				IloNumVar decVarATV1 = this.decVarOfThisType(this.daysPerGroup.get(group).get(s), "ATV");
+				if(decVarATV1 != null) {
+					constraint.addTerm(decVarATV1,  1);
+				}
+				
+				//The next day has a duty on it 
+				for(IloNumVar decVar : this.daysPerGroup.get(group).get((s+1)%group.getTc())) {
+					if(!this.decVarToCombination.get(decVar).getType().equals("ATV")) {
+						constraint.addTerm(decVar, 1);
+					}
+				}
+				
+				//The day after that is ATV or rest
+				constraint.addTerm(this.restDaysPerGroup.get(group)[(s+2)%group.getTc()], 1);
+				IloNumVar decVarATV2 = this.decVarOfThisType(this.daysPerGroup.get(group).get((s+2)%group.getTc()), "ATV");
+				if(decVarATV2 != null) {
+					constraint.addTerm(decVarATV2,  1);
+				}
+				
+				//Penalty
+				IloNumVar penalty = this.cplex.numVar(0,  Double.MAX_VALUE);
+				this.lonelyDuty.add(penalty);
+				
+				constraint.addTerm(penalty,  -1);
+				this.cplex.addLe(constraint, 2, "Lonely Duty" + (s+1));
+			}
+		}
+	}
 	
 	public void initObjective() throws IloException {
 		//Edit this later 
@@ -1046,6 +1104,12 @@ public class MIP_Phase1
 		}
 		for(IloNumVar five : this.fivePerWeek) {
 			objective.addTerm(five,  -penalties.getFivePerWeekParam());
+		}
+		for(IloNumVar atvWeekend : this.ATVonWeekend) {
+			objective.addTerm(atvWeekend, -penalties.getATVonWeekendParam());
+		}
+		for(IloNumVar lonelyDuty : this.lonelyDuty) {
+			objective.addTerm(lonelyDuty,  -penalties.getLonelyDutyParam());
 		}
 		
 		this.cplex.addMaximize(objective);
