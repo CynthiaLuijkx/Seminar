@@ -9,6 +9,8 @@ public class Phase1_Penalties {
 	private final int earlyToLateParam;
 	private final int partTimeParam;
 	private final int fivePerWeekParam;
+	private final int ATVonWeekendParam;
+	private final int lonelyDutyParam;
 	
 	public Phase1_Penalties() {
 		this.ATVSpreadPenaltyParam = 1;
@@ -20,6 +22,8 @@ public class Phase1_Penalties {
 		this.earlyToLateParam = 1;
 		this.partTimeParam = 1;
 		this.fivePerWeekParam = 1;
+		this.ATVonWeekendParam = 1;
+		this.lonelyDutyParam = 1;
 	}
 
 	public int getATVSpreadPenaltyParam() {
@@ -56,5 +60,13 @@ public class Phase1_Penalties {
 	
 	public int getFivePerWeekParam() {
 		return fivePerWeekParam;
+	}
+	
+	public int getATVonWeekendParam() {
+		return ATVonWeekendParam;
+	}
+	
+	public int getLonelyDutyParam() {
+		return lonelyDutyParam;
 	}
 }
