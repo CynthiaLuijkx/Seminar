@@ -1,4 +1,5 @@
 package Tools;
+
 /**
  * Class that models arcs in the directed arcs. Stores both the end-points,
  * as well as the data associated with the arc.
@@ -11,7 +12,7 @@ public class DirectedGraphArc<V,A>
 {
 	private final V from;
 	private final V to;
-	private A data;
+	private final A data;
 	
 	/**
 	 * Construct an arc of the graph
@@ -51,10 +52,6 @@ public class DirectedGraphArc<V,A>
 	public A getData()
 	{
 		return data;
-	}
-	
-	public void setData(A newData) {
-		data = newData;
 	}
 
 	@Override

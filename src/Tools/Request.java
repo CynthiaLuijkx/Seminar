@@ -20,28 +20,26 @@ public class Request {
 		this.duty = duty;
 		this.group = group;
 		this.day = day;
-		this.dutyNumber = duty.getNr();
+		this.dutyNumber = duty.getNr(); 
 		this.weekday = day%7;
 	}
-	public Request(ReserveDutyType rduty, ContractGroup group, int day) {
+	public Request(ReserveDutyType rduty, ContractGroup group, int day ) {
 		this.reserveDuty = rduty;
 		this.group = group;
 		this.day = day;
-		this.dutyNumber = rduty.getNr();
+		this.dutyNumber = rduty.getNr(); 
 		this.weekday = day%7;
 	}
 
 	public Request(int dutyNumber, ContractGroup group, int day) {
-		
 		this.dutyNumber = dutyNumber;
-		
 		this.group = group;
 		this.day = day;
 		this.weekday = day%7;
 	}
 	public int getStartTime() {
 		int start = 0;
-		if(this.getDutyNumber() == 1 || this.getDutyNumber() == 2) {
+		if(this.getDutyNumber() == 1||this.getDutyNumber() == 2) {
 			start = 24*60;
 		}
 		else if(this.getDutyNumber() < 1000) {
@@ -54,7 +52,7 @@ public class Request {
 	}
 	public int getEndTime() {
 		int end = 0;
-		if(this.getDutyNumber() == 1 || this.getDutyNumber() == 2) {
+		if(this.getDutyNumber() == 1||this.getDutyNumber() == 2) {
 			end = 0;
 		}
 		else if(this.getDutyNumber() < 1000) {
@@ -83,15 +81,43 @@ public class Request {
 	public int getDutyNumber() {
 		return dutyNumber;
 	}
+	
 	public void addPlacement(Request request, TimeSlot slot, double cost) {
 		Placement placement = new Placement(request, slot, cost);
 		this.listOfPlacements.add(placement);
 	}
+	
+	public void addPlacement(Placement placement) {
+		this.listOfPlacements.add(placement); 
+	}
+	
+	public List<Placement> getPlacements(){
+		return this.listOfPlacements; 
+	}
+		
+	public void deletePlacement(Placement placement) {
+		this.listOfPlacements.remove(placement); 
+	}
+	
+	public void deletePlacements(ContractGroup group) {
+		Set<Placement> toDelete = new HashSet<Placement>(); 
+		for(Placement placement: this.listOfPlacements) {
+			if(placement.getTimeslot().getGroup().equals(group)) {
+				toDelete.add(placement); 
+			}
+		}
+		
+		this.listOfPlacements.removeAll(toDelete); 
+	}
+	
+	public void deleteAllPlacements() {
+		this.listOfPlacements.clear();
+	}
+	
 	@Override
 	public String toString() {
-		return "Request [duty=" + duty + ", group=" + group + "]";
+		return "Request [dutyNr=" + this.dutyNumber + ", group=" + group + "]";
 	}
 	
 		
 }
-

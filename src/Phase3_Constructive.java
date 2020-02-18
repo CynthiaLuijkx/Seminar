@@ -57,7 +57,7 @@ public class Phase3_Constructive {
 		for(int i= 0; i<7; i++) { //for every day of the week
 			this.alrScheduled.add(new HashMap<String, ArrayList<Integer>>());  //list of duties that still need to be scheduled for a certain day of the week
 			this.toSchedule.add(new HashMap<String, ArrayList<Integer>>());  //list of duties that are already scheduled for a certain day of the week
-			for(String dutyType : instance.getDutyTypes()) {
+			for(String dutyType : instance.getDutiesPerType().keySet()) {
 				if(i==0) { 
 					if(instance.getDutiesPerTypeSun().containsKey(dutyType)) { //if the duty type needs to be scheduled on Sunday
 						this.toSchedule.get(i).put(dutyType, getNumbersFromDuty(instance.getDutiesPerTypeSun().get(dutyType))); //need to schedule this type on Sunday 
@@ -491,7 +491,7 @@ public class Phase3_Constructive {
 			}
 		}
 
-		return new Schedule(group, overTime, minHours, this.solutionHeur.get(group)); 
+		return new Schedule(group, overTime-minHours, this.solutionHeur.get(group)); 
 	}
 
 	//Save the last occurences of the type

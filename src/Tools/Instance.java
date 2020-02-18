@@ -25,11 +25,13 @@ public class Instance
 	private final Set<ContractGroup> contractGroups;
 	private final Set<ReserveDutyType> reserveDutyTypes;
 	private final HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty;
-
-	private final Set<String> dutyTypes; 
+	
+	
+	private final int minBreak = 11*60; 
+	private final int minWeekBreak = 32*60; 
+	private final int min2WeekBreak = 72*60; 
 	
 	private Set<Violation> violations11;
-
 	private Set<Violation> violations32;
 	private Set<Violation3Days> violations3Days;
 	
@@ -37,10 +39,6 @@ public class Instance
 	
 	private int UB = 0; 
 	private int LB = 0;
-	
-	private final int minBreak = 11*60; 
-	private final int minWeekBreak = 32*60; 
-	private final int min2WeekBreak = 72*60; 
 	
 	private int nDrivers;
 	
@@ -62,8 +60,7 @@ public class Instance
 	 */
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
 			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
-			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty, Set<String> dutyTypes) {
-
+			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32) {
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
@@ -75,9 +72,9 @@ public class Instance
 		this.fromRDutyNrToRDuty = fromRDutyNrToRDuty;
 		this.contractGroups = contractGroups;
 		this.reserveDutyTypes = reserveDutyTypes;
-
-		this.dutyTypes = dutyTypes; 
-
+		this.violations11 = violations11;
+		this.violations32 = violations32;
+		
 		this.M = new HashSet<>();
 		String[] workDays = new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 		for (String day : workDays) {
@@ -227,10 +224,6 @@ public class Instance
 		this.violations3Days = violations3Days;
 	}
 
-
-	public Set<Violation3Days> getViolations3Days() {
-		return violations3Days;
-	}
 	
 	public int getMinBreak() {
 		return minBreak;
@@ -243,9 +236,8 @@ public class Instance
 	public int getMin2WeekBreak() {
 		return min2WeekBreak;
 	}
-
-	public Set<String> getDutyTypes() {
-		return dutyTypes;
+	
+	public Set<Violation3Days> getViolations3Days() {
+		return violations3Days;
 	}
-
 }

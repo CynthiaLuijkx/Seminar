@@ -22,8 +22,11 @@ public class Phase4_RelaxFix_LP {
 	
 	private final HashMap<IloNumVar, Schedule> varToSchedule;
 	private final HashMap<Schedule, IloNumVar> scheduleToVar;
+	private final HashMap<IloNumVar, Duty> penaltyToDuty;
+	private final HashMap<IloNumVar, Integer> penaltyToDay;
 	private final Set<IloNumVar> integerVariables;
 	private final Set<IloNumVar> relaxedVariables;
+	private final Set<IloNumVar> dutyIncludedPenalty;
 	
 	private final HashMap<Schedule, Double> solution;
 	
@@ -40,8 +43,11 @@ public class Phase4_RelaxFix_LP {
 		
 		this.integerVariables = new HashSet<>();
 		this.relaxedVariables = new HashSet<>(); 
+		this.dutyIncludedPenalty = new HashSet<>();
 		this.scheduleToVar = new HashMap<>();
 		this.varToSchedule = new HashMap<>();
+		this.penaltyToDay = new HashMap<>();
+		this.penaltyToDuty = new HashMap<>();
 		
 		initVars();
 		initConstraint1();
@@ -53,8 +59,6 @@ public class Phase4_RelaxFix_LP {
 		this.cplex.setWarning(null);
 		this.cplex.exportModel("Phase4_ILP.lp");
 		solve();
-	
-		//System.out.println(this.cplex.getObjValue());
 		
 		this.solution = new HashMap<>();
 		makeSolution();
@@ -114,8 +118,8 @@ public class Phase4_RelaxFix_LP {
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 			int alreadyCovered = 0; 
 			for(Schedule curSchedule : this.schedules) {
-				for(int w = 0; w < curSchedule.getSchedule().length/7; w++) {//For every week
-					if(curSchedule.getSchedule()[7*w] == duty.getNr()) {
+				for(int w = 0; w < curSchedule.getScheduleArray().length/7; w++) {//For every week
+					if(curSchedule.getScheduleArray()[7*w] == duty.getNr()) {
 						constraint.addTerm(this.scheduleToVar.get(curSchedule), 1);
 						break;
 					}
@@ -123,8 +127,8 @@ public class Phase4_RelaxFix_LP {
 			}
 			for(Schedule fixedSchedule : this.fixedSchedules.keySet()) {
 				if(this.fixedSchedules.get(fixedSchedule) == 1) {
-					for(int w = 0; w < fixedSchedule.getSchedule().length/7; w++) {//For every week
-						if(fixedSchedule.getSchedule()[7*w] == duty.getNr()) {
+					for(int w = 0; w < fixedSchedule.getScheduleArray().length/7; w++) {//For every week
+						if(fixedSchedule.getScheduleArray()[7*w] == duty.getNr()) {
 							this.cplex.sum(constraint, this.cplex.constant(1));
 							alreadyCovered++;
 							break;
@@ -132,14 +136,20 @@ public class Phase4_RelaxFix_LP {
 					}
 				}
 			}
+			//Penalty
+			IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+			constraint.addTerm(penalty,1);
+			this.dutyIncludedPenalty.add(penalty);
+			this.penaltyToDay.put(penalty, 0);
+			this.penaltyToDuty.put(penalty, duty);
 			this.cplex.addGe(constraint, 1-alreadyCovered, duty.getNr() + "_" + 0);
 		}
 		for(Duty duty : instance.getSaturday()) {
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 			int alreadyCovered = 0;
 			for(Schedule curSchedule : this.schedules) {
-				for(int w = 0; w < curSchedule.getSchedule().length/7; w++) {//For every week
-					if(curSchedule.getSchedule()[7*w + 6] == duty.getNr()) {
+				for(int w = 0; w < curSchedule.getScheduleArray().length/7; w++) {//For every week
+					if(curSchedule.getScheduleArray()[7*w + 6] == duty.getNr()) {
 						constraint.addTerm(this.scheduleToVar.get(curSchedule), 1);
 						break;
 					}
@@ -147,8 +157,8 @@ public class Phase4_RelaxFix_LP {
 			}
 			for(Schedule fixedSchedule : this.fixedSchedules.keySet()) {
 				if(this.fixedSchedules.get(fixedSchedule) == 1) {
-					for(int w = 0; w < fixedSchedule.getSchedule().length/7; w++) {//For every week
-						if(fixedSchedule.getSchedule()[7*w + 6] == duty.getNr()) {
+					for(int w = 0; w < fixedSchedule.getScheduleArray().length/7; w++) {//For every week
+						if(fixedSchedule.getScheduleArray()[7*w + 6] == duty.getNr()) {
 							this.cplex.sum(constraint, this.cplex.constant(1));
 							alreadyCovered++;
 							break;
@@ -156,6 +166,11 @@ public class Phase4_RelaxFix_LP {
 					}
 				}
 			}
+			IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+			constraint.addTerm(penalty,1);
+			this.dutyIncludedPenalty.add(penalty);
+			this.penaltyToDay.put(penalty, 6);
+			this.penaltyToDuty.put(penalty, duty);
 			this.cplex.addGe(constraint, 1-alreadyCovered, duty.getNr() + "_" + 6);
 		}
 		for (Duty duty : instance.getWorkingDays()) {
@@ -163,8 +178,8 @@ public class Phase4_RelaxFix_LP {
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 				int alreadyCovered = 0;
 				for (Schedule curSchedule : this.schedules) {
-					for (int w = 0; w < curSchedule.getSchedule().length / 7; w++) {// For every week
-						if (curSchedule.getSchedule()[7 * w + s] == duty.getNr()) {
+					for (int w = 0; w < curSchedule.getScheduleArray().length / 7; w++) {// For every week
+						if (curSchedule.getScheduleArray()[7 * w + s] == duty.getNr()) {
 							constraint.addTerm(this.scheduleToVar.get(curSchedule), 1);
 							break;
 						}
@@ -173,8 +188,8 @@ public class Phase4_RelaxFix_LP {
 				
 				for(Schedule fixedSchedule : this.fixedSchedules.keySet()) {
 					if(this.fixedSchedules.get(fixedSchedule) == 1) {
-						for(int w = 0; w < fixedSchedule.getSchedule().length/7; w++) {//For every week
-							if(fixedSchedule.getSchedule()[7*w + s] == duty.getNr()) {
+						for(int w = 0; w < fixedSchedule.getScheduleArray().length/7; w++) {//For every week
+							if(fixedSchedule.getScheduleArray()[7*w + s] == duty.getNr()) {
 								this.cplex.sum(constraint, this.cplex.constant(1));
 								alreadyCovered++;
 								break;
@@ -182,6 +197,11 @@ public class Phase4_RelaxFix_LP {
 						}
 					}
 				}
+				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+				constraint.addTerm(penalty,1);
+				this.dutyIncludedPenalty.add(penalty);
+				this.penaltyToDay.put(penalty, s);
+				this.penaltyToDuty.put(penalty, duty);
 				this.cplex.addGe(constraint, 1 - alreadyCovered, duty.getNr() + "_" + s);
 			}
 		}
@@ -190,7 +210,7 @@ public class Phase4_RelaxFix_LP {
 	public void initObjective() throws IloException {
 		IloLinearNumExpr objective = this.cplex.linearNumExpr();
 		for(Schedule curSchedule : this.schedules) {
-			objective.addTerm(Math.max(0, curSchedule.getPlusMin() - curSchedule.getMinMin()), this.scheduleToVar.get(curSchedule));
+			objective.addTerm(curSchedule.getOvertime(), this.scheduleToVar.get(curSchedule));
 		}
 		this.cplex.addMinimize(objective);
 	}

@@ -18,8 +18,8 @@ public class ScheduleCombination {
 		for(Duty duty : instance.getSunday()) {
 			int found = 0;
 			for(Schedule schedule : schedules) {
-				for(int w = 0; w < schedule.getSchedule().length/7; w++) {
-					if(schedule.getSchedule()[w*7] == duty.getNr()) {
+				for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+					if(schedule.getScheduleArray()[w*7] == duty.getNr()) {
 						found++;
 						break;
 					}
@@ -33,8 +33,8 @@ public class ScheduleCombination {
 		for(Duty duty : instance.getSaturday()) {
 			int found = 0; 
 			for(Schedule schedule : schedules) {
-				for(int w = 0; w < schedule.getSchedule().length/7; w++) {
-					if(schedule.getSchedule()[w*7 +6] == duty.getNr()) {
+				for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+					if(schedule.getScheduleArray()[w*7 +6] == duty.getNr()) {
 						found++;
 						break;
 					}
@@ -48,8 +48,8 @@ public class ScheduleCombination {
 			for (Duty duty : instance.getWorkingDays()) {
 				int found = 0;
 				for (Schedule schedule : schedules) {
-					for (int w = 0; w < schedule.getSchedule().length / 7; w++) {
-						if (schedule.getSchedule()[w * 7 + s] == duty.getNr()) {
+					for (int w = 0; w < schedule.getScheduleArray().length / 7; w++) {
+						if (schedule.getScheduleArray()[w * 7 + s] == duty.getNr()) {
 							found++;
 							break;
 						}
@@ -66,7 +66,7 @@ public class ScheduleCombination {
 	public int calculateCost() {
 		int cost = 0;
 		for(Schedule schedule : schedules) {
-			cost = cost + Math.max(0,  schedule.getPlusMin()-schedule.getMinMin());
+			cost = cost + Math.max(0,  schedule.getOvertime());
 		}
 		return cost;
 	}

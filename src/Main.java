@@ -1,7 +1,12 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -11,22 +16,22 @@ import Tools.Duty;
 import Tools.Instance;
 import Tools.ReserveDutyType;
 import Tools.Schedule;
+import Tools.ScheduleVis;
+import Tools.Solution;
 import Tools.Violation;
 import ilog.concert.IloException;
 
-import java.util.Locale;
-
 public class Main 
 {
-	public static void main(String[] args) throws FileNotFoundException, IloException {
+	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
-		int restDayMin = 32 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
-
-		double violationBound = 0.45;
-		double violationBound3Days = 0.45;
-
+		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
+		int restDayMinCG = 32*60;
+		int restTwoWeek = 72 * 60;
+		double violationBound = 0.3;
+		double violationBound3Days = 0.3;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
@@ -48,8 +53,9 @@ public class Main
 
 		//Get all starting information
 		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound);
-		
+		Schedule.setInstance(instance);
 		System.out.println("Instance " + depot + " initialised");
+
 
 		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound, violationBound3Days); 
 		System.out.println("Violations Determined"); 
@@ -58,47 +64,48 @@ public class Main
 		System.out.println(temp.get32Violations().size()); 
 		System.out.println(temp.getViolations3Days().size());
 
-
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() + 15;
-
+		int numberOfDrivers = instance.getLB() +18;
 		instance.setNrDrivers(numberOfDrivers);
 
-		Phase1_Penalties penalties = new Phase1_Penalties();
+		/*Phase1_Penalties penalties = new Phase1_Penalties();
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
 		
-		Phase3_Constructive conHeur = new Phase3_Constructive(instance, mip.getSolution()); 
 		
-
-		Set<Schedule> schedules = conHeur.getSchedule(); 
-		
-		HashMap<ContractGroup, Schedule> con3_Schedules = new HashMap<ContractGroup, Schedule>(); 
-		for(Schedule schedule:schedules) {
-			con3_Schedules.put(schedule.getC(), schedule); 
-		}
-		
-		int iterations_phase5 = 1; 
-		Phase5_ALNS alns = new Phase5_ALNS(iterations_phase5, instance, con3_Schedules, 0); 
-		
-//		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
-//		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
-		
-//		for(Schedule schedule : solution.keySet()) {
-//			System.out.println(solution.get(schedule) + " " + schedule.toString());
-//		}
+		long phase3Start = System.nanoTime();
+		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
+		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+		long phase3End = System.nanoTime();
+		System.out.println("Phase 3 runtime: " + (phase3End-phase3Start)/1000000000.0);
 		
 		int treshold = 0; //bigger than or equal 
-		//Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
-		//phase4.runILP();
-		//phase4.runRelaxFix();
-		//phase4.runAllCombinations(depot);
-
-//		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMin);
-//		colGen.executeColumnGeneration();
-
+		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
+		List<Schedule> newSchedules = phase4.runILP();
+		new ScheduleVis(newSchedules.get(1).getScheduleArray(), ""+newSchedules.get(0).getC().getNr() , instance);
+		Map<ContractGroup, Schedule> mapSchedules = new HashMap<ContractGroup, Schedule>(); 
+		for(Schedule schedule: newSchedules) {
+			mapSchedules.put(schedule.getC(), schedule); 
+		}*/
+		/*Phase3_Constructive conheur = new Phase3_Constructive(instance, mip.getSolution());
+		for(Schedule schedule: conheur.getSchedule()) {
+		printSchedule(schedule, "Dirksland", numberOfDrivers, schedule.getC().getNr());
+		}*/
+		Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
+		Iterator<ContractGroup> iter = schedules.keySet().iterator(); 
+		ContractGroup group = iter.next(); 
+		ContractGroup group2 = iter.next(); 
+		
+		new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance);
+		new ScheduleVis(schedules.get(group2).getScheduleArray(), "" + group2.getNr() + "before", instance);
+		int iterations_phase5 = 50; 
+		Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, 0); 
+		new ScheduleVis(alns.executeBasic(schedules).getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance);
+		new ScheduleVis(schedules.get(group2).getScheduleArray(), "" + group2.getNr() + "after", instance);
+		
+		
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
@@ -184,10 +191,9 @@ public class Main
 		scReserve.close();
 
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, fromDutyNrToDuty, contractGroups, 
-				reserveDutyTypes, fromRDutyNrToRDuty, dutyTypes);
+				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32);
 
 	}
-
 
 	/**
 	 * Determines the number of violations between a set of duties and a reserve shift
@@ -326,6 +332,21 @@ public class Main
 
 		return counts;
 	}
+	public static void printSchedule(Schedule schedule, String depot, int nDrivers, int contractGroupNr) throws IOException {
+		FileWriter writer = new FileWriter("Schedule_" + depot + "" + nDrivers + "" + contractGroupNr + ".txt");
+		
+		writer.write(String.valueOf(contractGroupNr));
+		writer.write(System.getProperty("line.separator"));
+		writer.write(String.valueOf(schedule.getOvertime()));
+		writer.write(System.getProperty("line.separator"));
+		writer.write(String.valueOf(schedule.getScheduleArray().length));
+		for (int i = 0; i < schedule.getScheduleArray().length; i++) {
+			writer.write(System.getProperty("line.separator"));
+			writer.write(String.valueOf(schedule.getScheduleArray()[i]));
+		}
+		
+		writer.close();
+	}
 	
 	public static Set<Schedule> getSchedulesAboveTreshold(HashMap<Schedule, Double> solution, double treshold){
 		Set<Schedule> output = new HashSet<>();
@@ -336,6 +357,28 @@ public class Main
 		}
 		return output;
 	}
-
+	public static Map<ContractGroup, Schedule> readSchedules(String depot, int nDrivers, Set<ContractGroup> groups) throws FileNotFoundException {
+		Map<ContractGroup, Schedule> schedules = new HashMap<>();
+		
+		for (int c = 1; c <= groups.size(); c++) {
+			Scanner sc = new Scanner(new File("Schedule_" + depot + "" + nDrivers + "" + c + ".txt"));
+			int contractGroupNr = sc.nextInt();
+			int overtime = sc.nextInt();
+			int[] schedule = new int[sc.nextInt()];
+			for (int i = 0; i < schedule.length; i++) {
+				schedule[i] = sc.nextInt();
+			}
+			
+			ContractGroup group = null;
+			for (ContractGroup temp : groups) {
+				if (temp.getNr() == contractGroupNr) {
+					group = temp;
+				}
+			}
+			
+			schedules.put(group, new Schedule(group, overtime, schedule));
+		}
+		
+		return schedules;
+	}
 }
-
