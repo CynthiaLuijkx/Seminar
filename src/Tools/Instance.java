@@ -228,7 +228,7 @@ public class Instance
 		
 		for (ContractGroup c : this.contractGroups) {
 			
-			c.setTc((int) Math.ceil(nDrivers * c.getRelativeGroupSize()) * 7);
+			c.setTc((int) Math.floor(nDrivers * c.getRelativeGroupSize()) * 7);
 			c.setATVc((int) Math.floor(c.getATVPerYear() / 365.0 * c.getTc()));
 		}
 	}

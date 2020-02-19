@@ -159,7 +159,7 @@ public class Phase4_ILP {
 			objective.addTerm(schedule.getOvertime(), var);
 		}
 		for(IloNumVar var : this.dutyIncludedPenalty) {
-			//objective.addTerm(var, 1);
+			objective.addTerm(var, 1);
 		}
 		this.cplex.addMinimize(objective);
 	}
