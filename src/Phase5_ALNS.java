@@ -3,81 +3,82 @@ import Tools.*;
 import java.util.*;
 import java.util.Random;
 
+//This class executes the Adaptive Large Neighbourhood Search
 public class Phase5_ALNS {
 
-	//private List<Map<ContractGroup, LSschedule>> listWithSol = new ArrayList<Map<ContractGroup, LSschedule>>();
-	private double globalOptimum;
-	private Solution globalSolution;
-	private Random random;
-	private int minSizeNeighbourhood;
-	private int maxSizeNeighbourhood;
-//	private Set<Request> dutiesStillAsRequest = new HashSet<Request>();
-	private int nIterations;
-	private Map<ContractGroup, Schedule> copySchedule;
-	private Set<Request> copyRequest= new HashSet<Request>();
-	private final Instance instance;
-	private DestroyHeuristics destroyHeuristics;
-	private RepairHeuristics repairHeuristics;
-	
-	private double[] weightsDestroy;
-	private double[][] weightsDestroyAdj;
-	private double[] weightsRepair;
-	private double[][] weightsRepairAdj;
-	private int nDestroy; 
-	private int nRepair; 
-	private double T;
-	private double c;
-	
+	private double globalOptimum; //best solution value found so far
+	private Random random; //generates a random number
+	private int minSizeNeighbourhood; //the minimum size the neighbourhood can be
+	private int maxSizeNeighbourhood; //the maximum size the neighbourhood can be
+	private int nIterations; //the number of iterations we are going to execute the ALNS
+	//private Map<ContractGroup, Schedule> copySchedule;
+	private Set<Integer> hashCodesSolutions = new HashSet<Integer>(); //set that contains the hashcodes of the solutions
+	//private Set<Request> copyRequest= new HashSet<Request>();
+	private final Instance instance; //use of the instance
+	private DestroyHeuristics destroyHeuristics; //use of the destroy heuristics
+	private RepairHeuristics repairHeuristics; //use of the repair heuristics
+
+	private double[] weightUpdates = {33/(double)55, 9/(double)55, 13/(double)55}; //determine how to update the weights
+	private final double rho = 0.1; //the proportion of the weights that is determined by the recent performance
+	private final double c = 0.99975; //cooling rate of the simulated annealing aspect
+
+	private double[] weightsDestroy; //weights of the destroy methods
+	private double[][] weightsDestroyAdj; //adjusted weights of the destroy methods
+	private double[] weightsRepair; //weights of the repair methods
+	private double[][] weightsRepairAdj; //adjusted weights of the repair methods
+	private int nDestroy = 2; //number of destroy methods
+	private int nRepair = 2;  // number of repair methods
+	private Solution globalBestSol;  //best solution found so far
+	private double T; //temperature used for simulated annealing
+
+	//Constructor of the class
 	public Phase5_ALNS (int iterations, Instance instance, Map<ContractGroup, Schedule> startSchedule, long seed){
-		this.minSizeNeighbourhood = 5;
-		this.maxSizeNeighbourhood = 50;
+		this.minSizeNeighbourhood = 2;
+		this.maxSizeNeighbourhood = 25;
 		this.nIterations = iterations;
 		this.instance = instance;
-		this.random = new Random();
-		this.nDestroy = 2;
-		this.nRepair = 2;
+		this.random = new Random(seed);
 		this.destroyHeuristics = new DestroyHeuristics();
 		this.repairHeuristics = new RepairHeuristics(instance);
-		System.out.println(startSchedule.toString()); 
-		this.c = 0.5;
-		
-		
-	}
-	
-	public Solution executeBasic(Map<ContractGroup, Schedule> startSchedule) {
-		int n = 1;
-		// find initial solution
-		Solution initSol = this.getInitialSol(startSchedule);
-		this.globalSolution = initSol;
-		System.out.println(initSol.toString()); 
-		
-		this.globalOptimum = initSol.getObj();
-		System.out.println("Best Solution so far: " + this.globalOptimum);
-		Solution currentSol = initSol.clone(); 
-		this.copySchedule = currentSol.getNewSchedule(); 
-		this.getTStart();
-		boolean accepted = true;
-		
-		// Initialize weights
-		System.out.println("nDestory: " + this.nDestroy +" nRepair: " + this.nRepair);
+		//System.out.println(startSchedule.toString()); 
+		this.T = 1; //Starting temperature 
+		//determine the starting values of the weights of the destroy and repair methods
 		this.weightsDestroy = new double[this.nDestroy];
 		for (int i = 0; i < this.nDestroy; i++) {
 			this.weightsDestroy[i] = 1 / (double) this.nDestroy;
 		}
 		this.weightsDestroyAdj = new double[this.nDestroy][2];
+
 		this.weightsRepair = new double[this.nRepair];
 		for (int i = 0; i < this.nRepair; i++) {
-			this.weightsRepair[i] = 1/ (double) this.nRepair;
+			this.weightsRepair[i] = 1/  (double) this.nRepair;
 		}
 		this.weightsRepairAdj = new double[this.nRepair][2];
 
-		System.out.println(initSol.toString());
-		
+		//this.executeBasic(startSchedule);
+
+
+	}
+	//Method that executes the Adaptive Large Neighborhood Search
+	public Solution executeBasic(Map<ContractGroup, Schedule> startSchedule) {
+		int n = 1; //start with the first iteration
+		// find initial solution
+		Solution initSol = this.getInitialSol(startSchedule);
+		//System.out.println(initSol.toString()); 
+		this.globalOptimum = initSol.getObj(); // set the best found solution equal to this one
+		//System.out.println("Best Solution so far: " + this.globalOptimum);
+		Solution currentSol = initSol.clone(); 
+		boolean accepted = true;
+
+		globalBestSol = currentSol.clone(); 
+
+		//System.out.println(initSol);
+		//till the number of iterations is reached
 		while (n <= this.nIterations) {	
-			// find the destroy and repair heuristic
+
+			// find the destroy and repair heuristic depending on the weights
 			double UDestroy = this.random.nextDouble();
 			int destroyHeuristicNr = 0;
-		
 			for (int i = 0; i < this.weightsDestroy.length; i++) {
 				if (UDestroy < this.weightsDestroy[i]) {
 					destroyHeuristicNr = i;
@@ -85,7 +86,6 @@ public class Phase5_ALNS {
 				}
 				UDestroy -= this.weightsDestroy[i];
 			}
-			//System.out.println("UDestroy: " + UDestroy + " destroy heuristic number: " + destroyHeuristicNr);
 			double URepair = this.random.nextDouble();
 			int repairHeuristicNr = 0;
 			for (int i = 0; i < this.weightsRepair.length; i++) {
@@ -95,71 +95,62 @@ public class Phase5_ALNS {
 				}
 				URepair -= this.weightsRepair[i];
 			}
-
-			Solution tempSol = currentSol.clone();
-			//System.out.println(tempSol.toString());
+			Solution tempSol = currentSol.clone(); //get a temporary solution
+			//determine randomly the size of the neighborhood
 			int sizeNeighbourhood = this.random.nextInt(this.maxSizeNeighbourhood - this.minSizeNeighbourhood) + this.minSizeNeighbourhood;
-			
+
 			System.out.println("-----------------------------------------------------------------------");
 			System.out.println("ITERATION " + n + ":");
-			
+
 			// find new solution
 			tempSol = this.executeDestroyAndRepair(tempSol, destroyHeuristicNr, repairHeuristicNr, sizeNeighbourhood);
-			
+			boolean unique = updateUniqueSol(tempSol); // determine whether it is unique
+
 			// determine if accepted or not
 			boolean globalOpt = false;
-			accepted  = false;
-			if (tempSol.getObj() < this.globalOptimum) {
-				
-				this.globalSolution = tempSol.clone();
-				this.globalOptimum = this.globalSolution.getObj();
-				globalOpt = true;
-				accepted = true;
-				currentSol = tempSol.clone();
-				System.out.println(tempSol.getRequests().size());
-				//System.out.println("-----------------------------------------------------------------------");
-				System.out.println("New global best solution (iteration " + n + "): " + this.globalOptimum);
-				 
-				
-				} else if (this.random.nextDouble() < Math.exp(-(tempSol.getObj() - currentSol.getObj()) / this.T)) {
-					accepted = true;
-					currentSol = tempSol.clone();
-					System.out.println("We accept the solution with value: " + currentSol.getObj());
-					System.out.println(currentSol.getNewSchedule().toString());
+			accepted = false;
+ 
+			//System.out.println("Number of request in request bank: " + tempSol.getRequests().size()); 
+			if (tempSol.getObj() < this.globalBestSol.getObj()) { //if we improve our global solution
+				this.globalBestSol = tempSol.clone();
+				globalOpt = true; //we found a new global optimum
+				accepted = true; //we always accept the solution 
+				currentSol = tempSol; //set the current solution to the temporary solution
+				System.out.println("-----------------------------------------------------------------------");
+				System.out.println("New global best solution (iteration " + n + "): " + this.globalBestSol.getObj());
+			}
+			//if we accept the solution by simulated annealing
+			else if (this.random.nextDouble() < Math.exp(-(tempSol.getObj() - currentSol.getObj()) / this.T)) {
+				accepted = true; //accept solution
+				currentSol = tempSol; //set the current solution to the temporary solution
+				System.out.println("We accepted the solution: " + currentSol.getObj());
 			}
 
-			/*	// update weight adjustments
-						this.updateWeightAdj(globalOpt, accepted, unique, destroyHeuristicNr, repairHeuristicNr);
+			// update weight adjustments
+			this.updateWeightAdj(globalOpt, accepted, unique, destroyHeuristicNr, repairHeuristicNr);
 
-						// update weights if multiple of 100
-						if (n % 100 == 0 && n < nIterations) {
-							this.updateWeights();
-							System.out.println("-----------------------------------------------------------------------");
-							System.out.println("-----------------------------------------------------------------------");
-							System.out.println("ITERATION " + n + " - " + (n+99) + ":");
-						}
-*/
-						// update temperature
-						this.T = this.T *this.c;
-						//System.out.println(tempSol.toString());
-						//System.out.println(currentSol.toString());
-					//	System.out.println(this.globalSolution.toString());
-						n++;
+			// update weights if multiple of 100
+			if (n % 100 == 0 && n < nIterations) {
+				this.updateWeights();
+				System.out.println("-----------------------------------------------------------------------");
+				System.out.println("-----------------------------------------------------------------------");
+				System.out.println("ITERATION " + n + " - " + (n+99) + ":");
+			}
 
+			// update temperature
+			this.T = this.T * this.c;
+			n++;
 		}
-		System.out.println(this.globalSolution.getObj());
-		System.out.println(this.globalSolution.getNewSchedule().toString());
-		return this.globalSolution;
+		
+		return this.globalBestSol; //return our global solution
 	}
-	
+	//method to get the initial solution 
 	public Solution getInitialSol(Map<ContractGroup, Schedule> startSol) {
 		Set<Request> emptyRequestSet = new HashSet<Request>();
 		Solution initSol = new Solution(emptyRequestSet, startSol, instance);
 		return initSol;
 	}
-	
-	
-	
+
 	/**
 	 * This method executes the destroy and repair heuristic given the destroy and repair heuristic number.
 	 * @param currentSol				the current solution
@@ -170,111 +161,67 @@ public class Phase5_ALNS {
 	 */
 	public Solution executeDestroyAndRepair(Solution currentSol, int destroyHeuristicNr, int repairHeuristicNr, 
 			int sizeNeighbourhood) {
-		//if (destroyHeuristicNr == 0) {
+		//execute a destroy heuristic depending on the generated number
+		if (destroyHeuristicNr == 0) {
 			currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood,  random,instance);
-		//} 
-		//else {
-			//currentSol = this.destroyHeuristics.executeRandomOvertime(currentSol, sizeNeighbourhood, random, instance);
-		//}
+		}else {
+			currentSol = this.destroyHeuristics.executeRandomOvertime(currentSol, sizeNeighbourhood, random, instance); 
+		}
 
-		this.repairHeuristics.setAllPlacements(currentSol).toString();
-		
-	//if (repairHeuristicNr == 0) {
+		this.repairHeuristics.setAllPlacements(currentSol).toString(); 
+		//execute a repair heuristic depending on the generated number
+		if (repairHeuristicNr == 0) {
 			currentSol = this.repairHeuristics.greedyRepair(currentSol);
-		/*} else {
+		} else {
 			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
-		} */
+		} 
 
 		return currentSol;
 	}
-	
-	
-	public double sumOfArray(double[] array) {
-		double sum = 0;
-		for(int i =0; i < array.length; i++) {
-			sum += array[i];
+	//Method that returns whether it is an unique solution
+	public boolean updateUniqueSol(Solution currentSol) {
+		if(!this.hashCodesSolutions.contains(currentSol.getHashCode())) {
+			this.hashCodesSolutions.add(currentSol.getHashCode()); 
+			return true; 
 		}
-		return sum;
-	}
-	public void getTStart() {
-		this.T = 1;
+		return false; 
 	}
 	
-	public Solution copySolution(Solution solution) {
-		Map<ContractGroup, Schedule> schedule = solution.getNewSchedule();
-		this.copySchedule = new HashMap<ContractGroup, Schedule>();
-		for(ContractGroup group: schedule.keySet()) {
-			this.copySchedule.put(group, schedule.get(group));
-		}
+	/**
+	 * This method updates the weight adjustments given the status of the new solution.
+	 * @param globalOpt					true if the new solution is a global optimum, false otherwise
+	 * @param accepted					true if the solution is accepted, false otherwise
+	 * @param unique					true if the solution is unique, false otherwise
+	 * @param destroyHeuristicNr		the destroy heuristic number
+	 * @param repairHeuristicNr			the repair heuristic number
+	 */
+	public void updateWeightAdj(boolean globalOpt, boolean accepted, boolean unique, int destroyHeuristicNr, 
+			int repairHeuristicNr) {
 
-		this.copyRequest = new HashSet<Request>(solution.getRequests());
-
-		Solution copy = new Solution(this.copyRequest, this.copySchedule, instance);
-
-		return copy;
-	}
-	public boolean overTimeFeasible(int[] schedule, ContractGroup c) {
-		int totMinWorkedOverSchedule = 0;
-		//For every week
-		for (int i = 0; i < schedule.length/7; i++) {
-			//For all the days in that week 
-			for (int j = 0; j < 7; j++) {
-				if (schedule[i * 7 + j] == 1 || instance.getFromRDutyNrToRDuty().containsKey(schedule[i * 7 + j])) {
-					totMinWorkedOverSchedule += c.getAvgHoursPerDay() * 60;
-				} else if (instance.getFromDutyNrToDuty().containsKey(schedule[i * 7 + j])) {
-					totMinWorkedOverSchedule += instance.getFromDutyNrToDuty().get(schedule[i * 7 + j]).getPaidMin();
-				}
-			}
-		}
-
-		if(totMinWorkedOverSchedule > schedule.length/7 * c.getAvgDaysPerWeek() * c.getAvgHoursPerDay() * 60) {
-			return false;
-		}
-		else {
-			return true;
+		this.weightsDestroyAdj[destroyHeuristicNr][1] += 1.0;
+		this.weightsRepairAdj[repairHeuristicNr][1] += 1.0;
+		if (globalOpt) {
+			this.weightsDestroyAdj[destroyHeuristicNr][0] += this.weightUpdates[0];
+			this.weightsRepairAdj[repairHeuristicNr][0] += this.weightUpdates[0];
+		} else if (accepted && unique) {
+			this.weightsDestroyAdj[destroyHeuristicNr][0] += this.weightUpdates[1];
+			this.weightsRepairAdj[repairHeuristicNr][0] += this.weightUpdates[1];
+		} else if (unique) {
+			this.weightsDestroyAdj[destroyHeuristicNr][0] += this.weightUpdates[2];
+			this.weightsRepairAdj[repairHeuristicNr][0] += this.weightUpdates[2];
 		}
 	}
-	public double QuaterlyOvertime(int[] solution, ContractGroup c) {
-		double overtime = 0;
-		double[] weeklyOvertime = this.setWeeklyOvertime(solution, c);
-		for(int empl = 0; empl < solution.length/7; empl++) {
-			
-			for(int i =0; i < 13; i++) { //need to loop over 13 weeks for overtime
-				if((empl + i) < solution.length/7){
-					if(weeklyOvertime[empl + i] > 0) {
-						overtime = overtime + weeklyOvertime[empl +i];	
-					}
-				}
-				else {
-					int remainder = (empl + i) % solution.length/7;
-					if(weeklyOvertime[remainder] > 0) {
-						overtime = overtime + weeklyOvertime[remainder];		
-					}
-				}
-			}
-		}
-		return overtime;
-	}
-	public double[] setWeeklyOvertime(int[] schedule, ContractGroup c) {
-		int sum = 0;
-		double[] weeklyOvertime = new double[schedule.length/7];
-		for(int  k = 0; k < (schedule.length/7); k++) {
-			sum = 0;
-			for(int i = 7*k; i < (7*k+6); i++) {
-				if(instance.getFromDutyNrToDuty().containsKey(schedule[i])) {
-					sum += instance.getFromDutyNrToDuty().get(schedule[i]).getPaidMin();
-				}
-				else if(instance.getFromRDutyNrToRDuty().containsKey(schedule[i])) {
-					sum += c.getAvgHoursPerDay()*60;
-				}
-				else if(schedule[i] == 1) {
-					sum += c.getAvgHoursPerDay()*60;
-				}
-			}
 
-			weeklyOvertime[k] = sum - (c.getAvgDaysPerWeek()*c.getAvgHoursPerDay()*60) ;
+	/**
+	 * This method updates the weights given the weights adjustments found over the past 100 iterations.
+	 */
+	public void updateWeights() {
+		for (int i = 0; i < this.weightsDestroy.length; i++) {
+			this.weightsDestroy[i] = this.rho * (this.weightsDestroyAdj[i][0] / this.weightsDestroyAdj[i][1]) + (1 - this.rho) * this.weightsDestroy[i];
 		}
-		return weeklyOvertime;
+		for (int i = 0; i < this.weightsRepair.length; i++) {
+			this.weightsRepair[i] = this.rho * (this.weightsRepairAdj[i][0] / this.weightsRepairAdj[i][1]) + (1 - this.rho) * this.weightsRepair[i];
+		}
 	}
+
 }
-

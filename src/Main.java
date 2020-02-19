@@ -100,10 +100,12 @@ public class Main
 		
 		new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance);
 		new ScheduleVis(schedules.get(group2).getScheduleArray(), "" + group2.getNr() + "before", instance);
-		int iterations_phase5 = 50; 
+		int iterations_phase5 = 1000; 
 		Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, 0); 
-		new ScheduleVis(alns.executeBasic(schedules).getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance);
-		new ScheduleVis(schedules.get(group2).getScheduleArray(), "" + group2.getNr() + "after", instance);
+		Solution solutionALNS = alns.executeBasic(schedules);
+		System.out.println(solutionALNS.getObj());
+		new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance);
+		new ScheduleVis(solutionALNS.getNewSchedule().get(group2).getScheduleArray(), "" + group2.getNr() + "after", instance);
 		
 		
 	}

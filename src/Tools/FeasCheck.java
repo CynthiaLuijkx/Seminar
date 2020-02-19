@@ -316,37 +316,46 @@ public class FeasCheck {
 			return false;
 		}
 	}
+	//Need 7 days before and after without ATV day
+	public double ATVspread(int[] schedule, int startDay, int endDay,  ContractGroup c) {
+		double addCost = 0;
+		int counter = 0;
+		for(int k = startDay; k < endDay; k++) {
+			if(schedule[(k+schedule.length)%schedule.length] == 1) {
+				counter++;
+			}
+		}
+		//System.out.println(counter);
+		if(counter > 1) {
+		 addCost = (counter-1)*100000;
+		}
+		return addCost;
+	}
 	
-	public double QuaterlyOvertime(Solution sol) {
+//get the total quarterly overtime 	
+	public double QuarterlyOvertime(Solution sol) {
 		double overtime = 0;
 		for(ContractGroup group: sol.getNewSchedule().keySet()) {
-			overtime += QuaterlyOvertime(sol.getNewSchedule().get(group).getScheduleArray(), group); 
+			overtime += QuarterlyOvertime(sol.getNewSchedule().get(group).getScheduleArray(), group); 
 		}
 
 		return overtime;
 	}
-
-	public double QuaterlyOvertime(int[] solution, ContractGroup c) {
+//get the quarterly overtime per contract group
+	public double QuarterlyOvertime(int[] solution, ContractGroup c) {
 		double overtime = 0;
 		double[] weeklyOvertime = this.setWeeklyOvertime(solution, c);
-		for(int empl = 0; empl < solution.length/7; empl++) {
-			
+		for(int empl = 0; empl < solution.length/7; empl++) {	
 			for(int i =0; i < 13; i++) { //need to loop over 13 weeks for overtime
-				if((empl + i) < solution.length/7){
-					if(weeklyOvertime[empl + i] > 0) {
-						overtime = overtime + weeklyOvertime[empl +i];	
-					}
-				}
-				else {
 					int remainder = (empl + i) % solution.length/7;
 					if(weeklyOvertime[remainder] > 0) {
 						overtime = overtime + weeklyOvertime[remainder];		
 					}
 				}
-			}
 		}
 		return overtime;
 	}
+	//determine the weekly overtime in a schedule of a certain contract group
 	public double[] setWeeklyOvertime(int[] schedule, ContractGroup c) {
 		int sum = 0;
 		double[] weeklyOvertime = new double[schedule.length/7];

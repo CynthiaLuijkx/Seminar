@@ -4,12 +4,14 @@ import Tools.ContractGroup;
 
 import java.util.*;
 
+//This class is the solution information we want to have in every iteration of the adaptive large neighborhood search
 public class Solution {
 
-	private Set<Request> requests;
-	private Map<ContractGroup, Schedule> newSchedule = new HashMap<ContractGroup,Schedule>();
-	private final Instance instance;
+	private Set<Request> requests; //list with requests 
+	private Map<ContractGroup, Schedule> newSchedule = new HashMap<ContractGroup,Schedule>(); //the new schedule of the solution
+	private final Instance instance; //the instance information
 	
+	//constructor of the solution
 	public Solution(Set<Request> requests, Map<ContractGroup,Schedule> schedule, Instance instance) {
 		this.requests = requests;
 		this.newSchedule = schedule;
@@ -24,11 +26,14 @@ public class Solution {
 	 * @param problem					the rich pick-up and delivery vehicle routing problem with time windows
 	 */
 	public void removeRequest(Request request, Solution solution, Set<TimeSlot> emptyTimeSlots, int dutyDay) {
+		//if the request is not in there yet
 		if(!requests.contains(request)) {
 				TimeSlot slot = new TimeSlot(request.getGroup(), dutyDay);
 				emptyTimeSlots.add(slot);
+				//determine in which week the request needs to be removed from
 				int weekNumber = (int) Math.floor(dutyDay/7);
 				int sum = 0;
+				//determine the total worked hours in that week
 				for(int k = 7*weekNumber; k < (7*weekNumber+6); k++) {
 					if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(request.getGroup()).getScheduleArray()[k])) {
 						sum += instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(request.getGroup()).getScheduleArray()[k]).getPaidMin();
@@ -42,12 +47,12 @@ public class Solution {
 					
 					
 				}
-				
-				solution.getNewSchedule().get(request.getGroup()).getWeeklyOvertime()[weekNumber] = sum;				
-				
-			solution.getNewSchedule().get(request.getGroup()).getScheduleArray()[dutyDay] = 2;
+				//set the weekly overtime/minustime
+				solution.getNewSchedule().get(request.getGroup()).getWeeklyOvertime()[weekNumber] = sum- request.getGroup().getAvgHoursPerDay()*request.getGroup().getAvgDaysPerWeek()*60 ;				
+				//set the request to a rest day
+				solution.getNewSchedule().get(request.getGroup()).getScheduleArray()[dutyDay] = 2;
 			
-		this.requests.add(request);
+		this.requests.add(request); //add the request to the list of requests
 		}
 		
 		
@@ -67,13 +72,13 @@ public class Solution {
 	public void setNewSchedule(Map<ContractGroup, Schedule> schedule) {
 		this.newSchedule = schedule;
 	}
-	
+	//add a request to the schedule
 	public void addRequest(Placement placement) {
-		Schedule currentSchedule = this.getNewSchedule().get(placement.getTimeslot().getGroup()); 
+		Schedule currentSchedule = this.getNewSchedule().get(placement.getTimeslot().getGroup());  //get the previous schedule
 		//System.out.println("duty number: "+ placement.getRequest().getDutyNumber());
-		currentSchedule.getScheduleArray()[placement.getTimeslot().getDay()] = placement.getRequest().getDutyNumber(); 
-		currentSchedule.setWeeklyOvertime(currentSchedule, instance); 
-		this.requests.remove(placement.getRequest()); 
+		currentSchedule.getScheduleArray()[placement.getTimeslot().getDay()] = placement.getRequest().getDutyNumber();  //add the placement on the right day with the new duty number
+		currentSchedule.setWeeklyOvertime(currentSchedule, instance); //determine the weekly overtime 
+		this.requests.remove(placement.getRequest());  //remove the request from the set of requests
 	}
 	
 	
@@ -82,41 +87,32 @@ public class Solution {
 		return "Solution [ newSchedule=" + newSchedule + "]";
 	}
 	
-	
+	//Determine the objective
 	public double getObj() {
 		double objective = 0.0;
-		double[] allEmployeesOvertime = new double[instance.getContractGroups().size()];
 		for(ContractGroup group: this.getNewSchedule().keySet()) {
-			allEmployeesOvertime[group.getNr()-1] = this.QuaterlyOvertime(this.getNewSchedule().get(group).getScheduleArray(), group);
+			objective += this.QuarterlyOvertime(this.getNewSchedule().get(group).getScheduleArray(), group);
 		}
-		
-		for(int i =0; i < allEmployeesOvertime.length; i++) {
-			objective += allEmployeesOvertime[i];
-		}
+
 		return objective;
 	}
-	
-	public double QuaterlyOvertime(int[] solution, ContractGroup c) {
+	//determine the quarterly overtime
+	public double QuarterlyOvertime(int[] solution, ContractGroup c) {
 		double overtime = 0;
 		double[] weeklyOvertime = this.setWeeklyOvertime(solution, c);
 		for(int empl = 0; empl < solution.length/7; empl++) {
 			
 			for(int i =0; i < 13; i++) { //need to loop over 13 weeks for overtime
-				if((empl + i) < solution.length/7){
-					if(weeklyOvertime[empl + i] > 0) {
-						overtime = overtime + weeklyOvertime[empl +i];	
-					}
-				}
-				else {
 					int remainder = (empl + i) % solution.length/7;
 					if(weeklyOvertime[remainder] > 0) {
 						overtime = overtime + weeklyOvertime[remainder];		
 					}
 				}
-			}
+			
 		}
 		return overtime;
 	}
+	//determine the weekly overtime
 	public double[] setWeeklyOvertime(int[] schedule, ContractGroup c) {
 		int sum = 0;
 		double[] weeklyOvertime = new double[schedule.length/7];
@@ -138,6 +134,7 @@ public class Solution {
 		}
 		return weeklyOvertime;
 	}
+	//to clone a solution
 	public Solution clone() {
 		
 		Map<ContractGroup, Schedule> copy = new HashMap<ContractGroup, Schedule>(); 
@@ -147,5 +144,23 @@ public class Solution {
 		}
 		
 		return new Solution(new HashSet<Request>(this.requests),copy, this.instance);
+	}
+	/**
+	 * This method determines the hashcode of a solution.
+	 * @param sol						the solution
+	 * @return							its hashcode
+	 */
+	public int getHashCode() {
+		final int prime = 31;
+		int result = 1;
+		long temp;
+		temp = Double.doubleToLongBits(this.getObj());
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+
+		for(ContractGroup group: this.getNewSchedule().keySet()) {
+			Schedule schedule = this.getNewSchedule().get(group); 
+			result = prime*result + schedule.getScheduleArray().hashCode();  
+		}
+		return result;
 	}
 }

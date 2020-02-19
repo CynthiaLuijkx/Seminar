@@ -1,10 +1,11 @@
 package Tools;
 import Tools.TimeSlot;
 
+//This class consists of a placement 
 public class Placement implements Comparable<Placement>{
-	private final Request request;
-	private final TimeSlot timeslot;
-	private double cost;
+	private final Request request; //a placement is of a certain request
+	private final TimeSlot timeslot; //a placement can be put on a certain timeslot
+	private double cost; //a placement has a cost involved
 	
 	public Placement(Request request, TimeSlot slot, double cost) {
 		this.request = request;

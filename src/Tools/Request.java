@@ -4,14 +4,15 @@ import java.util.*;
 import Tools.ContractGroup;
 import Tools.ReserveDutyType;
 
+//The class of type request 
 public class Request {
-	private Duty duty;
-	private ReserveDutyType reserveDuty;
-	private int dutyNumber;
-	private ContractGroup group;
-	private final int day;
-	private List<Placement> listOfPlacements = new ArrayList<Placement>();
-	private final int weekday;
+	private Duty duty; //a request can have a duty 
+	private ReserveDutyType reserveDuty; //a request can have a reserve duty
+	private int dutyNumber; //a request can be an ATV duty
+	private ContractGroup group; //a request contains the contract group the duty is removed from
+	private final int day; //a request has the day on which the duty is removed
+	private List<Placement> listOfPlacements = new ArrayList<Placement>(); //contains all the placements on which the request can be put
+	private final int weekday; //the weekday the duty should be executed on
 	
 	public int getDay() {
 		return day;
@@ -37,10 +38,11 @@ public class Request {
 		this.day = day;
 		this.weekday = day%7;
 	}
+	//Determine the startime of the duty
 	public int getStartTime() {
 		int start = 0;
-		if(this.getDutyNumber() == 1||this.getDutyNumber() == 2) {
-			start = 24*60;
+		if(this.getDutyNumber() == 1) {
+			start = 0;
 		}
 		else if(this.getDutyNumber() < 1000) {
 			start = this.getReserveDuty().getStartTime();
@@ -50,10 +52,11 @@ public class Request {
 		}
 		return start;
 	}
+	//determine the endtime of the duty
 	public int getEndTime() {
 		int end = 0;
-		if(this.getDutyNumber() == 1||this.getDutyNumber() == 2) {
-			end = 0;
+		if(this.getDutyNumber() == 1) {
+			end = 24*60;
 		}
 		else if(this.getDutyNumber() < 1000) {
 			end = this.getReserveDuty().getEndTime();
@@ -81,8 +84,9 @@ public class Request {
 	public int getDutyNumber() {
 		return dutyNumber;
 	}
-	
+	//add a placement to the possibilities of a request
 	public void addPlacement(Request request, TimeSlot slot, double cost) {
+		//System.out.println("Duty number: "  +request.getDutyNumber());
 		Placement placement = new Placement(request, slot, cost);
 		this.listOfPlacements.add(placement);
 	}
@@ -98,7 +102,7 @@ public class Request {
 	public void deletePlacement(Placement placement) {
 		this.listOfPlacements.remove(placement); 
 	}
-	
+	//delete a placement from the list
 	public void deletePlacements(ContractGroup group) {
 		Set<Placement> toDelete = new HashSet<Placement>(); 
 		for(Placement placement: this.listOfPlacements) {
