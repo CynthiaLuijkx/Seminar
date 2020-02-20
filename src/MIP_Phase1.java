@@ -541,21 +541,21 @@ public class MIP_Phase1
 	public void initSoft1() throws IloException { // ATV spread
 		for (ContractGroup group : this.instance.getContractGroups()) { //For all contract groups
 			if (group.getDutyTypes().contains("ATV")) { //If this group can work ATV duties
-				for (int s = 0; s < group.getTc(); s++) {//For all weeks
+				for (int w = 0; w < group.getTc()/7; w++) {//For all weeks
 					IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 					
 					for(int t = 0; t < 14; t++) {
-						IloNumVar decVarATV = this.decVarOfThisType(this.daysPerGroup.get(group).get((s+t)%group.getTc()), "ATV");
+						IloNumVar decVarATV = this.decVarOfThisType(this.daysPerGroup.get(group).get(((7*w)+t)%group.getTc()), "ATV");
 						constraint.addTerm(decVarATV, 1);
 					}
 
 					//Add a penalty 
 					IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
-					penalty.setName(group.groupNumberToString() + "ATVSpread_S" + s);
+					penalty.setName(group.groupNumberToString() + "ATVSpread_W" + w);
 					this.ATVSpreadPenalty.add(penalty);
 					constraint.addTerm(penalty, -1);
 					
-					this.cplex.addLe(constraint, 1, group.groupNumberToString() + "ATVSpread_S" + s);
+					this.cplex.addLe(constraint, 1, group.groupNumberToString() + "ATVSpread_W" + w);
 				}
 			}
 		}
