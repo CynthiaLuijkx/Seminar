@@ -564,12 +564,12 @@ public class MIP_Phase1
 	public void initSoft2() throws IloException { // Reserve per period of 7 days 
 		for (ContractGroup group : this.instance.getContractGroups()) { //For all contract groups
 
-			for (int s = 0; s < group.getTc(); s++) { //Starting on every day
+			for (int w = 0; w < group.getTc()/7; w++) { //Starting on every day
 				
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 				
 				for(int t = 0; t < 7; t++) {
-					for(IloNumVar decVar : this.daysPerGroup.get(group).get((s+t)%group.getTc())) {
+					for(IloNumVar decVar : this.daysPerGroup.get(group).get(((7*w)+t)%group.getTc())) {
 						String type = this.decVarToCombination.get(decVar).getType();
 						Character ch = type.charAt(0);
 						if(ch.equals('R')) {
@@ -577,14 +577,13 @@ public class MIP_Phase1
 						}
 					}
 				}
-
 				//Add the penalty
 				IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
-				penalty.setName(group.groupNumberToString() + "Reserve_S" + s);
+				penalty.setName(group.groupNumberToString() + "Reserve_W" + w);
 				this.reservePenalty.add(penalty);
 				
 				constraint.addTerm(penalty, -1);
-				this.cplex.addLe(constraint, 2, group.groupNumberToString() + "Reserve_S" + s);
+				this.cplex.addLe(constraint, 2, group.groupNumberToString() + "Reserve_W" + w);
 			}
 		}
 	}
@@ -612,6 +611,7 @@ public class MIP_Phase1
 			}
 		}
 	}
+	
 	
 	public void initSoft4() throws IloException { //Max consecutive similar duties 
 		for(ContractGroup group: this.instance.getContractGroups()) {//For all contract groups
@@ -938,26 +938,26 @@ public class MIP_Phase1
 	
 	public void initSoft13() throws IloException { // Spread the rest
 		for (ContractGroup group : this.instance.getContractGroups()) { // For all contract groups
-			for (int s = 0; s < group.getTc(); s++) {// For all days
+			for (int w = 0; w < group.getTc()/7; w++) {// For all days
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 
 				//The week from that day onwards 
 				for (int t = 0; t < 7; t++) {
 					IloNumVar decVarATV = this
-							.decVarOfThisType(this.daysPerGroup.get(group).get((s + t) % group.getTc()), "ATV");
+							.decVarOfThisType(this.daysPerGroup.get(group).get(((7*w) + t) % group.getTc()), "ATV");
 					if(decVarATV != null) {
 						constraint.addTerm(decVarATV, 1);
 					}
-					constraint.addTerm(this.restDaysPerGroup.get(group)[(s + t) % group.getTc()], 1);
+					constraint.addTerm(this.restDaysPerGroup.get(group)[((7*w) + t) % group.getTc()], 1);
 				}
 
 				// Add a penalty
 				IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
-				penalty.setName(group.groupNumberToString() + "RestSpread_S" + s);
+				penalty.setName(group.groupNumberToString() + "RestSpread_W" + w);
 				this.RestSpread.add(penalty);
 				constraint.addTerm(penalty, -1);
 
-				this.cplex.addLe(constraint, 3, group.groupNumberToString() + "RestSpread_S" + s);
+				this.cplex.addLe(constraint, 3, group.groupNumberToString() + "RestSpread_W" + w);
 			}
 		}
 	}
