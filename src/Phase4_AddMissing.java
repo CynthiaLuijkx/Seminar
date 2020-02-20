@@ -130,7 +130,9 @@ public class Phase4_AddMissing {
 			}
 
 			int tries = 0;
-			while (missingDuties(schedulesCopy) > 0 && tries < 5000) {
+			int totalMissing = missingDuties(schedulesCopy);
+			int currentMissing = totalMissing;
+			while (currentMissing > 0 && tries < (Math.pow(totalMissing, 2) +1000)) {
 				int i = (int) (Math.random() * 7); // Pick a random weekday
 				if (originalMissing.get(i).size() > 0) {
 					int insertNr = (int) (Math.random() * originalMissing.get(i).size());
@@ -162,9 +164,9 @@ public class Phase4_AddMissing {
 															toInsert.getStartTime(), toInsert.getEndTime())) {
 														scheduleArray[t * 7 + i] = toInsert.getNr();
 														if (scheduleIsFeasible(scheduleArray, schedulesCopy.get(random).getC())) {
-															// System.out.println("Swapped:" + " " + (i) + " " + random+ " "+ toInsert.getNr() + " " + toDelete.getNr());
 															duplicatesTaken.get(i).add(toDelete);
 															insertedDuties.get(i).add(toInsert);
+															currentMissing = missingDuties(schedulesCopy);
 														} else {
 															scheduleArray[t * 7 + i] = toDelete.getNr();
 														}
@@ -174,16 +176,15 @@ public class Phase4_AddMissing {
 										}
 									}
 								}
+								tries++;
 							}
-							tries++;
 						}
 					}
 				}
-
 			}
 			//System.out.println(missingDuties(schedulesCopy));
-			if(missingDuties(schedulesCopy) < minimumMissed) {
-				minimumMissed = missingDuties(schedulesCopy);
+			if(currentMissing < minimumMissed) {
+				minimumMissed = currentMissing;
 				bestSchedules.clear();
 				bestSchedules.addAll(schedulesCopy);
 			}
