@@ -22,7 +22,7 @@ public class Main
 {
 	public static void main(String[] args) throws FileNotFoundException, IloException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
@@ -64,25 +64,25 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() +35;
+		int numberOfDrivers = instance.getLB()+19;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		Set<Schedule> schedules = new HashSet<>();
-		int iteration = 1;
+		int iteration = 0;
 		int maxIt = 5;
 		boolean scheduleForEveryGroup = false;
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		mip.solve();
 		if (mip.isFeasible()) {
-			//mip.populate(maxIt);
-			//while (scheduleForEveryGroup == false && iteration <= maxIt) {
-				mip.makeSolution(); //When not using populate 
-				//mip.makeSolution(iteration); //When using populate
+			//int nsol = mip.populate(maxIt); //When using populate
+			int nsol = 1; //When not using populate 
+			while (scheduleForEveryGroup == false && iteration < nsol) {
+				mip.makeSolution(iteration); 
 				instance.setBasicSchedules(mip.getSolution());
 				
 				for(ContractGroup c : instance.getContractGroups()) {
-				//	new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr());
+					new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr());
 				}
 
 				long phase3Start = System.nanoTime();
@@ -106,7 +106,7 @@ public class Main
 					}
 				}
 				iteration++;
-			//}
+			}
 			
 			if(iteration == maxIt || schedules.size() == 0) {
 				System.out.println("No feasible schedules found on all " + maxIt + " basic schedules");

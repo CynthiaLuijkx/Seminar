@@ -130,7 +130,9 @@ public class Phase4_AddMissing {
 			}
 
 			int tries = 0;
-			while (missingDuties(schedulesCopy) > 0 && tries < 2000) {
+			int totalMissing = missingDuties(schedulesCopy);
+			int currentMissing = totalMissing;
+			while (currentMissing > 0 && tries < (Math.pow(totalMissing, 2) +1000)) {
 				int i = (int) (Math.random() * 7); // Pick a random weekday
 				if (originalMissing.get(i).size() > 0) {
 					int insertNr = (int) (Math.random() * originalMissing.get(i).size());
@@ -139,8 +141,9 @@ public class Phase4_AddMissing {
 						if (duplicatesCopy.get(i).size() > 0) {
 							int deleteNr = (int) (Math.random() * duplicatesCopy.get(i).size());
 							Duty toDelete = duplicatesCopy.get(i).get(deleteNr); // Pick a random duplicate to delete
-							if (toInsert.getType().equals(toDelete.getType())
-									&& !duplicatesTaken.get(i).contains(toDelete)) {
+							if (!duplicatesTaken.get(i).contains(toDelete)) {
+									
+									//toInsert.getType().equals(toDelete.getType())&& !duplicatesTaken.get(i).contains(toDelete)) {
 								List<Schedule> schedulesChecked = new ArrayList<>();
 								while (schedulesChecked.size() != schedulesCopy.size()) {
 									int random = (int) (Math.random() * schedulesCopy.size());
@@ -161,9 +164,9 @@ public class Phase4_AddMissing {
 															toInsert.getStartTime(), toInsert.getEndTime())) {
 														scheduleArray[t * 7 + i] = toInsert.getNr();
 														if (scheduleIsFeasible(scheduleArray, schedulesCopy.get(random).getC())) {
-															// System.out.println("Swapped:" + " " + (i) + " " + random+ " "+ toInsert.getNr() + " " + toDelete.getNr());
 															duplicatesTaken.get(i).add(toDelete);
 															insertedDuties.get(i).add(toInsert);
+															currentMissing = missingDuties(schedulesCopy);
 														} else {
 															scheduleArray[t * 7 + i] = toDelete.getNr();
 														}
@@ -173,16 +176,15 @@ public class Phase4_AddMissing {
 										}
 									}
 								}
+								tries++;
 							}
-							tries++;
 						}
 					}
 				}
-
 			}
 			//System.out.println(missingDuties(schedulesCopy));
-			if(missingDuties(schedulesCopy) < minimumMissed) {
-				minimumMissed = missingDuties(schedulesCopy);
+			if(currentMissing < minimumMissed) {
+				minimumMissed = currentMissing;
 				bestSchedules.clear();
 				bestSchedules.addAll(schedulesCopy);
 			}
@@ -205,7 +207,7 @@ public class Phase4_AddMissing {
 			return false;
 		}
 		if(!overTimeFeasible(schedule,c)) {
-			//System.out.println("Overtime failed");
+		//	System.out.println("Overtime failed");
 			return false;
 		}
 		return true;
@@ -229,52 +231,40 @@ public class Phase4_AddMissing {
 				for (int i = 1; i <= 6; i++) {// For every rolling window of 7 days from this day on
 					if (!rangeFeasible) {
 						// If this day is a rest/ATV day
-						if (schedule[(s + i) % schedule.length] == 1 || schedule[(s + i) % schedule.length] == 2) {
-							int consecRest = 24 * 60;
-
-							// The day before
-							if (instance.getFromDutyNrToDuty()
-									.containsKey(schedule[(s + i - 1) % schedule.length])) {
-								consecRest += 24 * 60 - instance.getFromDutyNrToDuty()
-										.get(schedule[(s + i - 1) % schedule.length]).getEndTime();
-							} else {
-								consecRest += 24 * 60 - instance.getFromRDutyNrToRDuty()
-										.get(schedule[(s + i - 1) % schedule.length]).getEndTime();
+						if (schedule[(s+i)%schedule.length] == 1 || schedule[(s+i)%schedule.length] == 2) {
+							int consec = 24 * 60;
+							
+							//Check the day before 
+							if (instance.getFromDutyNrToDuty().containsKey(schedule[(s+i-1)%schedule.length])) {//Normal duty
+								consec += 24 * 60 - instance.getFromDutyNrToDuty().get(schedule[(s+i-1)%schedule.length]).getEndTime();
+							} else {//Reserve duty
+								consec += 24 * 60 - instance.getFromRDutyNrToRDuty().get(schedule[(s+i-1)%schedule.length]).getEndTime();
 							}
-
-							// If the rest day we're on is the final day of the row, we need to jump one
-							// further
+							
+							//The day after
+							
+							//If it's the last day 
 							if (i == 6) {
-								// We count up to max the start time of the duty
-								if (schedule[(s + 7) % schedule.length] == 1
-										|| schedule[(s + 7) % schedule.length] == 2) {
-									consecRest += start;
-								} else if (instance.getFromDutyNrToDuty()
-										.containsKey(schedule[(s + 7) % schedule.length])) {
-									consecRest += Math.min(start, instance.getFromDutyNrToDuty()
-											.get(schedule[(s + 7) % schedule.length]).getStartTime());
+								//We only count up until the start of the previous duty, or the new duty if it starts earlier 
+								if (schedule[(s+7)%schedule.length] == 1 || schedule[(s+7)%schedule.length] == 2) {
+									consec += start;
+								} else if (instance.getFromDutyNrToDuty().containsKey(schedule[(s+7)%schedule.length])) {
+									consec += Math.min(start, instance.getFromDutyNrToDuty().get(schedule[(s+7)%schedule.length]).getStartTime());
 								} else {
-									consecRest += Math.min(start, instance.getFromRDutyNrToRDuty()
-											.get(schedule[(s + 7) % schedule.length]).getStartTime());
+									consec += Math.min(start, instance.getFromRDutyNrToRDuty().get(schedule[(s+7)%schedule.length]).getStartTime());
 								}
-							}
-							// The day after
+							} 
+							//If it's any other day 
 							else {
-								if (schedule[(s + i + 1) % schedule.length] == 1
-										|| schedule[(s + i + 1) % schedule.length] == 2) {// ATV/rest day
-									consecRest += 24 * 60;
-									// Normal duty
-								} else if (instance.getFromDutyNrToDuty()
-										.containsKey(schedule[(s + i + 1) % schedule.length])) {
-									consecRest += instance.getFromDutyNrToDuty()
-											.get(schedule[(s + i + 1) % schedule.length]).getStartTime();
-									// Reserve duty
+								if (schedule[(s+i+1)%schedule.length] == 1 || schedule[(s+i+1)%schedule.length] == 2) {
+									consec += 24 * 60;
+								} else if (instance.getFromDutyNrToDuty().containsKey(schedule[(s+i+1)%schedule.length])) {
+									consec += instance.getFromDutyNrToDuty().get(schedule[(s+i+1)%schedule.length]).getStartTime();
 								} else {
-									consecRest += instance.getFromRDutyNrToRDuty()
-											.get(schedule[(s + i + 1) % schedule.length]).getStartTime();
+									consec += instance.getFromRDutyNrToRDuty().get(schedule[(s+i+1)%schedule.length]).getStartTime();
 								}
 							}
-							if (consecRest >= 32 * 60) {
+							if (consec >= 32 * 60) {
 								rangeFeasible = true;
 							}
 						}
@@ -337,16 +327,20 @@ public class Phase4_AddMissing {
 							}
 							// Day after, not the end of the period
 							else {
-								if (schedule[(s + i + 1) % schedule.length] == 1
-										|| schedule[(s + i + 1) % schedule.length] == 2) {
-									consec += 24 * 60;
-								} else if (instance.getFromDutyNrToDuty()
-										.containsKey(schedule[(s + i + 1) % schedule.length])) {
-									consec += instance.getFromDutyNrToDuty()
-											.get(schedule[(s + i + 1) % schedule.length]).getStartTime();
+								if (instance.getFromDutyNrToDuty().containsKey(schedule[(s+i+1)%schedule.length])) {
+									consec += instance.getFromDutyNrToDuty().get(schedule[(s+i+1)%schedule.length]).getStartTime();
+								} else if (instance.getFromRDutyNrToRDuty().containsKey(schedule[(s+i+1)%schedule.length])) {
+									consec += instance.getFromRDutyNrToRDuty().get(schedule[(s+i+1)%schedule.length]).getStartTime();
 								} else {
-									consec += instance.getFromRDutyNrToRDuty()
-											.get(schedule[(s + i + 1) % schedule.length]).getStartTime();
+									int j = 1;
+									while (schedule[(s+i+j)%schedule.length] == 1 || schedule[(s+i+j)%schedule.length] == 2) {
+										if (i+j == 14) {
+											consec += start;
+											break;
+										}
+										consec += 24 * 60;
+										j++;
+									}
 								}
 							}
 
