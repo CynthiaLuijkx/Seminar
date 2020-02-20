@@ -43,6 +43,10 @@ public class Instance
 	private final Map<String, Integer> avgMinSat;
 	private final Map<String, Integer> avgMinSun;
 	
+	private final int minBreak = 11*60; 
+	private final int minWeekBreak = 32*60; 
+	private final int min2WeekBreak = 72*60; 
+	
 	/**
 	 * Constructs an Instance.
 	 * @param workingDays			a Set containing all the duties on a working day
@@ -269,5 +273,17 @@ public class Instance
 			int averageMin = (int) Math.ceil(totalMin/this.dutiesPerTypeSun.get(dutyType).size());
 			this.avgMinSun.put(dutyType, averageMin);
 		}
+	}
+	
+	public int getMinBreak() {
+		return minBreak;
+	}
+
+	public int getMinWeekBreak() {
+		return minWeekBreak;
+	}
+
+	public int getMin2WeekBreak() {
+		return min2WeekBreak;
 	}
 }
