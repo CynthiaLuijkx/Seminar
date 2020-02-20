@@ -433,7 +433,9 @@ public class MIP_Phase1
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 			for(int w = 0; w < group.getTc()/7; w++) { //Summing all weeks
 				for(IloNumVar decVar : this.daysPerGroup.get(group).get(w*7)) {//All decision variables on sunday
-					constraint.addTerm(decVar, 1);
+					if(!this.decVarToCombination.get(decVar).getType().equals("ATV")) {
+						constraint.addTerm(decVar, 1);
+					}
 				}				
 			}
 			int numberOfSundays = (int) (Math.floor((group.getTc()/7 * 3/4))); //Rounding down 
