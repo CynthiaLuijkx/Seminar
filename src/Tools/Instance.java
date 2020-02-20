@@ -240,4 +240,15 @@ public class Instance
 	public Set<Violation3Days> getViolations3Days() {
 		return violations3Days;
 	}
+	public String getDutyTypeFromDutyNR(int dutyNr) {
+		if(dutyNr==1) {
+			return "ATV"; 
+		}else if(dutyNr == 2) {
+			return "Rest"; 
+		}else if(dutyNr <1000) {
+			return this.getFromRDutyNrToRDuty().get(dutyNr).getType(); 
+		}else {
+			return this.getFromDutyNrToDuty().get(dutyNr).getType(); 
+		}
+	}
 }

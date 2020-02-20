@@ -294,6 +294,22 @@ public class FeasCheck {
 			return true;
 		}
 	}
+	/**
+	 * Feasibility check to check the average number of split duties
+	 * @param schedule
+	 * @return
+	 */
+	public boolean checkMax2SplitDuties(int[] schedule) {
+		int count = 0; //amount of split duties in whole schedule
+		for(int i = 0; i<schedule.length; i++) {
+			String dutyType = this.instance.getDutyTypeFromDutyNR(schedule[i]); 
+
+			if(dutyType.equals("G") || dutyType.equals("GM")) {
+				count++; 
+			}
+		}
+		return count/(schedule.length/7) <= 2; 
+	}
 
 	/**
 	 * Checks if there are enough ATV days for that contract group
@@ -316,20 +332,296 @@ public class FeasCheck {
 			return false;
 		}
 	}
+	//method that gets the total number of violations for every soft constraint
+	public int[] allViolations(int[] schedule, ContractGroup c) {
+		int[] violations = new int[11]; //INCREASE IF YOU HAVE ALL VIOLATIONS;
+		/*
+		 * 0: ATV spread
+		 * 1: no more than 2 reserve duties
+		 * 2: max of 5 consecutive duties
+		 * 3: no more than 5 duties + ATV days in a week
+		 * 4: ATV days are not preferred in the weekends
+		 * 5: if the contract group has part timers, gives back the number of not part time duties
+		 * 6: do not want early followed by late duties
+		 * 7: want ATV and rest after one another (check how often a rest/atv stands alone)
+		 * 8: loose duties are not preferred
+		 * 9: check at least 2 duties of the same type in a row
+		 * 10 check that at most 3 duties of the same type are in a row
+		 */
+		
+		violations[0] = this.ATVspread(schedule, 0, schedule.length,c);
+		violations[6] = this.checkEarlyFollowedByLate(schedule, 0, schedule.length);
+		violations[7] = this.checkConsecutiveRestATV(schedule,0, schedule.length);
+		violations[8] = this.checkLooseDuties(schedule, 0, schedule.length);
+		int[] temp = this.checkSameDuties(schedule, 0, schedule.length);
+		violations[9] = temp[0]; 
+		violations[10] = temp[1];
+		for(int i = 0; i < schedule.length; i+=7) {
+			violations[1] += this.reserveDuties(schedule, i, c);
+			violations[2] += this.maxConsecutive(schedule, i, c);
+			violations[3] += this.maxDuties(schedule, i, c);
+		}
+		int day = 0;
+		while(day < schedule.length) {
+			if(day%7 == 0) {
+				this.weekendATV(schedule, day,c);
+				day += 6;
+			}
+			else if(day%7 == 6) {
+				this.weekendATV(schedule, day,c);
+				day += 1;
+			}
+		}
+		return violations;
+	}
 	//Need 7 days before and after without ATV day
-	public double ATVspread(int[] schedule, int startDay, int endDay,  ContractGroup c) {
-		double addCost = 0;
+	public int ATVspread(int[] schedule, int startDay, int endDay, ContractGroup c) {
 		int counter = 0;
+		int violations = 0; //how many violations do we have
 		for(int k = startDay; k < endDay; k++) {
 			if(schedule[(k+schedule.length)%schedule.length] == 1) {
 				counter++;
 			}
 		}
 		//System.out.println(counter);
-		if(counter > 1) {
-		 addCost = (counter-1)*100000;
+		if(counter -1 > 0) {
+			violations  = counter -1;
 		}
-		return addCost;
+		return violations; //only want 1 ATV day every period of weeks
+	}
+	
+	//No more than 2 reserve duties per week
+	public int reserveDuties(int[] schedule, int index, ContractGroup c) {
+		int remainder = index%7; //get on which day the request falls
+		int counter = 0; //counter for the number of reserve duties in the week
+		int violations  = 0;
+		for(int i = index - remainder; i <=(index - remainder + 6); i++) { //check the whole week
+			if(instance.getFromRDutyNrToRDuty().containsKey(schedule[i])) {
+				counter++;
+			}
+		}
+		if(counter -2 > 0) {
+			violations = counter -2;
+		}
+		return violations;
+	}
+	//No more than 5 consecutive duties per week
+	public int maxConsecutive(int[] schedule, int index, ContractGroup c) {
+		int remainder = index%7; //get on which day the request falls
+		int counter = 0; //counter for the number of reserve duties in the week
+		int violations = 0; //number of violations in a week
+		int save = 0;
+		for(int i = index - remainder; i <=(index - remainder + 6); i++) { //check the whole week
+			if(schedule[i] != 2 && schedule[i] != 1) {
+				counter++;
+				if(counter > 5) {
+					save = 1;
+				}
+			}
+			else {
+				counter = 0;
+			}
+		}
+		if(counter - 5 > 0) {
+			violations = counter - 5;
+		}
+		else if(save == 1) {
+			violations = 1;
+		}
+		return violations;
+	}
+	//no more than 5 duties or ATV days in a week
+	public int maxDuties(int[] schedule, int index, ContractGroup c) {
+		int remainder = index%7; //get on which day the request falls
+		int counter = 0; //counter for the number of reserve duties in the week
+		int violations = 0; //number of violations in a week
+		for(int i = index - remainder; i <=(index - remainder + 6); i++) { //check the whole week
+			if(schedule[i] != 2) {
+				counter++;
+			}
+		}
+		if(counter - 5 > 0) {
+			violations = counter - 5;
+		}
+		return violations;
+	}
+	
+	//ATV days preferred not to be in the weekend
+	public int weekendATV(int[] schedule, int index, ContractGroup c) {
+		int remainder = index%7; //get on which day the request falls
+		int violations = 0;
+		if((remainder == 0 || remainder == 6) && schedule[index] == 1) {
+				violations++;
+			}
+		return violations;
+	}
+	/**
+	 * Method calculates the penalty for parttimers not getting a parttime duty 
+	 * @param schedule
+	 * @param c
+	 * @return
+	 */
+	public double checkPartTime(int[] schedule, ContractGroup c, int startDate, int endDate ) {
+
+		//If the group is not a parttime contractgroup, the check is not needed 
+		if(c.getATVPerYear()!=0) {
+			return 0.0;
+		}
+
+		int nPTduties = 0; 
+		int nOduties = 0; 
+		for(int i = startDate; i<endDate; i++) {
+			int dutyNr = schedule[i]; 
+			if(dutyNr>100) {
+				//How to count reserve duties for parttimers 
+				if(instance.getFromDutyNrToDuty().get(dutyNr).getType().equals("P")) {
+					nPTduties++; 
+				}else {
+					nOduties++;
+				}
+			}
+		}
+
+		return nOduties; 
+
+	}
+
+	/**
+	 * Methods checks the number of times an early duty is followed by a late duty
+	 * @param schedule
+	 * @param startDate
+	 * @param endDate
+	 * @return
+	 */
+	public int checkEarlyFollowedByLate(int[] schedule, int startDate, int endDate) {
+		int nOccurances = 0; 
+		for(int i = startDate; i<endDate; i++) {
+			int dutyNr1 = schedule[i]; 
+			int dutyNr2 = schedule[(i+1) % schedule.length]; 
+			String dutyType1 = this.instance.getDutyTypeFromDutyNR(dutyNr1); 
+			String dutyType2 = this.instance.getDutyTypeFromDutyNR(dutyNr2); 
+
+			if(dutyType1.length()== 2) {
+				dutyType1 = dutyType1.substring(1); 
+			}
+
+			if(dutyType2.length()== 2) {
+				dutyType2 = dutyType2.substring(1); 
+			}
+
+			if(dutyType1.equals("V") && dutyType2.equals("E")) {
+				nOccurances++; 
+			}
+		}
+		return nOccurances; 
+	}
+
+	/**
+	 * Method checks the number of times a rest day is stand alone
+	 * @param schedule
+	 * @param startDate
+	 * @param endDate
+	 * @return
+	 */
+	public int checkConsecutiveRestATV(int[] schedule, int startDate, int endDate) {
+		int nViolations = 0; 
+		for(int i = startDate; i<endDate; i++) {
+
+			String currentType = this.instance.getDutyTypeFromDutyNR(schedule[i]); 
+
+			boolean checkRest = currentType.equals("Rest") || currentType.equals("ATV"); 
+
+			if(checkRest) {
+				String prevDay = this.instance.getDutyTypeFromDutyNR(schedule[(i - 1 + schedule.length)%schedule.length]); 
+				String nextDay = this.instance.getDutyTypeFromDutyNR(schedule[(i +1 )%schedule.length]); 
+
+				boolean restPrevDay = prevDay.equals("Rest") || prevDay.equals("ATV"); 
+				boolean restNextDay = nextDay.equals("Rest") || nextDay.equals("ATV"); 
+				if(!restPrevDay && ! restNextDay) {
+					nViolations++; 
+				}
+			}
+		}
+		return nViolations; 
+	}
+
+	/**
+	 * Method checks the number of violations due to the consecutive same duties 
+	 * @param schedule
+	 * @param startDate
+	 * @param endDate
+	 * @return array of 		
+	 *		index 0: number of times a duty is alone
+	 *	  	index 1: number of times a duty is scheduled more than 3 times consecutively
+	 */
+	public int[] checkSameDuties(int[] schedule, int startDate, int endDate) {
+		//Assume checking only early, day and late duties 
+		int[] nViolations = new int[2]; 
+
+		int count = 1; 
+		for(int i = startDate + 1; i<endDate; i++){
+
+			String currentType = this.instance.getDutyTypeFromDutyNR(schedule[i]); 
+
+			//If it is a reserve duty get rid of the R 
+			if(currentType.length()== 2){
+				currentType = currentType.substring(1); 
+			}
+
+			//Check if the duty need to be checked
+			boolean checkDuty = currentType.equals("V") || currentType.equals("D") || currentType.equals("L"); 
+
+			if(checkDuty) {
+				String nextType = this.instance.getDutyTypeFromDutyNR(schedule[(i+1)%schedule.length]); 
+
+				//If it is a reserve duty get rid of the R 
+				if(nextType.length() == 2) {
+					nextType = nextType.substring(1); 
+				}
+
+				if(!nextType.equals(currentType)) {
+					if(count < 2) {
+						nViolations[0]++; 
+					}
+					if(count > 3) {
+						nViolations[1]++; 
+					}
+					count = 1; 
+				}else {
+					count++; 
+				}
+			}
+		}
+		return nViolations; 
+	}
+
+	/**
+	 * Checks the number of times a duty is loose (between two rest/ATV days
+	 * @param schedule
+	 * @param startDate
+	 * @param endDate
+	 * @return
+	 */
+	public int checkLooseDuties(int[] schedule, int startDate, int endDate) {
+		int nViolations = 0; 
+		for(int i = startDate; i<endDate; i++) {
+
+			String currentType = this.instance.getDutyTypeFromDutyNR(schedule[i]); 
+
+			boolean checkRest = !currentType.equals("Rest") && !currentType.equals("ATV"); 
+
+			if(checkRest) {
+				String prevDay = this.instance.getDutyTypeFromDutyNR(schedule[(i - 1 + schedule.length)%schedule.length]); 
+				String nextDay = this.instance.getDutyTypeFromDutyNR(schedule[(i +1 )%schedule.length]); 
+
+				boolean restPrevDay = prevDay.equals("Rest") || prevDay.equals("ATV"); 
+				boolean restNextDay = nextDay.equals("Rest") || nextDay.equals("ATV"); 
+				if(restPrevDay && restNextDay) {
+					nViolations++; 
+				}
+			}
+		}
+		return nViolations; 
 	}
 	
 //get the total quarterly overtime 	

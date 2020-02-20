@@ -10,16 +10,7 @@ public class RepairHeuristics {
 	public RepairHeuristics(Instance instance) {
 		this.placements = new ArrayList<Placement>();
 		this.feasCheck = new FeasCheck(instance); 
-
-		/*
-		 *	Order of the penalties
-		 *	0: Check if the number of ATV days is satisfied 
-		 *	1: Quaterly overtime paid out
-		 */
-
-		this.penaltiesFeas = new double[2]; 
-		this.penaltiesFeas[0] = 10; //more strict
-		this.penaltiesFeas[1] = 1;
+		this.penaltiesFeas = new Penalties().getFeasPenalties();
 	}
 
 	/**
@@ -172,13 +163,22 @@ public class RepairHeuristics {
 				List<Placement> placements = request.getPlacements(); 
 				Collections.sort(placements);
 
-				if(placements.size() != 0 && placements.size()>q) {
-					double regret = placements.get(q).getCost() - placements.get(0).getCost(); 
+				double regret = 0; 
+				if(placements.size() != 0) {
+					if(placements.size() == 1 ) {
+						regret = Double.MAX_VALUE; 
+					}else if(placements.size() <= q) {
+						regret = Double.MAX_VALUE/2; 
+					}else {
+						regret = placements.get(q).getCost() - placements.get(0).getCost();	
+					}
+					
 					if(regret > maxRegret) {
 						maxRegret = regret; 
 						mostRegretRequest = request; 
 					}
 				}
+				
 			}
 
 			if(mostRegretRequest == null) {
@@ -273,7 +273,6 @@ public class RepairHeuristics {
 		ContractGroup group = schedule.getC(); 
 		double[] newOvertime = this.feasCheck.setWeeklyOvertime(schedule.getScheduleArray(), group); 
 		double costOfPlacement = 0;
-
 		int[] check = schedule.getScheduleArray();
 		check[i] = request.getDutyNumber();
 		boolean checkFeasibility = this.feasCheck.checkATVDays(check, group);
@@ -281,28 +280,27 @@ public class RepairHeuristics {
 		
 		if(checkFeasibility == false) {
 				costOfPlacement += this.penaltiesFeas[0];
-				if(newOvertime[i/7] - this.feasCheck.setWeeklyOvertime(check, group)[i/7]*penaltiesFeas[1] > 0) {
 				costOfPlacement += newOvertime[i/7] - this.feasCheck.setWeeklyOvertime(check, group)[i/7]*penaltiesFeas[1];
-				}
-				else {
-					costOfPlacement -= newOvertime[i/7] - this.feasCheck.setWeeklyOvertime(check, group)[i/7]*penaltiesFeas[1];
-					
-				}
 			}
 		else {
-			if(newOvertime[i/7] - this.feasCheck.setWeeklyOvertime(check, group)[i/7]*penaltiesFeas[1] >0) {
 				costOfPlacement += newOvertime[i/7] - this.feasCheck.setWeeklyOvertime(check, group)[i/7]*penaltiesFeas[1];
-				}
-				else {
-					costOfPlacement -= newOvertime[i/7] - this.feasCheck.setWeeklyOvertime(check, group)[i/7]*penaltiesFeas[1];
-					
-				}
 			}
 		
 		//add soft constraints penalties
 		if(group.getATVPerYear() > 0 && request.getDutyNumber() == 1) {
-			costOfPlacement = costOfPlacement +  this.feasCheck.ATVspread(check, i-7 , i+7, group);
+			costOfPlacement+=  this.feasCheck.ATVspread(check, i-7 , i+7, group);
+			costOfPlacement += this.feasCheck.weekendATV(check, i, group);
 		}
+		costOfPlacement += this.feasCheck.checkConsecutiveRestATV(check, i-1, i+1);
+		costOfPlacement += this.feasCheck.checkEarlyFollowedByLate(check, i-1, i+1);
+		costOfPlacement += this.feasCheck.checkLooseDuties(check, i-1, i+1);
+		costOfPlacement += this.feasCheck.checkEarlyFollowedByLate(check, i-1, i+1);
+		costOfPlacement += this.feasCheck.maxConsecutive(check, i, group);
+		costOfPlacement += this.feasCheck.maxDuties(check, i, group);
+		costOfPlacement += this.feasCheck.reserveDuties(check, i, group);
+		int[] temp = this.feasCheck.checkSameDuties(check, i, i+1);//dit klopt niet
+		costOfPlacement += temp[0];
+		costOfPlacement += temp[1];
 		
 		check[i]=2;
 		return costOfPlacement; 
@@ -322,6 +320,6 @@ public class RepairHeuristics {
 	}
 	public boolean checkFeasibility(Schedule schedule, int i, Request request) {
 		int[] check = schedule.getScheduleArray();
-		return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()); 
+		return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check); 
 	}
 }

@@ -3,19 +3,24 @@ import Tools.Request;
 import Tools.ContractGroup;
 
 import java.util.*;
-
+import Tools.*;
 //This class is the solution information we want to have in every iteration of the adaptive large neighborhood search
 public class Solution {
 
 	private Set<Request> requests; //list with requests 
 	private Map<ContractGroup, Schedule> newSchedule = new HashMap<ContractGroup,Schedule>(); //the new schedule of the solution
 	private final Instance instance; //the instance information
+	private FeasCheck feasCheck; 
+	private final double[] penalties;
 	
 	//constructor of the solution
 	public Solution(Set<Request> requests, Map<ContractGroup,Schedule> schedule, Instance instance) {
 		this.requests = requests;
 		this.newSchedule = schedule;
 		this.instance = instance;
+		this.feasCheck= new FeasCheck(instance);
+		this.penalties = new Penalties().getSoftPenalties(); 
+		
 	}
 	
 	
@@ -92,6 +97,11 @@ public class Solution {
 		double objective = 0.0;
 		for(ContractGroup group: this.getNewSchedule().keySet()) {
 			objective += this.QuarterlyOvertime(this.getNewSchedule().get(group).getScheduleArray(), group);
+			int[] violations = this.feasCheck.allViolations(this.getNewSchedule().get(group).getScheduleArray(), group);
+			
+			for(int i =0; i < this.penalties.length; i++) {
+			objective += violations[i]*this.penalties[i];
+		}
 		}
 
 		return objective;
@@ -99,14 +109,15 @@ public class Solution {
 	//determine the quarterly overtime
 	public double QuarterlyOvertime(int[] solution, ContractGroup c) {
 		double overtime = 0;
+		double time = 0;
 		double[] weeklyOvertime = this.setWeeklyOvertime(solution, c);
 		for(int empl = 0; empl < solution.length/7; empl++) {
-			
 			for(int i =0; i < 13; i++) { //need to loop over 13 weeks for overtime
-					int remainder = (empl + i) % solution.length/7;
-					if(weeklyOvertime[remainder] > 0) {
-						overtime = overtime + weeklyOvertime[remainder];		
+					int remainder = (empl + i) % (solution.length/7);
+						time += weeklyOvertime[remainder];		
 					}
+			if(time > 0) {
+				overtime += time;
 				}
 			
 		}

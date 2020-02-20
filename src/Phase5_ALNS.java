@@ -66,7 +66,7 @@ public class Phase5_ALNS {
 		Solution initSol = this.getInitialSol(startSchedule);
 		//System.out.println(initSol.toString()); 
 		this.globalOptimum = initSol.getObj(); // set the best found solution equal to this one
-		//System.out.println("Best Solution so far: " + this.globalOptimum);
+		System.out.println("Best Solution so far: " + this.globalOptimum);
 		Solution currentSol = initSol.clone(); 
 		boolean accepted = true;
 
@@ -109,7 +109,7 @@ public class Phase5_ALNS {
 			// determine if accepted or not
 			boolean globalOpt = false;
 			accepted = false;
- 
+			if(tempSol.getRequests().size() == 0) {
 			//System.out.println("Number of request in request bank: " + tempSol.getRequests().size()); 
 			if (tempSol.getObj() < this.globalBestSol.getObj()) { //if we improve our global solution
 				this.globalBestSol = tempSol.clone();
@@ -125,10 +125,11 @@ public class Phase5_ALNS {
 				currentSol = tempSol; //set the current solution to the temporary solution
 				System.out.println("We accepted the solution: " + currentSol.getObj());
 			}
+			
 
 			// update weight adjustments
 			this.updateWeightAdj(globalOpt, accepted, unique, destroyHeuristicNr, repairHeuristicNr);
-
+			}
 			// update weights if multiple of 100
 			if (n % 100 == 0 && n < nIterations) {
 				this.updateWeights();
@@ -216,11 +217,21 @@ public class Phase5_ALNS {
 	 * This method updates the weights given the weights adjustments found over the past 100 iterations.
 	 */
 	public void updateWeights() {
+		double sum = 0;
 		for (int i = 0; i < this.weightsDestroy.length; i++) {
 			this.weightsDestroy[i] = this.rho * (this.weightsDestroyAdj[i][0] / this.weightsDestroyAdj[i][1]) + (1 - this.rho) * this.weightsDestroy[i];
+			sum += this.weightsDestroy[i];
 		}
+		for (int i = 0; i < this.weightsDestroy.length; i++) {
+			this.weightsDestroy[i] = this.weightsDestroy[i] / sum;
+		}
+		sum = 0;
 		for (int i = 0; i < this.weightsRepair.length; i++) {
 			this.weightsRepair[i] = this.rho * (this.weightsRepairAdj[i][0] / this.weightsRepairAdj[i][1]) + (1 - this.rho) * this.weightsRepair[i];
+			sum = this.weightsRepair[i];
+		}
+		for (int i = 0; i < this.weightsRepair.length; i++) {
+			this.weightsRepair[i] = this.weightsRepair[i] / sum;
 		}
 	}
 
