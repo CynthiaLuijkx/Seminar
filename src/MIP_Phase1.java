@@ -52,6 +52,7 @@ public class MIP_Phase1
 	private Set<IloNumVar> ATVonWeekend;
 	private Set<IloNumVar> lonelyDuty;
 	private Set<IloNumVar> splitDuties;
+	private Set<IloNumVar> RestSpread;
 	
 	//Output
 	private final HashMap<ContractGroup, String[]> solution;
@@ -79,7 +80,7 @@ public class MIP_Phase1
 		initVars(); //Initialize variables
 		
 		//Hard constraints
-		initConstraint1(); //Max one duty per day
+		initConstraint1(); //Max one activity per day
 		initConstraint2(); //All combinations ticked off 
 		initConstraint3(); //Max one meal duty per two weeks
 		initConstraint4(); //ATV duties 
@@ -88,6 +89,7 @@ public class MIP_Phase1
 		initConstraint7(); //Rest of 32 hours violations
 		initConstraint8(); //Sunday maximum 
 		initConstraint9(); //3 day violations
+		initConstraint10(); //Average hours should not exceed the contract hours 
 		
 		//Soft constraints 
 		initSoft1(); //Even spread of ATV days 
@@ -97,17 +99,17 @@ public class MIP_Phase1
 		initSoft5(); //Min consecutive similar duties
 		initSoft6(); //Min consecutive rest + ATV 
 		initSoft7(); //Early to late duty 
-		initSoft8(); //Parttimers should work as little other duties as possible 
+	//	initSoft8(); //Parttimers should work as little other duties as possible (implicit in constraint 10)
 		initSoft9(); //Maximum of 5 duties per calendar week on average
-		initSoft10(); 
-		initSoft11(); //Penalize ATV days on weekends 
-		initSoft12(); //Penalize lone duties
-		initSoft13(); //Average of 2 split duties per week
+		initSoft10(); //Penalize ATV days on weekends 
+		initSoft11(); //Penalize lone duties
+		initSoft12(); //Average of 2 split duties per week
+		initSoft13(); //Even spread of rest (no more than 3 per week)
 		
 		initObjective();
 		
 		//System.out.println(this.cplex.getModel());
-		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0.01);
+		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0);
 		this.cplex.exportModel("MIP_Phase1.lp");
 		//this.cplex.setOut(null);	
 		
@@ -130,12 +132,12 @@ public class MIP_Phase1
 	//Source: https://orinanobworld.blogspot.com/2013/01/finding-all-mip-optima-cplex-solution.html
 	//Source: https://www.ibm.com/support/knowledgecenter/SSSA5P_12.7.1/ilog.odms.cplex.help/CPLEX/OverviewAPIs/topics/Soln_pool.html
 	public int populate(int nsol) throws IloException{
-		//this.cplex.setParam(IloCplex.IntParam.SolnPoolCapacity, nsol);
+		this.cplex.setParam(IloCplex.IntParam.SolnPoolCapacity, nsol);
 		this.cplex.setParam(IloCplex.IntParam.SolnPoolReplace, 1);
 		//this.cplex.setParam(IloCplex.DoubleParam.SolnPoolGap, 0);
 		this.cplex.setParam(IloCplex.DoubleParam.SolnPoolAGap, 0.5);
 		//this.cplex.setParam(IloCplex.IntParam.SolnPoolIntensity, 1);
-		//this.cplex.setParam(IloCplex.IntParam.PopulateLim, 1);
+		this.cplex.setParam(IloCplex.IntParam.PopulateLim, nsol);
 		this.cplex.setParam(IloCplex.DoubleParam.TimeLimit, 600);
 		this.cplex.populate();
 		System.out.println("Solution pool size: " + cplex.getSolnPoolNsolns());
@@ -154,66 +156,26 @@ public class MIP_Phase1
 		this.solution.clear();
 		for(ContractGroup group : this.instance.getContractGroups()) {
 			String[] solutionArray = new String[group.getTc()];
-			System.out.println(group.toString());
+			//System.out.println(group.toString());
 			for(int t = 0; t < solutionArray.length; t++) {
+				/*
 				if(t % 7 == 0 && t > 0) {
 					System.out.println(" ");
-				}
+				}*/
 				for(IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {
 					if(this.cplex.getValue(decVar, i) > 0) {
 						solutionArray[t] = this.decVarToCombination.get(decVar).getType();
-						System.out.print(solutionArray[t] + " ");
+				//		System.out.print(solutionArray[t] + " ");
 					}
 				}
 				if(this.cplex.getValue(this.restDaysPerGroup.get(group)[t], i) > 0) {
 					solutionArray[t] = "Rest";
-					System.out.print(solutionArray[t] + " ");
+				//	System.out.print(solutionArray[t] + " ");
 				}
 			}
-			System.out.println("");
-			System.out.println("--------------");
+			//System.out.println("");
+			//System.out.println("--------------");
 			this.solution.put(group, solutionArray);
-		}
-		System.out.println("<40 per week");
-		for(IloNumVar decVar : this.fivePerWeek) {
-			System.out.println(this.cplex.getValue(decVar, i));
-		}
-		System.out.println("40 per week");
-		for(IloNumVar decVar : this.fivePerWeek40) {
-			System.out.println(this.cplex.getValue(decVar, i));
-		}
-	}
-	
-	public void makeSolution() throws UnknownObjectException, IloException {
-		for(ContractGroup group : this.instance.getContractGroups()) {
-			String[] solutionArray = new String[group.getTc()];
-			System.out.println(group.toString());
-			for(int t = 0; t < solutionArray.length; t++) {
-				if(t % 7 == 0 && t > 0) {
-					System.out.println(" ");
-				}
-				for(IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {
-					if(this.cplex.getValue(decVar) > 0) {
-						solutionArray[t] = this.decVarToCombination.get(decVar).getType();
-						System.out.print(solutionArray[t] + " ");
-					}
-				}
-				if(this.cplex.getValue(this.restDaysPerGroup.get(group)[t]) > 0) {
-					solutionArray[t] = "Rest";
-					System.out.print(solutionArray[t] + " ");
-				}
-			}
-			System.out.println("");
-			System.out.println("--------------");
-			this.solution.put(group, solutionArray);
-		}
-		System.out.println("<40 per week");
-		for(IloNumVar decVar : this.fivePerWeek) {
-			System.out.println(this.cplex.getValue(decVar));
-		}
-		System.out.println("40 per week");
-		for(IloNumVar decVar : this.fivePerWeek40) {
-			System.out.println(this.cplex.getValue(decVar));
 		}
 	}
 	
@@ -258,7 +220,6 @@ public class MIP_Phase1
 		}
 		
 		//Penalty/reward variables
-		
 		this.ATVSpreadPenalty = new HashSet<>();
 		this.reservePenalty = new HashSet<>();
 		this.tooManyConsecutiveDuties = new HashSet<>();
@@ -272,9 +233,10 @@ public class MIP_Phase1
 		this.ATVonWeekend = new HashSet<>();
 		this.lonelyDuty = new HashSet<>();
 		this.splitDuties = new HashSet<>();
+		this.RestSpread = new HashSet<>();
 	}
 	
-	public void initConstraint1() throws IloException { //Max one duty per day
+	public void initConstraint1() throws IloException { //Max one activity per day
 		for(ContractGroup group : this.instance.getContractGroups()) { //For every contract group 
 			
 			for(int t = 0; t < this.daysPerGroup.get(group).size(); t++) { //For every day
@@ -298,7 +260,7 @@ public class MIP_Phase1
 	
 	public void initConstraint2() throws IloException { // All combinations should be included the right number of times
 		for (Combination combination : this.instance.getM()) { // For all combinations
-			if (!combination.getType().equals("ATV")) { //Exclude ATV 
+			if (!combination.getType().equals("ATV")) { //Exclude ATV, this is covered in another constraint
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 				for (IloNumVar decisionVar : this.dutyAssignmentCombis.get(combination)) { // All decision variables for
 																							// that combination
@@ -315,30 +277,14 @@ public class MIP_Phase1
 			for (int w = 0; w < group.getTc()/7; w++) { // For all weeks
 				
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
-				Set<Integer> daysToCover = new HashSet<>();
-				if(w + 2 < group.getTc()/7) { //We don't need to go back to the beginning
-					for(int t = (7 * w); t <= ((7 * (w + 2)) - 1); t++) {
-						daysToCover.add(t);
-					}
-				}
-				else { //We need to go back to the beginning for all the overflow days
-					int overflow = w + 2 - group.getTc()/7;
-					for(int t = (7 * w); t < group.getTc(); t++) {
-						daysToCover.add(t);
-					}
-					for(int t = 0; t <= (7*overflow); t++) {
-						daysToCover.add(t);
-					}
-				}
 				
-				for(Integer day : daysToCover) { // From the Sunday of this week until the Saturday before two weeks later
-					
-					//If there is a duty of type M, add it 
-					IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(day), "M");
+				for(int t = 0; t < 14; t++) {//For this week and the week afterwards
+					IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(((7*w)+t)%group.getTc()), "M");
 					if(decVar != null) {
 						constraint.addTerm(decVar, 1);
 					}
 				}
+				
 				this.cplex.addLe(constraint, 1, "Meal" + w + "," + (w+1));
 			}
 		}
@@ -350,7 +296,7 @@ public class MIP_Phase1
 			if (group.getDutyTypes().contains("ATV")) { //If the group can work ATV 
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 
-				for (int t = 0; t < this.daysPerGroup.get(group).size(); t++) { // Summing over all days
+				for (int t = 0; t < group.getTc(); t++) { // Summing over all days
 
 					// Get the variable of type ATV
 					IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(t), "ATV");
@@ -365,17 +311,24 @@ public class MIP_Phase1
 
 	public void initConstraint5() throws IloException { // Rest of 11 hours
 		for (Violation violation : this.instance.getViolations11()) { // For all violations of more than 11 hours
-
 			for (ContractGroup group : this.instance.getContractGroups()) { // For all contract groups
-
 				// Get a set of all the days in this contract group the violation can apply to
-				Set<Integer> daysToCover = this.daysToCover(violation.getDayTypeFrom(), group.getTc()/7);
+				Set<Integer> daysToCover = this.daysToCover(violation.getDayTypeFrom(), group.getTc() / 7);
 				for (Integer t : daysToCover) {
-					int nextDay = t+1;
-					//If the nextDay is the end, we want to go back to the beginning 
-					if (nextDay == this.daysPerGroup.get(group).size()) {
-						nextDay = 0;
+					int nextDay = (t + 1) % group.getTc();
+					
+					//Check whether the next dayType is correct 
+					boolean feasible = true;
+					if (violation.getDayTypeTo().equals("Sunday") && nextDay%7 != 0) {
+						feasible = false;
 					}
+					if (violation.getDayTypeTo().equals("Saturday") && nextDay%7 != 6) {
+						feasible = false;
+					}
+					if (violation.getDayTypeTo().equals("Workingday") && (nextDay%7 == 0 || nextDay%7 == 6)) {
+						feasible = false;
+					}
+					if (feasible) {
 						// Find a decVar with the right type in the set
 						IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(t),
 								violation.getTypeFrom());
@@ -392,6 +345,7 @@ public class MIP_Phase1
 										group.groupNumberToString() + " " + violation.toString());
 							}
 						}
+					}
 				}
 			}
 		}
@@ -400,31 +354,11 @@ public class MIP_Phase1
 	public void initConstraint6() throws IloException { //At least one rest or ATV day per 7days
 		for(ContractGroup group : this.instance.getContractGroups()) {// For all contract groups
 			for(int i = 0; i < group.getTc(); i++) { //For every period of 7 days
-				
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
-				Set<Integer> daysToCover = new HashSet<>();
-				if(i + 6 < group.getTc()) { //We don't need to go back to the beginning
-					for(int t = i; t <= i+6; t++) {
-						daysToCover.add(t);
-					}
-				}
-				else { //We need to go back to the beginning for all the overflow days
-					int overflow = i + 6  - group.getTc();
-					for(int t = i; t < group.getTc(); t++) {
-						daysToCover.add(t);
-					}
-					for(int t = 0; t <= overflow; t++) {
-						daysToCover.add(t);
-					}
-				}
-
-				for(Integer day : daysToCover) {//Sum all days of the week
-					
-					constraint.addTerm(this.restDaysPerGroup.get(group)[day],1); //Add the rest day 
-					
-					
+				for(int t = 0; t < 7; t++) {
+					constraint.addTerm(this.restDaysPerGroup.get(group)[(i+t)%group.getTc()],1); //Add the rest day 	
 					if(group.getDutyTypes().contains("ATV")) { //If this group can work ATV
-						IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(day), "ATV"); 
+						IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get((i+t)%group.getTc()), "ATV"); 
 						if(decVar != null) {//This check should be redundant but better safe than sorry
 							constraint.addTerm(decVar, 1);;
 						}
@@ -442,26 +376,20 @@ public class MIP_Phase1
 				// Get a set of all the days in this contract group the violation can apply to
 				Set<Integer> daysToCover = this.daysToCover(violation.getDayTypeFrom(), group.getTc() / 7);
 
-				for (Integer t : daysToCover) { // Go over all days
-					
-					//Ensuring the connection from end to start 
+				for (Integer t : daysToCover) { // Go over all days				
+
 					boolean feasible = true;
-					int nextDay = t + 1;
-					int twoDays = t + 2;
-					if (twoDays == this.daysPerGroup.get(group).size()) {
-						if (violation.getDayTypeTo().equals("Sunday")) { // Otherwise, it's not feasible
-							twoDays = 0;
-						} else {
-							feasible = false;
-						}
-					} else if (twoDays == this.daysPerGroup.get(group).size() + 1) {
-						if (violation.getDayTypeTo().equals("Workingday")) {
-							nextDay = 0;
-							twoDays = 1;
-						} else {
-							feasible = false;
-						}
+					//Check whether the dayType is correct
+					if (violation.getDayTypeTo().equals("Sunday") && (t+2)%7 != 0) {
+						feasible = false;
 					}
+					if (violation.getDayTypeTo().equals("Saturday") && (t+2)%7 != 6) {
+						feasible = false;
+					}
+					if (violation.getDayTypeTo().equals("Workingday") && ((t+2)%7 == 0 || (t+2)%7 == 6)) {
+						feasible = false;
+					}
+					
 					if (feasible) {
 						// Find a decVar with this type
 						IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(t),
@@ -470,25 +398,25 @@ public class MIP_Phase1
 						// If we found one
 						if (decVar != null) {
 							// Look for the right dutyTo type in two days from now
-
-							IloNumVar decVarNext = this.decVarOfThisType(this.daysPerGroup.get(group).get(twoDays),
+							IloNumVar decVarTwoDays = this.decVarOfThisType(this.daysPerGroup.get(group).get((t+2)%group.getTc()),
 									violation.getTypeTo());
-							if (decVarNext != null) {
+							if (decVarTwoDays != null) {
 								// If we have found it, add a constraint
 								IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+								
 								constraint.addTerm(decVar, 1); // The current day
-								constraint.addTerm(this.restDaysPerGroup.get(group)[nextDay], 1); // The rest day
+								
+								constraint.addTerm(this.restDaysPerGroup.get(group)[(t+1)%group.getTc()], 1); // The rest day
 
 								// Find an ATV day, if there is one
-
 								if (group.getDutyTypes().contains("ATV")) {
 									IloNumVar decVarATV = this
-											.decVarOfThisType(this.daysPerGroup.get(group).get(nextDay), "ATV");
+											.decVarOfThisType(this.daysPerGroup.get(group).get((t+1)%group.getTc()), "ATV");
 									if (decVarATV != null) { // Should be redundant
 										constraint.addTerm(decVarATV, 1);
 									}
 								}
-								constraint.addTerm(decVarNext, 1); // The day two days from now
+								constraint.addTerm(decVarTwoDays, 1); // The day two days from now
 								// Add the constraint
 								this.cplex.addLe(constraint, 2,
 										group.groupNumberToString() + " " + violation.toString());
@@ -513,8 +441,7 @@ public class MIP_Phase1
 		}
 	}
 	
-	public void initConstraint9() throws IloException {
-		int counter = 0; 
+	public void initConstraint9() throws IloException {// 3 day violations 
 		for (Violation3Days violation : this.instance.getViolations3Days()) {// For all violations
 			String[] dayTypes = violation.getDayTypes();
 			String[] dutyTypes = violation.getDutyTypes();
@@ -527,68 +454,86 @@ public class MIP_Phase1
 
 					// Ensuring the connection from end to start
 					boolean feasible = true;
-					int nextDay = t + 1;
-					int twoDays = t + 2;
-					if (twoDays == this.daysPerGroup.get(group).size()) {
-						if (dayTypes[2].equals("Sunday")) { // Otherwise, it's not feasible
-							twoDays = 0;
-						} else {
-							feasible = false;
-						}
-					} else if (twoDays == this.daysPerGroup.get(group).size() + 1) {
-						if (dayTypes[2].equals("Workingday")) {
-							nextDay = 0;
-							twoDays = 1;
-						} else {
-							feasible = false;
-						}
-					}
 					
-					if(dayTypes[1] == "Sunday" && nextDay%7 !=0) {
+					if(dayTypes[1].equals("Sunday") && (t+1)%7 !=0) {
 						feasible = false;
 					}
-					if(dayTypes[1] == "Saturday" && nextDay%7 != 6) {
+					if(dayTypes[1].equals("Saturday") && (t+1)%7 != 6) {
 						feasible = false;
 					}
-					if(dayTypes[1] == "Workingday" && (nextDay%7 == 0 || nextDay%7 ==6)){
+					if(dayTypes[1].equals("Workingday") && ((t+1)%7 == 0 || (t+1)%7 ==6)){
 						feasible = false;
 					}
-					if(dayTypes[2] == "Sunday" && twoDays%7 !=0) {
+					if(dayTypes[2].equals("Sunday") && (t+2)%7 !=0) {
 						feasible = false;
 					}
-					if(dayTypes[2] == "Saturday" && twoDays%7 != 6) {
+					if(dayTypes[2].equals("Saturday") && (t+2)%7 != 6) {
 						feasible = false;
 					}
 
-					if(dayTypes[2] == "Workingday" && (twoDays%7 == 0 || twoDays%7 ==6)){
+					if(dayTypes[2].equals("Workingday") && ((t+2)%7 == 0 || (t+2)%7 ==6)){
 						feasible = false;
 					}
 
 					if (feasible) {
 						// Find a decVar with this type
 						IloNumVar decVar0 = this.decVarOfThisType(this.daysPerGroup.get(group).get(t), dutyTypes[0]);
-						IloNumVar decVar1 = this.decVarOfThisType(this.daysPerGroup.get(group).get(nextDay),
+						IloNumVar decVar1 = this.decVarOfThisType(this.daysPerGroup.get(group).get((t+1)%group.getTc()),
 								dutyTypes[1]);
-						IloNumVar decVar2 = this.decVarOfThisType(this.daysPerGroup.get(group).get(twoDays),
+						IloNumVar decVar2 = this.decVarOfThisType(this.daysPerGroup.get(group).get((t+2)%group.getTc()),
 								dutyTypes[2]);
 
-						// If we found one
+						// If we found them all 
 						if (decVar0 != null && decVar1 != null && decVar2 != null) {
-							// Look for the right dutyTo type in one day from now
-
 							IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 							constraint.addTerm(decVar0, 1); // The First day
 							constraint.addTerm(decVar1, 1); // The second day
 							constraint.addTerm(decVar2, 1); // The third day
 
 							this.cplex.addLe(constraint, 2, group.groupNumberToString() + " " + violation.toString());
-							counter++;
 						}
 					}
 				}
 			}
 		}
-		System.out.println(counter);
+	}
+	
+	public void initConstraint10() throws IloException { //Don't exceed contract hours over the entire period 
+		for (ContractGroup group : this.instance.getContractGroups()) {
+			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+			for (int t = 0; t < group.getTc(); t++) {
+
+				for (IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {// Loop over all decVars
+					// ATV days
+					String type = this.decVarToCombination.get(decVar).getType();
+					if (type.equals("ATV")) {
+						constraint.addTerm(decVar, (int) group.getAvgHoursPerDay()*60);
+					}
+
+					// Normal duties
+					else {
+						Character ch = type.charAt(0);
+						// Normal duties
+						if (!ch.equals('R')) {
+							if (t % 7 == 0) {// Sunday
+								constraint.addTerm(decVar, this.instance.getAvgMinSun().get(type));
+							} else if (t % 7 == 6) {// Saturday
+								constraint.addTerm(decVar, this.instance.getAvgMinSat().get(type));
+							} else {// Working days
+								constraint.addTerm(decVar, this.instance.getAvgMinW().get(type));
+							}
+						}
+
+						// Reserve duties
+						if (ch.equals('R')) {
+							constraint.addTerm(decVar, (int) group.getAvgHoursPerDay()*60);
+						}
+					}
+				}
+			}
+			int rhs = (int) (60*group.getAvgHoursPerDay() * group.getAvgDaysPerWeek() * ((group.getTc() / 7)));
+			cplex.addLe(constraint, rhs);
+		}
 	}
 	
 	public void initSoft1() throws IloException { // ATV spread
@@ -597,29 +542,13 @@ public class MIP_Phase1
 				for (int s = 0; s < group.getTc(); s++) {//For all weeks
 					IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 					
-					//Get all the days we need
-					Set<Integer> daysToCover = new HashSet<>();
-					if (s + 13 < group.getTc()) { // We don't need to go back to the beginning
-						for (int t = s; t <= s + 13; t++) {
-							daysToCover.add(t);
-						}
-					} else { // We need to go back to the beginning for all the overflow days
-						int overflow = s + 13 - group.getTc();
-						for (int t = s; t < group.getTc(); t++) {
-							daysToCover.add(t);
-						}
-						for (int t = 0; t <= overflow; t++) {
-							daysToCover.add(t);
-						}
-					}
-
-					for (Integer day : daysToCover) { //Sum over all days in the week
-						//Find ATV duty and add it
-						IloNumVar decVarATV = this.decVarOfThisType(this.daysPerGroup.get(group).get(day), "ATV");
+					for(int t = 0; t < 14; t++) {
+						IloNumVar decVarATV = this.decVarOfThisType(this.daysPerGroup.get(group).get((s+t)%group.getTc()), "ATV");
 						constraint.addTerm(decVarATV, 1);
 					}
+
 					//Add a penalty 
-					IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+					IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
 					penalty.setName(group.groupNumberToString() + "ATVSpread_S" + s);
 					this.ATVSpreadPenalty.add(penalty);
 					constraint.addTerm(penalty, -1);
@@ -636,25 +565,9 @@ public class MIP_Phase1
 			for (int s = 0; s < group.getTc(); s++) { //Starting on every day
 				
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
-				//Find all the days up to 6 ahead of this one
-				Set<Integer> daysToCover = new HashSet<>();
-				if (s + 6 < group.getTc()) { // We don't need to go back to the beginning
-					for (int t = s; t <= s + 6; t++) {
-						daysToCover.add(t);
-					}
-				} else { // We need to go back to the beginning for all the overflow days
-					int overflow = s + 6 - group.getTc();
-					for (int t = s; t < group.getTc(); t++) {
-						daysToCover.add(t);
-					}
-					for (int t = 0; t <= overflow; t++) {
-						daysToCover.add(t);
-					}
-				}
-
-				for (Integer day : daysToCover) {//Summing all days
-					//If a decision variable's duty type starts with an R, add it 
-					for(IloNumVar decVar : this.daysPerGroup.get(group).get(day)) {
+				
+				for(int t = 0; t < 7; t++) {
+					for(IloNumVar decVar : this.daysPerGroup.get(group).get((s+t)%group.getTc())) {
 						String type = this.decVarToCombination.get(decVar).getType();
 						Character ch = type.charAt(0);
 						if(ch.equals('R')) {
@@ -662,8 +575,9 @@ public class MIP_Phase1
 						}
 					}
 				}
+
 				//Add the penalty
-				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+				IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
 				penalty.setName(group.groupNumberToString() + "Reserve_S" + s);
 				this.reservePenalty.add(penalty);
 				
@@ -678,31 +592,16 @@ public class MIP_Phase1
 			for (int s = 0; s < group.getTc(); s++) { // For all days 
 
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
-				//Get all the days we need to cover in the sum 
-				Set<Integer> daysToCover = new HashSet<>();
-				if (s + 5 < group.getTc()) { // We don't need to go back to the beginning
-					for (int t = s; t <= s + 5; t++) {
-						daysToCover.add(t);
-					}
-				} else { // We need to go back to the beginning for all the overflow days
-					int overflow = s + 5 - group.getTc();
-					for (int t = s; t < group.getTc(); t++) {
-						daysToCover.add(t);
-					}
-					for (int t = 0; t <= overflow; t++) {
-						daysToCover.add(t);
-					}
-				}
-
-				for (Integer day : daysToCover) { // Sum over all days
-					for (IloNumVar decVar : this.daysPerGroup.get(group).get(day)) {
+				for(int t = 0; t < 6; t++) {//For 6 days from now
+					for (IloNumVar decVar : this.daysPerGroup.get(group).get((s+t)%group.getTc())) {
 						if (!this.decVarToCombination.get(decVar).getType().equals("ATV")) { // Exclude ATV days
 							constraint.addTerm(decVar, 1);
 						}
 					}
 				}
+
 				// Add the penalty
-				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+				IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
 				penalty.setName(group.groupNumberToString() + "MaxDuties_S" + s);
 				this.tooManyConsecutiveDuties.add(penalty);
 
@@ -714,51 +613,28 @@ public class MIP_Phase1
 	
 	public void initSoft4() throws IloException { //Max consecutive similar duties 
 		for(ContractGroup group: this.instance.getContractGroups()) {//For all contract groups
-			
 			for(int s = 0; s < group.getTc(); s++){ //for all days
-				
 				for(String dutyType : dutyTypes) { //for all duty types
-					
 					//if they can work this duty and it's not an ATV duty 
-					if(group.getDutyTypes().contains(dutyType) && !dutyType.equals("ATV")) { 
+					Character firstChar = dutyType.charAt(0);
+					//We want to exclude reserve duty types so we don't get duplicate constraints
+					if(group.getDutyTypes().contains(dutyType) && !dutyType.equals("ATV") && !firstChar.equals('R')) { 
 						
 						IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 						
 						//Determine what duties we need to count
 						Set<String> possibilities = new HashSet<>();
 						possibilities.add(dutyType);
+						//If it's a regular duty, we also want the reserve
+						possibilities.add("R" + dutyType);					
 						
-						Character firstChar = dutyType.charAt(0);
-						
-						if(firstChar.equals('R')) {//If it's a reserve duty, we also want the regular one
-							possibilities.add(Character.toString(dutyType.charAt(1)));
-						}
-						else {//If it's a regular duty, we also want the reserve
-							possibilities.add("R" + dutyType);
-						}
-						
-						Set<Integer> daysToCover = new HashSet<>();
-						if(s + 3 < group.getTc()) { //We don't need to go back to the beginning
-							for(int t = s; t <= s+3; t++) {
-								daysToCover.add(t);
-							}
-						}
-						else { //We need to go back to the beginning for all the overflow days
-							int overflow = s + 3  - group.getTc();
-							for(int t = s; t < group.getTc(); t++) {
-								daysToCover.add(t);
-							}
-							for(int t = 0; t <= overflow; t++) {
-								daysToCover.add(t);
-							}
-						}
 						//Add a feasibility check so we don't add unnecessary constraints
 						//A constraint would be unnecessary if we can't even have that many consecutive duties of the same type
 						boolean feasible = true;
-						for(Integer day : daysToCover) { //Sum over these elements
+						for(int t = 0; t < 3; t++) {
 							boolean added = false;
 							for (String option : possibilities) {//See if the options are included
-								IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(day), option);
+								IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get((s+t)%group.getTc()), option);
 								if (decVar != null) {
 									constraint.addTerm(decVar, 1);
 									added = true;
@@ -768,9 +644,9 @@ public class MIP_Phase1
 								feasible = false;
 							}
 						}
-						//Add the penalty
+						//Add the penalty and initialise the constraint
 						if (feasible) {
-							IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+							IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
 							penalty.setName(
 									group.groupNumberToString() + "MaxConsecutiveDuties_I" + dutyType + "_S" + s);
 							this.consecutiveMaxPenalty.add(penalty);
@@ -791,64 +667,44 @@ public class MIP_Phase1
 			for(int s = 0; s < group.getTc(); s++){ //for all days
 				
 				for(String dutyType : dutyTypes) { //for all duty types
-					
+					Character firstChar = dutyType.charAt(0);
 					//if they can work this duty and it's not an ATV duty 
-					if(group.getDutyTypes().contains(dutyType) && !dutyType.equals("ATV")) {
+					//Exclude reserve duties so we don't get double constraints
+					if(group.getDutyTypes().contains(dutyType) && !dutyType.equals("ATV") && !firstChar.equals('R')) {
 						
 						IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 						
 						//Determine what duties we need to count
 						Set<String> possibilities = new HashSet<>();
 						possibilities.add(dutyType);
-						
-						Character firstChar = dutyType.charAt(0);
-						
-						if(firstChar.equals('R')) {//If it's a reserve duty, we also want the regular one
-							possibilities.add(Character.toString(dutyType.charAt(1)));
-						}
-						else {//If it's a regular duty, we also want the reserve
-							possibilities.add("R" + dutyType);
-						}
-						
-						//Set of days to count over
-						Set<Integer> daysToCover = new HashSet<>();
-						if(s + 1 < group.getTc()) { //We don't need to go back to the beginning
-							for(int t = s; t <= s+1; t++) {
-								daysToCover.add(t);
-							}
-						}
-						else { //We need to go back to the beginning for all the overflow days
-							int overflow = s + 1 - group.getTc();
-							for(int t = s; t < group.getTc(); t++) {
-								daysToCover.add(t);
-							}
-							for(int t = 0; t <= overflow; t++) {
-								daysToCover.add(t);
-							}
-						}
+						possibilities.add("R" + dutyType);
 						
 						//Add a feasibility check so we don't add unnecessary constraints
 						//A constraint would be unnecessary if we can't even have that many consecutive duties of the same type
 						boolean feasible = true;
-						for(Integer day : daysToCover) { //Sum over these elements
+						for(int t = 0; t < 2; t++) {
+							boolean added = false;
 							for (String option : possibilities) {//See if the options are included
-								IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(day), option);
+								IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get((s+t)%group.getTc()), option);
 								if (decVar != null) {
 									constraint.addTerm(decVar, 1);
-									feasible = false;
+									added = true;
 								}
 							}
 							//Add a possible ATV day 
 							if(group.getDutyTypes().contains("ATV")) {
-								IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(day), "ATV");
+								IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get((s+t)%group.getTc()), "ATV");
 								constraint.addTerm(decVar, 1);
 							}
 							//Add a possible rest day
-							constraint.addTerm(this.restDaysPerGroup.get(group)[day], 1);
+							constraint.addTerm(this.restDaysPerGroup.get(group)[(s+t)%group.getTc()], 1);
+							if(!added) {
+								feasible = false;
+							}
 						}
 
 						if (feasible) {
-							IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+							IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
 							penalty.setName(group.groupNumberToString() + "MinConsecutiveDuties_I" + dutyType + "_S" + s);
 							this.consecutiveMinPenalty.add(penalty);
 							
@@ -861,41 +717,28 @@ public class MIP_Phase1
 		}
 	}
 	
-	public void initSoft6() throws IloException { //Min consecutive rest + ATV  
-		for(ContractGroup group: this.instance.getContractGroups()) {//For all contract groups
-			
-			for(int s= 0; s < group.getTc(); s++){ //for all days
-						IloLinearNumExpr constraint = this.cplex.linearNumExpr();
-						
-						Set<Integer> daysToCover = new HashSet<>();
-						if(s + 1 < group.getTc()) { //We don't need to go back to the beginning
-							for(int t = s; t <= s+1; t++) {
-								daysToCover.add(t);
-							}
-						}
-						else { //We need to go back to the beginning for all the overflow days
-							int overflow = s + 1 - group.getTc();
-							for(int t = s; t < group.getTc(); t++) {
-								daysToCover.add(t);
-							}
-							for(int t = 0; t <= overflow; t++) {
-								daysToCover.add(t);
-							}
-						}
+	public void initSoft6() throws IloException { // Min consecutive rest + ATV
+		for (ContractGroup group : this.instance.getContractGroups()) {// For all contract groups
 
-						for(Integer day : daysToCover) {//Sum over these elements
-							constraint.addTerm(this.restDaysPerGroup.get(group)[day], 1); //Add the rest day
-							//Add an ATV day if we have one
-							IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(day), "ATV");
-							if(decVar !=null) {
-								constraint.addTerm(decVar, 1);
-							}
-						}
-						//Add the reward
-							IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
-							this.consecutiveRest.add(penalty);
-							constraint.addTerm(penalty, 1);
-							this.cplex.addGe(constraint, 2, group.groupNumberToString() + "ConsecutiveRest_S" + s);
+			for (int s = 0; s < group.getTc(); s++) { // for all days
+				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+
+				for (int t = 0; t < 2; t++) {
+					//Add the rest day
+					constraint.addTerm(this.restDaysPerGroup.get(group)[(s + t) % group.getTc()], 1); 
+					// Add an ATV day if we have one
+					IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get((s + t) % group.getTc()),
+							"ATV");
+					if (decVar != null) {
+						constraint.addTerm(decVar, 1);
+					}
+				}
+
+				// Add the reward
+				IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
+				this.consecutiveRest.add(penalty);
+				constraint.addTerm(penalty, 1);
+				this.cplex.addGe(constraint, 2, group.groupNumberToString() + "ConsecutiveRest_S" + s);
 			}
 		}
 	}
@@ -910,31 +753,29 @@ public class MIP_Phase1
 				boolean[] dutyExists = new boolean[2];
 				
 				//First day
+				//Reserve duty
 				IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(i), "RV");
 				if (decVar != null) {
 					constraint.addTerm(decVar, 1);
 					dutyExists[0] = true;
 				}
+				//Actual duty
 				decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(i), "V");
 				if (decVar != null) {
 					constraint.addTerm(decVar, 1);
 					dutyExists[0] = true;
 				}
 				
-				//In case we go over the amount of days, we go back to 0
-				int nextDay = i+1;
-				if (nextDay >= group.getTc()) {
-					nextDay = 0;
-				}
 				
 				//Next day
-				decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(nextDay), "RL");
+				//Reserve duty
+				decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get((i+1)%group.getTc()), "RL");
 				if (decVar != null) {
 					constraint.addTerm(decVar, 1);
 					dutyExists[1] = true;
 				}
-
-				decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(nextDay), "L");
+				//Actual duty
+				decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get((i+1)%group.getTc()), "L");
 				if (decVar != null) {
 					constraint.addTerm(decVar, 1);
 					dutyExists[1] = true;
@@ -947,7 +788,7 @@ public class MIP_Phase1
 					}
 				}
 				if (feasible) {
-					IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+					IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
 					this.earlyToLate.add(penalty);
 					constraint.addTerm(penalty, -1);
 					this.cplex.addLe(constraint, 1, group.groupNumberToString() + "EarlyToLate_T" + i);
@@ -969,7 +810,7 @@ public class MIP_Phase1
 					}
 				}
 				//Add the penalty
-				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+				IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
 				this.partTime.add(penalty);
 				constraint.addTerm(penalty, -1);
 				this.cplex.addLe(constraint, 0);
@@ -1010,48 +851,8 @@ public class MIP_Phase1
 			}
 		}
 	}
-	
-	public void initSoft10() throws IloException { //Don't exceed contract hours over the entire period 
-		for (ContractGroup group : this.instance.getContractGroups()) {
-			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
-			for (int t = 0; t < group.getTc(); t++) {
 
-				for (IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {// Loop over all decVars
-					// ATV days
-					String type = this.decVarToCombination.get(decVar).getType();
-					if (type.equals("ATV")) {
-						constraint.addTerm(decVar, (int) group.getAvgHoursPerDay()*60);
-					}
-
-					// Normal duties
-					else {
-						Character ch = type.charAt(0);
-						// Normal duties
-						if (!ch.equals('R')) {
-							if (t % 7 == 0) {// Sunday
-								constraint.addTerm(decVar, this.instance.getAvgMinSun().get(type));
-							} else if (t % 7 == 6) {// Saturday
-								constraint.addTerm(decVar, this.instance.getAvgMinSat().get(type));
-							} else {// Working days
-								constraint.addTerm(decVar, this.instance.getAvgMinW().get(type));
-							}
-						}
-
-						// Reserve duties
-						if (ch.equals('R')) {
-							constraint.addTerm(decVar, (int) group.getAvgHoursPerDay()*60);
-						}
-					}
-				}
-			}
-			int rhs = (int) (60*group.getAvgHoursPerDay() * group.getAvgDaysPerWeek() * ((group.getTc() / 7)));
-			//int extraHoursPerWeek = 2;
-			//rhs = rhs + (int) ((group.getTc() / 7) * 60 * extraHoursPerWeek); //Add extra hours per week 
-			cplex.addLe(constraint, rhs);
-		}
-	}
-
-	public void initSoft11() throws IloException { //Penalize ATV days on Saturdays and Sundays
+	public void initSoft10() throws IloException { //Penalize ATV days on Saturdays and Sundays
 		IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 		for(ContractGroup group : this.instance.getContractGroups()) {
 			if(group.getDutyTypes().contains("ATV")) {
@@ -1064,14 +865,14 @@ public class MIP_Phase1
 				}
 			}
 		}
-		IloNumVar penalty = this.cplex.numVar(0,  Integer.MAX_VALUE);
+		IloNumVar penalty = this.cplex.intVar(0,  Integer.MAX_VALUE);
 		this.ATVonWeekend.add(penalty);
 		
 		constraint.addTerm(penalty, -1);
 		this.cplex.addLe(constraint, 0, "ATV_On_Weekends");
 	}
 	
-	public void initSoft12() throws IloException { //Penalize lonely duties
+	public void initSoft11() throws IloException { //Penalize lonely duties
 		for(ContractGroup group : this.instance.getContractGroups()) {
 			for(int s = 0; s < group.getTc(); s++) { //For every day 
 				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
@@ -1098,7 +899,7 @@ public class MIP_Phase1
 				}
 				
 				//Penalty
-				IloNumVar penalty = this.cplex.numVar(0,  Integer.MAX_VALUE);
+				IloNumVar penalty = this.cplex.intVar(0,  Integer.MAX_VALUE);
 				this.lonelyDuty.add(penalty);
 				
 				constraint.addTerm(penalty,  -1);
@@ -1107,26 +908,55 @@ public class MIP_Phase1
 		}
 	}
 	
-	public void initSoft13() throws IloException {
+	public void initSoft12() throws IloException { //Penalize more than 2 split duties per week on average
 		for (ContractGroup group : this.instance.getContractGroups()) {// For all contract groups
 			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 			
-			for (int t = 0; t < group.getTc(); t++) { // For all days				
-				IloNumVar decVarDuty = this.decVarOfThisType(this.daysPerGroup.get(group).get(t), "G");
-				IloNumVar decVarReserve = this.decVarOfThisType(this.daysPerGroup.get(group).get(t), "RG");
-				if(decVarDuty != null) {
-					constraint.addTerm(decVarDuty, 1);	
-				}
-				if(decVarReserve != null) {
-					constraint.addTerm(decVarReserve, 1);
+			Set<String> possibilities = new HashSet<>();
+			possibilities.add("G");
+			possibilities.add("RG");
+			possibilities.add("GM");
+			
+			for (int t = 0; t < group.getTc(); t++) { // For all days
+				for(String option : possibilities) {
+					IloNumVar decVar = this.decVarOfThisType(this.daysPerGroup.get(group).get(t), option);
+					if(decVar != null) {
+						constraint.addTerm(decVar, 1);
+					}
 				}
 			}
 			// Add the penalty
-			IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
+			IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
 			penalty.setName(group.groupNumberToString() + "Average2Split");
 			this.splitDuties.add(penalty);
 			constraint.addTerm(penalty, -1);
 			this.cplex.addLe(constraint, (2*group.getTc()/7));
+		}
+	}
+	
+	public void initSoft13() throws IloException { // Spread the rest
+		for (ContractGroup group : this.instance.getContractGroups()) { // For all contract groups
+			for (int s = 0; s < group.getTc(); s++) {// For all days
+				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+
+				//The week from that day onwards 
+				for (int t = 0; t < 7; t++) {
+					IloNumVar decVarATV = this
+							.decVarOfThisType(this.daysPerGroup.get(group).get((s + t) % group.getTc()), "ATV");
+					if(decVarATV != null) {
+						constraint.addTerm(decVarATV, 1);
+					}
+					constraint.addTerm(this.restDaysPerGroup.get(group)[(s + t) % group.getTc()], 1);
+				}
+
+				// Add a penalty
+				IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
+				penalty.setName(group.groupNumberToString() + "RestSpread_S" + s);
+				this.RestSpread.add(penalty);
+				constraint.addTerm(penalty, -1);
+
+				this.cplex.addLe(constraint, 3, group.groupNumberToString() + "RestSpread_S" + s);
+			}
 		}
 	}
 	
@@ -1176,6 +1006,9 @@ public class MIP_Phase1
 		}
 		for(IloNumVar splitDuty : this.splitDuties) {
 			objective.addTerm(splitDuty, -penalties.getSplitDutiesParam());
+		}
+		for(IloNumVar restSpread : this.RestSpread) {
+			objective.addTerm(restSpread,  -penalties.getRestSpreadParam());
 		}
 		
 		this.cplex.addMaximize(objective);

@@ -13,6 +13,7 @@ public class Phase1_Penalties {
 	private final int ATVonWeekendParam;
 	private final int lonelyDutyParam;
 	private final int splitDutiesParam;
+	private final int restSpreadParam;
 	
 	public Phase1_Penalties() {
 		this.ATVSpreadPenaltyParam = 1;
@@ -28,6 +29,7 @@ public class Phase1_Penalties {
 		this.ATVonWeekendParam = 1;
 		this.lonelyDutyParam = 1;
 		this.splitDutiesParam = 1000;
+		this.restSpreadParam = 1;
 	}
 
 	public int getATVSpreadPenaltyParam() {
@@ -80,5 +82,9 @@ public class Phase1_Penalties {
 	
 	public int getSplitDutiesParam() {
 		return splitDutiesParam;
+	}
+	
+	public int getRestSpreadParam() {
+		return restSpreadParam;
 	}
 }
