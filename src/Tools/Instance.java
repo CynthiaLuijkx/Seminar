@@ -26,7 +26,6 @@ public class Instance
 	private final Set<ReserveDutyType> reserveDutyTypes;
 	private final HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty;
 	
-	
 	private final int minBreak = 11*60; 
 	private final int minWeekBreak = 32*60; 
 	private final int min2WeekBreak = 72*60; 
@@ -36,6 +35,8 @@ public class Instance
 	private Set<Violation3Days> violations3Days;
 	
 	private Set<Combination> M;					// A Set with combinations of day type, duty type and the number of times this shift should be added
+	
+	private  int nrReserveDuties;
 	
 	private int UB = 0; 
 	private int LB = 0;
@@ -200,10 +201,15 @@ public class Instance
 		}
 		
 		int totalnDuties = nDutiesW*5 + nDutiesSat + nDutiesSun + nReserveDuties; 
+		this.nrReserveDuties = nReserveDuties;
 		this.UB =  (int) Math.ceil(totalnDuties/3.0); 
 		this.LB = (int) Math.ceil(totalnDuties/6); 
 	}
 	
+	public int getNrReserveDuties() {
+		return nrReserveDuties;
+	}
+
 	public int getUB() {
 		return this.UB; 
 	}
