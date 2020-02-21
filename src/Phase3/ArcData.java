@@ -1,4 +1,4 @@
-package Tools;
+package Phase3;
 
 /**
  * Data class for arcs in the directed graph containing the dual costs and the working time.

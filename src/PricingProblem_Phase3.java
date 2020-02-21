@@ -6,16 +6,15 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import Tools.ArcData;
+import Phase3.ArcData;
+import Phase3.DirectedGraph;
+import Phase3.DirectedGraphArc;
+import Phase3.Node;
+import Phase3.Path;
+import Phase3.Pulse;
 import Tools.ContractGroup;
-import Tools.DirectedGraph;
-import Tools.DirectedGraphArc;
 import Tools.Duty;
 import Tools.Instance;
-import Tools.Label;
-import Tools.Node;
-import Tools.Path;
-import Tools.Pulse;
 import Tools.ReserveDutyType;
 import Tools.Schedule;
 
@@ -210,136 +209,6 @@ public class PricingProblem_Phase3
 		}
 	}
 	
-	//NO LONGER USED 
-	public Map<ContractGroup, Set<Schedule>> executeLabelling() {
-		Map<ContractGroup, Set<Schedule>> negRedCostsSchedules = new HashMap<ContractGroup, Set<Schedule>>();
-
-		for (ContractGroup c : instance.getContractGroups()) {
-			Map<Node, Set<Label>> labelMap = new HashMap<>();
-
-			// Initialise the label at the source: node with index 0
-			Set<Label> labels = new HashSet<>();
-			List<Set<Integer>> duties = new ArrayList<>();
-			for (int i = 0; i < 7; i++) { duties.add(new HashSet<>()); }
-			labels.add(new Label(0, 0, new int[instance.getBasicSchedules().get(c).length], duties));
-			labelMap.put(graphs.get(c).getNodes().get(0), labels);
-
-			// Execute labelling for all other nodes
-			for (int i = 0; i < graphs.get(c).getNumberOfNodes() - 1; i++) {
-				Node curNode = graphs.get(c).getNodes().get(i);
-				for (DirectedGraphArc<Node, ArcData> curArc : graphs.get(c).getOutArcs(curNode)) {
-					if (!labelMap.containsKey(curArc.getTo())) {
-						labelMap.put(curArc.getTo(), new HashSet<Label>());
-					}
-					for (Label prevLabel : labelMap.get(curNode)) {
-						// Construct the label if its feasible
-						Label newLabel = this.getLabel(prevLabel, curArc, c);
-						if (newLabel != null) {
-							labelMap.get(curArc.getTo()).add(newLabel);
-						}
-					}
-				}
-				System.out.println("Node " + curNode + " forwarded");
-				labelMap.remove(curNode);
-			}
-			//			for (int i = 1; i < graphs.get(c).getNumberOfNodes(); i++) {
-			//				labels = new HashSet<>();
-			//				Node curNode = graphs.get(c).getNodes().get(i);
-			//				for (DirectedGraphArc<Node, ArcData> curArc : graphs.get(c).getInArcs(curNode)) {
-			//					for (Label prevLabel : labelMap.get(curArc.getFrom())) {
-			//						// Construct the label if its feasible
-			//						Label newLabel = this.getLabel(prevLabel, curArc, c);
-			//						if (newLabel != null) {
-			//							labels.add(newLabel);
-			//						}
-			//					}
-			//				}
-			//				labelMap.put(curNode, labels);
-			//			}
-			// For all labels at the sink with negative reduced costs, check 7x24 and 14x24 constraints from end to start and tot hours
-			Set<Schedule> schedules = new HashSet<>();
-			Node sink = graphs.get(c).getNodes().get(graphs.get(c).getNumberOfNodes() - 1);
-			for (Label curLabel : labelMap.get(sink)) {
-				if (curLabel.getRedCosts() < 0) {
-					int overtime = this.isFeasibleSchedule(curLabel.getSchedule(), c);
-					if (overtime != Integer.MAX_VALUE) {
-						schedules.add(new Schedule(c, overtime, curLabel.getSchedule()));
-					}
-				}
-			}
-			negRedCostsSchedules.put(c, schedules);
-		}
-
-		return negRedCostsSchedules;
-	}
-	
-	//NO LONGER USED
-	public Label getLabel(Label prevLabel, DirectedGraphArc<Node, ArcData> curArc, ContractGroup c) {
-		if (!prevLabel.getDuties().get(curArc.getTo().getDayNr()%7).contains(curArc.getTo().getDutyNr())) {
-			int[] schedule = this.copyIntArray(prevLabel.getSchedule());
-			schedule[curArc.getTo().getDayNr()] = curArc.getTo().getDutyNr();
-
-			if (curArc.getTo().getDayNr() >= 7) {
-				/*
-				 * For a schedule to be feasible:
-				 * 			- at least one period of 32 hours free in the past 7x24 hours
-				 * 			- at least 72 hours free in the past 14x24 hours of which at least 32 hours per period free
-				 */
-
-				if (!this.isFeasible7(schedule, curArc.getTo().getDayNr() - 7)) {
-					return null;
-				}
-
-				if (curArc.getTo().getDayNr() >= 14) {
-					if (!this.isFeasible14(schedule, curArc.getTo().getDayNr() - 7)) {
-						return null;
-					}
-				}
-			}
-
-			//			if (prevLabel.getTotMinWorked() + curArc.getData().getData(false) + this.shortestPath(graphs.get(c), 
-			//					graphs.get(c).getNodes().indexOf(curArc.getFrom()), graphs.get(c).getNodes().indexOf(curArc.getTo()), false, prevLabel.getDuties()).getCosts() > 
-			//					c.getAvgDaysPerWeek() * c.getAvgHoursPerDay() * 60 * instance.getBasicSchedules().get(c).length / 7) {
-			//				return null;
-			//			}
-			//			if (prevLabel.getRedCosts() + curArc.getData().getData(true) + this.shortestPath(graphs.get(c), 
-			//					graphs.get(c).getNodes().indexOf(curArc.getFrom()), graphs.get(c).getNodes().indexOf(curArc.getTo()), true, prevLabel.getDuties()).getCosts() > 
-			//					0) {
-			//				return null;
-			//			}
-
-			if (curArc.getTo().getDayNr() % 7 == 6) {
-				int totMin = 0;
-				for (int i = 0; i < 7; i++) {
-					if (schedule[curArc.getTo().getDayNr() - i] == 1 || instance.getFromRDutyNrToRDuty().containsKey(schedule[curArc.getTo().getDayNr() - i])) {
-						totMin += c.getAvgHoursPerDay() * 60;
-					} else if (instance.getFromDutyNrToDuty().containsKey(schedule[curArc.getTo().getDayNr() - i])) {
-						totMin += instance.getFromDutyNrToDuty().get(schedule[curArc.getTo().getDayNr() - i]).getPaidMin();
-					}
-				}
-				List<Set<Integer>> newDuties = new ArrayList<>();
-				for (int i = 0; i < 7; i++) {
-					newDuties.add(this.copySet(prevLabel.getDuties().get(i)));
-				}
-				if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
-					newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
-				}
-				return new Label(prevLabel.getRedCosts() + curArc.getData().getDualCosts(), prevLabel.getTotMinWorked() + totMin, schedule, newDuties);
-			} else {
-				List<Set<Integer>> newDuties = new ArrayList<>();
-				for (int i = 0; i < 7; i++) {
-					newDuties.add(this.copySet(prevLabel.getDuties().get(i)));
-				}
-				if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
-					newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
-				}
-				return new Label(prevLabel.getRedCosts() + curArc.getData().getDualCosts(), prevLabel.getTotMinWorked(), schedule, newDuties);
-			}
-		} else {
-			return null;
-		}
-	}
-
 	/**
 	 * This method returns whether a schedule is feasible from the end to the start of the schedule.
 	 * @param label					the label of the schedule of consideration

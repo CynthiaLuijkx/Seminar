@@ -26,6 +26,11 @@ public class Instance
 	private final Set<ReserveDutyType> reserveDutyTypes;
 	private final HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty;
 	
+	
+	private final int minBreak = 11*60; 
+	private final int minWeekBreak = 32*60; 
+	private final int min2WeekBreak = 72*60; 
+	
 	private Set<Violation> violations11;
 	private Set<Violation> violations32;
 	private Set<Violation3Days> violations3Days;
@@ -39,13 +44,9 @@ public class Instance
 	
 	private Map<ContractGroup, String[]> basicSchedules;
 	
-	private final Map<String, Integer> avgMinW;
-	private final Map<String, Integer> avgMinSat;
+	private final Map<String, Integer> avgMinW;	
+	private final Map<String, Integer> avgMinSat;	
 	private final Map<String, Integer> avgMinSun;
-	
-	private final int minBreak = 11*60; 
-	private final int minWeekBreak = 32*60; 
-	private final int min2WeekBreak = 72*60; 
 	
 	/**
 	 * Constructs an Instance.
@@ -77,9 +78,9 @@ public class Instance
 		this.reserveDutyTypes = reserveDutyTypes;
 		this.violations11 = violations11;
 		this.violations32 = violations32;
-		this.avgMinW = new HashMap<>();
-		this.avgMinSat = new HashMap<>();
-		this.avgMinSun = new HashMap<>();
+		this.avgMinW = new HashMap<>();	
+		this.avgMinSat = new HashMap<>();	
+		this.avgMinSun = new HashMap<>();	
 		this.calculateAverages();
 		
 		this.M = new HashSet<>();
@@ -101,17 +102,15 @@ public class Instance
 		
 		this.calculateBounds();
 	}
-
-	public Map<String, Integer> getAvgMinW() {
-		return avgMinW;
-	}
-
-	public Map<String, Integer> getAvgMinSat() {
-		return avgMinSat;
-	}
-
-	public Map<String, Integer> getAvgMinSun() {
-		return avgMinSun;
+	
+	public Map<String, Integer> getAvgMinW() {	
+		return avgMinW;	
+	}	
+	public Map<String, Integer> getAvgMinSat() {	
+		return avgMinSat;	
+	}	
+	public Map<String, Integer> getAvgMinSun() {	
+		return avgMinSun;	
 	}
 
 	public Set<Duty> getWorkingDays() {
@@ -232,7 +231,7 @@ public class Instance
 		
 		for (ContractGroup c : this.contractGroups) {
 			
-			c.setTc((int) Math.floor(nDrivers * c.getRelativeGroupSize()) * 7);
+			c.setTc((int) Math.ceil(nDrivers * c.getRelativeGroupSize()) * 7);
 			c.setATVc((int) Math.floor(c.getATVPerYear() / 365.0 * c.getTc()));
 		}
 	}
@@ -243,37 +242,6 @@ public class Instance
 		this.violations3Days = violations3Days;
 	}
 
-	public Set<Violation3Days> getViolations3Days() {
-		return violations3Days;
-	}
-	
-	public void calculateAverages() {
-		for(String dutyType : this.dutiesPerTypeW.keySet()) {
-			int totalMin = 0;
-			for(Duty duty : this.dutiesPerTypeW.get(dutyType)) {
-				totalMin = totalMin + duty.getPaidMin();
-			}
-			int averageMin = (int) Math.ceil(totalMin/this.dutiesPerTypeW.get(dutyType).size());
-			this.avgMinW.put(dutyType, averageMin);
-		}
-		for(String dutyType : this.dutiesPerTypeSat.keySet()) {
-			int totalMin = 0;
-			for(Duty duty : this.dutiesPerTypeSat.get(dutyType)) {
-				totalMin = totalMin + duty.getPaidMin();
-			}
-			int averageMin = (int) Math.ceil(totalMin/this.dutiesPerTypeSat.get(dutyType).size());
-			this.avgMinSat.put(dutyType, averageMin);
-		}
-		
-		for(String dutyType : this.dutiesPerTypeSun.keySet()) {
-			int totalMin = 0;
-			for(Duty duty : this.dutiesPerTypeSun.get(dutyType)) {
-				totalMin = totalMin + duty.getPaidMin();
-			}
-			int averageMin = (int) Math.ceil(totalMin/this.dutiesPerTypeSun.get(dutyType).size());
-			this.avgMinSun.put(dutyType, averageMin);
-		}
-	}
 	
 	public int getMinBreak() {
 		return minBreak;
@@ -285,5 +253,49 @@ public class Instance
 
 	public int getMin2WeekBreak() {
 		return min2WeekBreak;
+	}
+	
+	public Set<Violation3Days> getViolations3Days() {
+		return violations3Days;
+	}
+	
+	public String getDutyTypeFromDutyNR(int dutyNr) {
+		if(dutyNr==1) {
+			return "ATV"; 
+		}else if(dutyNr == 2) {
+			return "Rest"; 
+		}else if(dutyNr <1000) {
+			return this.getFromRDutyNrToRDuty().get(dutyNr).getType(); 
+		}else {
+			return this.getFromDutyNrToDuty().get(dutyNr).getType(); 
+		}
+	}
+	
+	public void calculateAverages() {	
+		for(String dutyType : this.dutiesPerTypeW.keySet()) {	
+			int totalMin = 0;	
+			for(Duty duty : this.dutiesPerTypeW.get(dutyType)) {	
+				totalMin = totalMin + duty.getPaidMin();	
+			}	
+			int averageMin = (int) Math.ceil(totalMin/this.dutiesPerTypeW.get(dutyType).size());	
+			this.avgMinW.put(dutyType, averageMin);	
+		}	
+		for(String dutyType : this.dutiesPerTypeSat.keySet()) {	
+			int totalMin = 0;	
+			for(Duty duty : this.dutiesPerTypeSat.get(dutyType)) {	
+				totalMin = totalMin + duty.getPaidMin();	
+			}	
+			int averageMin = (int) Math.ceil(totalMin/this.dutiesPerTypeSat.get(dutyType).size());	
+			this.avgMinSat.put(dutyType, averageMin);	
+		}	
+			
+		for(String dutyType : this.dutiesPerTypeSun.keySet()) {	
+			int totalMin = 0;	
+			for(Duty duty : this.dutiesPerTypeSun.get(dutyType)) {	
+				totalMin = totalMin + duty.getPaidMin();	
+			}	
+			int averageMin = (int) Math.ceil(totalMin/this.dutiesPerTypeSun.get(dutyType).size());	
+			this.avgMinSun.put(dutyType, averageMin);	
+		}
 	}
 }

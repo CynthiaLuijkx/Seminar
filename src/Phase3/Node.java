@@ -1,4 +1,4 @@
-package Tools;
+package Phase3;
 
 /**
  * This method corresponds to a node in the directed graph containing the day number and the duty number.

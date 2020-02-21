@@ -1,26 +1,36 @@
-package Tools;
+package Phase3;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 /**
- * This class contains a label for the labelling pricing algorithm.
+ * Pulse class for the pulse pricing algorithm for Phase 3: Column generation
  * @author Mette Wagenvoort
  *
  */
-public class Label 
+public class Pulse 
 {
 	private final double redCosts;
 	private final int totMinWorked;
 	private final int[] schedule;
 	private final List<Set<Integer>> duties;
+	private final Pulse prevPulse;
 	
-	public Label(double redCosts, int totMinWorked, int[] schedule, List<Set<Integer>> duties) {
+	/**
+	 * Constructor of a pulse, which stores the reduced costs, the time worked, the schedule, the duties served and the previous pulse.
+	 * @param redCosts					the reduced costs of this pulse
+	 * @param totMinWorked				the total time worked of this pulse
+	 * @param schedule					the schedule
+	 * @param duties					the duties included in the pulse schedule
+	 * @param prevPulse					the previous pulse
+	 */
+	public Pulse(double redCosts, int totMinWorked, int[] schedule, List<Set<Integer>> duties, Pulse prevPulse) {
 		this.redCosts = redCosts;
 		this.totMinWorked = totMinWorked;
 		this.schedule = schedule;
 		this.duties = duties;
+		this.prevPulse = prevPulse;
 	}
 
 	public double getRedCosts() {
@@ -37,6 +47,10 @@ public class Label
 
 	public List<Set<Integer>> getDuties() {
 		return duties;
+	}
+	
+	public Pulse getPrevPulse() {
+		return prevPulse;
 	}
 
 	@Override
