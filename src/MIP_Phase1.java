@@ -111,7 +111,7 @@ public class MIP_Phase1
 		//System.out.println(this.cplex.getModel());
 		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0.01);
 		this.cplex.exportModel("MIP_Phase1.lp");
-		this.cplex.setOut(null);	
+		//this.cplex.setOut(null);	
 		
 		this.solution = new HashMap<>();
 	}
@@ -119,7 +119,7 @@ public class MIP_Phase1
 	public void clearModel() throws IloException {
 		this.cplex.clearModel();
 		this.cplex.end();
-		this.cplex.endModel();
+		//this.cplex.endModel();
 	}
 	
 	public void solve() throws IloException {

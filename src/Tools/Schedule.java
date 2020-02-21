@@ -9,14 +9,12 @@ public class Schedule implements Cloneable
 	private double[] weeklyOvertime;
 	private static Instance instance; 
 	
-	
-	
 	public Schedule(ContractGroup c, int overTime, int[] schedule) {
 		this.c = c;
 		this.overTime = overTime;
 		this.schedule = schedule;
 		this.weeklyOvertime = new double[schedule.length]; 
-		this.setWeeklyOvertime();
+		//this.setWeeklyOvertime();
 	}
 
 	public static void setInstance(Instance instance) {
@@ -57,6 +55,7 @@ public class Schedule implements Cloneable
 		for(int  k = 0; k < (this.getScheduleArray().length/7); k++) {
 			sum = 0;
 			for(int i = 7*k; i < (7*k+6); i++) {
+				System.out.println(instance.getFromDutyNrToDuty());
 				if(instance.getFromDutyNrToDuty().containsKey(this.getScheduleArray()[i])) {
 					sum += instance.getFromDutyNrToDuty().get(this.getScheduleArray()[i]).getPaidMin();
 				}

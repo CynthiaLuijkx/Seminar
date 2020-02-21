@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,8 +24,9 @@ public class DutyAssigner {
 		allDuties.addAll(oldInstance.getSaturday());
 		allDuties.addAll(oldInstance.getSunday());
 		
-		Map<ContractGroup, Set<Duty>> assignedDuties = randomAssign(allDuties);
+		Map<ContractGroup, Set<Duty>> assignedDuties = sortedAssign(allDuties);
 		Set<Instance> newInstances = new HashSet<>();
+		
 		for(ContractGroup group : assignedDuties.keySet()) {
 			Instance soloInstance = createSoloInstance(group, assignedDuties.get(group));
 			newInstances.add(soloInstance);
@@ -119,29 +121,87 @@ public class DutyAssigner {
 			Set<Duty> duties = new HashSet<>();
 			assignedDuties.put(group, duties);
 			sundayMax.put(group, (int) Math.floor(0.75 * this.newNrDrivers.get(group)));
-			totalMax.put(group, 4 * this.newNrDrivers.get(group)); //Excluding reserve duties 
+			totalMax.put(group, (int) (3.5 * this.newNrDrivers.get(group))); //Excluding reserve duties 
 		}
 		Set<Duty> added = new HashSet<>();
 		while (added.size() < allDuties.size()) {
-			int randomGroup = (int) (Math.random() * groups.size());
-			ContractGroup group = groups.get(randomGroup);
+			double randomGroup = (Math.random());
+			ContractGroup group = null;
+			if(randomGroup <= 0.4) {
+				group = groups.get(0);
+			}
+			else {
+				group = groups.get(1);
+			}
 			
-			if (totalCount[randomGroup] < totalMax.get(group)) {
-				int random = (int) (Math.random() * allDuties.size());
-				Duty toAdd = allDuties.get(random);
+			int random = (int) (Math.random() * allDuties.size());
+			Duty toAdd = allDuties.get(random);
+			int countToAdd = 1;
+			if(toAdd.getDayType().equals("Workingday")) {
+				countToAdd = 5;
+			}
+			if (totalCount[groups.indexOf(group)] + countToAdd <= totalMax.get(group)) {
 				if (!added.contains(toAdd)) {
 					if (!toAdd.getDayType().equals("Sunday") || (toAdd.getDayType().equals("Sunday")
-							&& sundayCount[randomGroup] < sundayMax.get(group))) {
+							&& sundayCount[groups.indexOf(group)] < sundayMax.get(group))) {
 						assignedDuties.get(group).add(toAdd);
 						added.add(toAdd);
-						totalCount[randomGroup]++;
+						totalCount[groups.indexOf(group)] = totalCount[groups.indexOf(group)] + countToAdd;
 						if (toAdd.getDayType().equals("Sunday")) {
-							sundayCount[randomGroup]++;
+							sundayCount[groups.indexOf(group)]++;
 						}
 					}
 				}
 			}
 		}
+		for(ContractGroup group : assignedDuties.keySet()) {
+			System.out.println(group + " " + totalCount[groups.indexOf(group)] + " out of " + totalMax.get(group));
+		}
 		return assignedDuties;
 	}
+
+	public Map<ContractGroup, Set<Duty>> sortedAssign(List<Duty> allDuties) {
+		Collections.sort(allDuties, new SortByPaidMins());
+		
+		List<ContractGroup> contractGroups = new ArrayList<>();
+		contractGroups.addAll(oldInstance.getContractGroups());
+		Collections.sort(contractGroups, new SortByContractHours());
+		
+		Map<ContractGroup, Set<Duty>> assignedDuties = new HashMap<>();
+		for(ContractGroup group : contractGroups) {
+			int totalMax = (int) (3 * this.newNrDrivers.get(group));
+			int sundayMax = (int) Math.floor(0.75 * this.newNrDrivers.get(group));
+			int totalCounter = 0;
+			int sundayCounter = 0; 
+			Set<Duty> duties = new HashSet<>();
+			for(Duty duty : allDuties) {
+				if(duty.getDayType().equals("Sunday") && sundayCounter < sundayMax) {
+					duties.add(duty);
+					totalCounter++;
+					sundayCounter++;
+				}
+				else {
+					if(duty.getDayType().equals("Workingday") && totalCounter+5 < totalMax) {
+						duties.add(duty);
+						totalCounter = totalCounter + 5;
+					}
+					else {
+						duties.add(duty);
+						totalCounter++;
+					}
+				}
+				
+				if(totalCounter >= totalMax) {
+					break;
+				}
+			}
+			allDuties.removeAll(duties);
+			assignedDuties.put(group, duties);
+			System.out.println("Assigned");
+			System.out.println(group + " " + totalCounter + " out of " + totalMax);
+		}
+		
+		return assignedDuties;
+	}
+	
 }

@@ -179,27 +179,59 @@ public class Instance
 		
 		for(ReserveDutyType duty: this.reserveDutyTypes) {
 			if(duty.getDayType().equals("Workingday")) {
-				int temp = (int) Math.ceil(scale*duty.getApproximateSize()*nDutiesW);
+				/*
+				int temp = 0;
+				for(int i = 0; i <= nDutiesW; i++) {
+					double ratio = i/((double) nDutiesW + i);
+					if(ratio >= duty.getApproximateSize()) {
+						temp = i;
+						break;
+					}
+				}*/
+				int temp = (int) (Math.ceil((double) nDutiesW/(1-duty.getApproximateSize()))) - nDutiesW;
 				nReserveDuties += temp*5;
+				//System.out.println(duty.getDayType() + " " + duty.getType() + " Needed: " + duty.getApproximateSize() + " Percentage: " + (double) temp/(double) (nDutiesW+temp));
 				String[] workDays = new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 				for (String day : workDays) {
 					M.add(new Combination(day, "R" + duty.getType(), temp));
 					duty.setAmount(temp);
 				}
 			} else if(duty.getDayType().equals("Saturday")){
-				int temp = (int) Math.ceil(scale* duty.getApproximateSize()*nDutiesSat);
+				/*
+				int temp = 0;
+				for(int i = 0; i <= nDutiesSat; i++) {
+					double ratio = i/((double) nDutiesSat + i);
+					if(ratio >= duty.getApproximateSize()) {
+						temp = i;
+						break;
+					}
+				}*/
+				int temp = (int) (Math.ceil((double) nDutiesSat/(1-duty.getApproximateSize()))) - nDutiesSat;
+				nReserveDuties += temp;
+				//System.out.println(duty.getDayType() + " " + duty.getType() + " Needed: " + duty.getApproximateSize() + " Percentage: " + (double) temp/(double) (nDutiesSat+temp));
 				nReserveDuties += temp;
 				M.add(new Combination("Saturday", "R" + duty.getType(), temp));
 				duty.setAmount(temp);
 			}else {
-				int temp = (int) Math.ceil(scale* duty.getApproximateSize()*nDutiesSun);
+				/*
+				int temp = 0;
+				for(int i = 0; i <= nDutiesSun; i++) {
+					double ratio = i/((double) nDutiesSun + i);
+					if(ratio >= duty.getApproximateSize()) {
+						temp = i;
+						break;
+					}
+				}*/
+				int temp = (int) (Math.ceil((double) nDutiesSun/(1-duty.getApproximateSize()))) - nDutiesSun;
+				nReserveDuties += temp;
+				//System.out.println(duty.getDayType() + " " + duty.getType() + " Needed: " + duty.getApproximateSize() + " Percentage: " + (double) temp/(double) (nDutiesSun+temp));
 				nReserveDuties +=  temp;
 				M.add(new Combination("Sunday", "R" + duty.getType(), temp));
 				duty.setAmount(temp);
 			}
 		}
-		
 		int totalnDuties = nDutiesW*5 + nDutiesSat + nDutiesSun + nReserveDuties; 
+		System.out.println("Reserve ratio: " + (double) nReserveDuties/(double) totalnDuties);
 		this.UB =  (int) Math.ceil(totalnDuties/3.0); 
 		this.LB = (int) Math.ceil(totalnDuties/6); 
 	}
@@ -231,7 +263,7 @@ public class Instance
 		
 		for (ContractGroup c : this.contractGroups) {
 			
-			c.setTc((int) Math.ceil(nDrivers * c.getRelativeGroupSize()) * 7);
+			c.setTc((int) Math.floor(nDrivers * c.getRelativeGroupSize()) * 7);
 			c.setATVc((int) Math.floor(c.getATVPerYear() / 365.0 * c.getTc()));
 		}
 	}

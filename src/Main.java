@@ -34,8 +34,8 @@ public class Main
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
-		double violationBound = 0.3;
-		double violationBound3Days = 0.3;
+		double violationBound = 0.7;
+		double violationBound3Days = 0.7;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
@@ -58,10 +58,9 @@ public class Main
 		//Get all starting information
 		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound);
 
-		System.out.println("Instance " + depot + " initialised");
-
+		/*
 		Map<ContractGroup, Integer> newDriverNrs = new HashMap<>();
-		int numberOfDrivers = instance.getLB()+17;
+		int numberOfDrivers = instance.getLB()+14;
 		instance.setNrDrivers(numberOfDrivers);
 		for(ContractGroup group : instance.getContractGroups()) {
 			newDriverNrs.put(group, group.getTc()/7);
@@ -69,7 +68,7 @@ public class Main
 		}
 		DutyAssigner dutyAssigner = new DutyAssigner(instance, newDriverNrs);
 		int feasibleFound = 0;
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 1; i++) {
 			System.out.println(feasibleFound);
 			if(feasibleFound == 2) {
 				System.out.println("Found all schedules");
@@ -99,9 +98,10 @@ public class Main
 				if (mip.isFeasible()) {
 					mip.makeSolution(0);
 					soloInstance.setBasicSchedules(mip.getSolution());
+					System.out.println("Reserve ratio: " + soloInstance.calculateReserveRatio());
 
 					for (ContractGroup c : soloInstance.getContractGroups()) {
-					//	new ScheduleVis(soloInstance.getBasicSchedules().get(c), "" + c.getNr());
+						new ScheduleVis(soloInstance.getBasicSchedules().get(c), "" + c.getNr());
 					}
 
 					long phase3Start = System.nanoTime();
@@ -126,22 +126,26 @@ public class Main
 					}
 					if(scheduleForEveryGroup){
 						feasibleFound++;
+						Phase4 phase4 = new Phase4(schedules, soloInstance);
+						List<Schedule> newSchedules = phase4.runILP();
+						for (Schedule schedule : newSchedules) {
+							new ScheduleVis(schedule.getSchedule(), "" + schedule.getC().getNr(), soloInstance);
+						}
 					}
-						/*
-					Phase4 phase4 = new Phase4(schedules, soloInstance);
-					List<Schedule> newSchedules = phase4.runILP();
-					for (Schedule schedule : newSchedules) {
-					//	new ScheduleVis(schedule.getSchedule(), "" + schedule.getC().getNr(), soloInstance);
-					}*/
+					else {
+						mip.clearModel();
+						break;
+					}
+					
 				}
 				else {
 					mip.clearModel();
 					break;
 				}
 			}
-		}
+		}*/
 
-		/*
+		
 		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound, violationBound3Days); 
 		System.out.println("Violations Determined"); 
 
@@ -153,7 +157,7 @@ public class Main
 
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getUB();
+		int numberOfDrivers = instance.getLB() +13;
 		instance.setNrDrivers(numberOfDrivers);
 		
 //		Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
@@ -216,7 +220,7 @@ public class Main
 			}
 		} else {
 			System.out.println("Basic schedule cannot be made.");
-		}*/
+		}
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
