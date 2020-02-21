@@ -68,7 +68,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() + 18;
+		int numberOfDrivers = instance.getLB() + 14;
 		instance.setNrDrivers(numberOfDrivers);
 		
 //		Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
@@ -85,10 +85,10 @@ public class Main
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		mip.solve();
 		if (mip.isFeasible()) {
-//			mip.populate(maxIt);
+			mip.populate(maxIt);
 			while (scheduleForEveryGroup == false && iteration <= maxIt) {
-				mip.makeSolution(); //When not using populate 
-//				mip.makeSolution(iteration); //When using populate
+//				mip.makeSolution(); //When not using populate 
+				mip.makeSolution(iteration); //When using populate
 				instance.setBasicSchedules(mip.getSolution());
 				
 				for(ContractGroup c : instance.getContractGroups()) {

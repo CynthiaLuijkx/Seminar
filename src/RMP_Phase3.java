@@ -161,7 +161,7 @@ public class RMP_Phase3 {
 		for (int c = 0; c < this.dummies2.length; c++) {
 			IloNumExpr lhs = cplex.constant(0); 
 			lhs = cplex.sum(lhs, this.dummies2[c]);
-			this.constraints2[c] = cplex.addEq(lhs, 1, "Contractgroup_" + c);	
+			this.constraints2[c] = cplex.addGe(lhs, 1, "Contractgroup_" + c);	
 		}
 	}
 	//Method that returns the dual values of the first type of constraints;
