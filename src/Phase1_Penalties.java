@@ -17,7 +17,7 @@ public class Phase1_Penalties {
 	
 	public Phase1_Penalties() {
 		this.ATVSpreadPenaltyParam = 1;
-		this.reservePenaltyParam = 1000;
+		this.reservePenaltyParam = 500;
 		this.tooManyConsecutiveDutiesParam = 1;
 		this.consecutiveMaxPenaltyParam = 1;
 		this.consecutiveMinPenaltyParam = 1;
@@ -25,10 +25,10 @@ public class Phase1_Penalties {
 		this.earlyToLateParam = 1;
 		this.partTimeParam = 1;
 		this.fivePerWeekParam = 1;
-		this.fivePerWeek40Param = 1;
+		this.fivePerWeek40Param = 2;
 		this.ATVonWeekendParam = 1;
 		this.lonelyDutyParam = 1;
-		this.splitDutiesParam = 1000;
+		this.splitDutiesParam = 500;
 		this.restSpreadParam = 1;
 	}
 

@@ -140,7 +140,7 @@ public class PricingProblem_Phase3
 			if (totOvertime != Integer.MAX_VALUE) {
 				this.finalSchedules.add(new Schedule(c, totOvertime, curPulse.getSchedule()));
 			}
-		} else if (finalSchedules.size() != maxSchedules && (System.nanoTime() - startTime)/1000000000.0 < 15) {
+		} else if (finalSchedules.size() != maxSchedules && (System.nanoTime() - startTime)/1000000000.0 < 30) {
 			// Check whether the new schedule would be feasible in terms of 7x24 and 14x24 hours
 			int[] schedule = this.copyIntArray(curPulse.getSchedule());
 			schedule[curArc.getTo().getDayNr()] = curArc.getTo().getDutyNr();
