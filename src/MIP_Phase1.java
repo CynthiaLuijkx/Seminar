@@ -111,7 +111,7 @@ public class MIP_Phase1
 		initObjective();
 		
 		//System.out.println(this.cplex.getModel());
-		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0.01);
+		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0);
 		this.cplex.exportModel("MIP_Phase1.lp");
 		//this.cplex.setOut(null);	
 		
