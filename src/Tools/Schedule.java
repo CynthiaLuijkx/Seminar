@@ -19,7 +19,7 @@ public class Schedule implements Cloneable
 		this.c = c;
 		this.overTime = overTime;
 		this.schedule = schedule;
-		this.weeklyOvertime = new double[schedule.length]; 
+		this.weeklyOvertime = new double[schedule.length/7]; 
 		this.setWeeklyOvertime();
 	}
 
@@ -74,7 +74,6 @@ public class Schedule implements Cloneable
 
 			this.weeklyOvertime[k] = sum - (this.getC().getAvgDaysPerWeek()*this.getC().getAvgHoursPerDay()*60) ;
 		}
-		
 	}
 	
 	public double[] getWeeklyOvertime() {

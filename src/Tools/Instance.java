@@ -179,7 +179,7 @@ public class Instance
 		
 		for(ReserveDutyType duty: this.reserveDutyTypes) {
 			if(duty.getDayType().equals("Workingday")) {
-				int temp = (int) Math.floor(scale*duty.getApproximateSize()*nDutiesW);
+				int temp = (int) Math.ceil(nDutiesW / (1 - duty.getApproximateSize()) - nDutiesW);
 				nReserveDuties += temp*5;
 				String[] workDays = new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 				for (String day : workDays) {
@@ -187,12 +187,12 @@ public class Instance
 					duty.setAmount(temp);
 				}
 			} else if(duty.getDayType().equals("Saturday")){
-				int temp = (int) Math.ceil(scale* duty.getApproximateSize()*nDutiesSat);
+				int temp = (int) Math.ceil(nDutiesSat / (1 - duty.getApproximateSize()) - nDutiesSat);
 				nReserveDuties += temp;
 				M.add(new Combination("Saturday", "R" + duty.getType(), temp));
 				duty.setAmount(temp);
 			}else {
-				int temp = (int) Math.ceil(scale* duty.getApproximateSize()*nDutiesSun);
+				int temp = (int) Math.ceil(nDutiesSun / (1 - duty.getApproximateSize()) - nDutiesSun);
 				nReserveDuties +=  temp;
 				M.add(new Combination("Sunday", "R" + duty.getType(), temp));
 				duty.setAmount(temp);

@@ -287,23 +287,18 @@ public class FeasCheck {
 	 * @param c
 	 * @return
 	 */
-	public boolean checkATVDays(int[] schedule, ContractGroup c) {
+	public int checkATVDays(int[] schedule, ContractGroup c) {
 		int nATVdays = 0; 
 
-		for(int i = 0; i<schedule.length; i++) {
-			if(schedule[i] == 1) {
-				nATVdays++; 
+		if (c.getATVc() > 0) {
+			for(int i = 0; i<schedule.length; i++) {
+				if(schedule[i] == 1) {
+					nATVdays++; 
+				}
 			}
-		}
-		if(c.getATVPerYear() > 0) {
-			if(nATVdays >= c.getATVc()) {
-				return true; 
-			}else {
-				return false;
-			}
-		}
-		else {
-			return true;
+			return c.getATVc() - nATVdays;
+		} else {
+			return 0;
 		}
 	}
 
@@ -802,6 +797,11 @@ public class FeasCheck {
 					currentType = nextType; 
 				}else {
 					count++; 
+				}
+			} else {
+				currentType = this.instance.getDutyTypeFromDutyNR(schedule[(i+1)%schedule.length]);
+				if (currentType.length() == 2) {
+					currentType = currentType.substring(1);
 				}
 			}
 		}

@@ -35,7 +35,7 @@ public class Phase5_ALNS {
 	private double[][] weightsDestroyAdj; //adjusted weights of the destroy methods
 	private double[] weightsRepair; //weights of the repair methods
 	private double[][] weightsRepairAdj; //adjusted weights of the repair methods
-	private int nDestroy = 4; //number of destroy methods
+	private int nDestroy = 1; //number of destroy methods
 	private int nRepair = 1;  // number of repair methods
 	private Solution globalBestSol;  //best solution found so far
 	private double T; //temperature used for simulated annealing
@@ -66,7 +66,7 @@ public class Phase5_ALNS {
 
 		//this.executeBasic(startSchedule);
 	}
-	
+
 	/**
 	 * This method executes the Adaptive Large Neighbourhood Search.
 	 * @param startSchedule				the initial solution
@@ -80,14 +80,14 @@ public class Phase5_ALNS {
 		this.globalOptimum = initSol.getObj(); // set the best found solution equal to this one
 		Solution currentSol = initSol.clone(); 
 		boolean accepted = true;
-		
+
 		this.globalBestSol = currentSol.clone();
 		System.out.println("Best Solution so far: " + this.globalOptimum);
 		System.out.println("request bank size: " +this.globalBestSol.getRequests().size());
-		 
+
 		for(ContractGroup group: instance.getContractGroups()) {
 			System.out.println(group.getNr() + " " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length);
-			}
+		}
 		//System.out.println(initSol);
 		//till the number of iterations is reached
 		while (n <= this.nIterations) {	
@@ -106,21 +106,21 @@ public class Phase5_ALNS {
 
 			int repairHeuristicNr = 0;
 			double URepair = this.random.nextDouble();
-				for (int i = 0; i < this.weightsRepair.length; i++) {
-					if (URepair < this.weightsRepair[i]) {
-						repairHeuristicNr = i;
-						break;
-					}
-					URepair -= this.weightsRepair[i];
+			for (int i = 0; i < this.weightsRepair.length; i++) {
+				if (URepair < this.weightsRepair[i]) {
+					repairHeuristicNr = i;
+					break;
 				}
-			
+				URepair -= this.weightsRepair[i];
+			}
+
 			Solution tempSol = currentSol.clone(); //get a temporary solution
-			System.out.println("request bank contains: "+ tempSol.getRequests().size());
+//			System.out.println("request bank contains: "+ tempSol.getRequests().size());
 			//determine randomly the size of the neighborhood
 			int sizeNeighbourhood = this.random.nextInt(this.maxSizeNeighbourhood - this.minSizeNeighbourhood) + this.minSizeNeighbourhood;
 
-			System.out.println("-----------------------------------------------------------------------");
-			System.out.println("ITERATION " + n + ":");
+//			System.out.println("-----------------------------------------------------------------------");
+//			System.out.println("ITERATION " + n + ":");
 
 			// find new solution
 			tempSol = this.executeDestroyAndRepair(tempSol, destroyHeuristicNr, repairHeuristicNr, sizeNeighbourhood);
@@ -129,28 +129,26 @@ public class Phase5_ALNS {
 			// determine if accepted or not
 			boolean globalOpt = false;
 			accepted = false;
-			if(tempSol.getRequests().size() == 0) {
-				System.out.println("Number of request in request bank: " + tempSol.getRequests().size()); 
-				if (tempSol.getObj() <= this.globalBestSol.getObj()) { //if we improve our global solution
-					this.globalBestSol = tempSol.clone();
-					globalOpt = true; //we found a new global optimum
-					accepted = true; //we always accept the solution 
-					currentSol = tempSol.clone(); //set the current solution to the temporary solution
-					System.out.println("-----------------------------------------------------------------------");
-					System.out.println("New global best solution (iteration " + n + "): " + this.globalBestSol.getObj());
-					
-				}
-				//if we accept the solution by simulated annealing
-				else if (this.random.nextDouble() < Math.exp(-(tempSol.getObj() - currentSol.getObj()) / this.T)) {
-					accepted = true; //accept solution
-					currentSol = tempSol.clone(); //set the current solution to the temporary solution
-					System.out.println("We accepted the solution: " + currentSol.getObj());
-				}
+//			System.out.println("Number of request in request bank: " + tempSol.getRequests().size()); 
+			if (tempSol.getObj() <= this.globalBestSol.getObj()) { //if we improve our global solution
+				this.globalBestSol = tempSol.clone();
+				globalOpt = true; //we found a new global optimum
+				accepted = true; //we always accept the solution 
+				currentSol = tempSol.clone(); //set the current solution to the temporary solution
+				System.out.println("-----------------------------------------------------------------------");
+				System.out.println("New global best solution (iteration " + n + "): " + this.globalBestSol.getObj());
 
-
-				// update weight adjustments
-				this.updateWeightAdj(globalOpt, accepted, unique, destroyHeuristicNr, repairHeuristicNr);
 			}
+			//if we accept the solution by simulated annealing
+			else if (this.random.nextDouble() < Math.exp(-(tempSol.getObj() - currentSol.getObj()) / this.T)) {
+				accepted = true; //accept solution
+				currentSol = tempSol.clone(); //set the current solution to the temporary solution
+//				System.out.println("We accepted the solution: " + currentSol.getObj());
+			}
+
+
+			// update weight adjustments
+			this.updateWeightAdj(globalOpt, accepted, unique, destroyHeuristicNr, repairHeuristicNr);
 			// update weights if multiple of 100
 			if (n % 100 == 0 && n < nIterations) {
 				this.updateWeights();
@@ -169,7 +167,7 @@ public class Phase5_ALNS {
 		}
 		return this.globalBestSol; //return our global solution
 	}
-	
+
 	/**
 	 * This method is used to get the initial solution.
 	 * @param startSol			the initial solution
@@ -197,31 +195,33 @@ public class Phase5_ALNS {
 	public Solution executeDestroyAndRepair(Solution currentSol, int destroyHeuristicNr, int repairHeuristicNr, 
 			int sizeNeighbourhood) {
 		//execute a destroy heuristic depending on the generated number
-		if (destroyHeuristicNr == 0) {
-			currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood,  random,instance);
-		}
-		else if(destroyHeuristicNr == 1){
-			currentSol = this.destroyHeuristics.executeRandomOvertimeWithWeeks(currentSol, sizeNeighbourhood, random, instance); 
-		}
-		else  if(destroyHeuristicNr ==2){
-			currentSol = this.destroyHeuristics.executeRandomOvertimeWithSpecificDuties(currentSol, sizeNeighbourhood, random, instance);
-		}
-		else {
-			currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance);
-		}
-		
+		currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood, random, instance);
+		//		if (destroyHeuristicNr == 0) {
+		//			currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood,  random,instance);
+		//		}
+		//		else if(destroyHeuristicNr == 1){
+		//			currentSol = this.destroyHeuristics.executeRandomOvertimeWithWeeks(currentSol, sizeNeighbourhood, random, instance); 
+		//		}
+		//		else  if(destroyHeuristicNr ==2){
+		//			currentSol = this.destroyHeuristics.executeRandomOvertimeWithSpecificDuties(currentSol, sizeNeighbourhood, random, instance);
+		//		}
+		//		else {
+		//			currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance);
+		//		}
+
 		this.repairHeuristics.setAllPlacements(currentSol).toString();
-		
+
 		//execute a repair heuristic depending on the generated number
+		currentSol = this.repairHeuristics.greedyRepair(currentSol);
 		//if (repairHeuristicNr == 0) {
-			//currentSol = this.repairHeuristics.greedyRepair(currentSol,2);
+		//currentSol = this.repairHeuristics.greedyRepair(currentSol,2);
 		//} else {
-			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
+		//			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
 		//}
 
 		return currentSol;
 	}
-	
+
 	/**
 	 * This method returns whether a solution is an unique solution.
 	 * @param currentSol				the solution
@@ -275,13 +275,13 @@ public class Phase5_ALNS {
 		sum = 0;
 		for (int i = 0; i < this.weightsRepair.length; i++) {
 			this.weightsRepair[i] = this.rho * (this.weightsRepairAdj[i][0] / this.weightsRepairAdj[i][1]) + (1 - this.rho) * this.weightsRepair[i];
-			sum = this.weightsRepair[i];
+			sum += this.weightsRepair[i];
 		}
 		for (int i = 0; i < this.weightsRepair.length; i++) {
 			this.weightsRepair[i] = this.weightsRepair[i] / sum;
 		}
 	}
-	
+
 	/**
 	 * This method creates a set of requests for the missing duties.
 	 * @param schedules					the list with schedules
@@ -305,7 +305,7 @@ public class Phase5_ALNS {
 						counter++;
 						Request request = new Request(duty, null, s);
 						requests.add(request);
-					//	System.out.println(duty);
+						//	System.out.println(duty);
 					}
 				}
 			}
@@ -316,7 +316,7 @@ public class Phase5_ALNS {
 						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
 							if(schedule.getScheduleArray()[(7*w) + s] == duty.getNr()) {
 								included++;
-								
+
 							}
 						}
 					}
@@ -324,7 +324,7 @@ public class Phase5_ALNS {
 						counter++;
 						Request request = new Request(duty, null, s);
 						requests.add(request);
-					//	System.out.println(duty);
+						//	System.out.println(duty);
 					}
 				}
 			}
@@ -343,7 +343,7 @@ public class Phase5_ALNS {
 						counter++;
 						Request request = new Request(duty, null, s);
 						requests.add(request);
-					//	System.out.println(duty);
+						//	System.out.println(duty);
 					}
 				}
 			}
