@@ -3,6 +3,7 @@ package Tools;
 public class Penalties {
 	private static double[] feasPenalties;
 	private static double[] softPenalties;
+	public final static double penaltyRequest = 10000;
 	
 	public Penalties() {
 		feasPenalties = new double[2];

@@ -26,8 +26,8 @@ public class Phase5_ALNS {
 	private double[][] weightsDestroyAdj; //adjusted weights of the destroy methods
 	private double[] weightsRepair; //weights of the repair methods
 	private double[][] weightsRepairAdj; //adjusted weights of the repair methods
-	private int nDestroy = 2; //number of destroy methods
-	private int nRepair = 2;  // number of repair methods
+	private int nDestroy = 4; //number of destroy methods
+	private int nRepair = 1;  // number of repair methods
 	private Solution globalBestSol;  //best solution found so far
 	private double T; //temperature used for simulated annealing
 
@@ -38,7 +38,7 @@ public class Phase5_ALNS {
 		this.nIterations = iterations;
 		this.instance = instance;
 		this.random = new Random(seed);
-		this.destroyHeuristics = new DestroyHeuristics();
+		this.destroyHeuristics = new DestroyHeuristics(instance);
 		this.repairHeuristics = new RepairHeuristics(instance);
 		//System.out.println(startSchedule.toString()); 
 		this.T = 1; //Starting temperature 
@@ -66,12 +66,16 @@ public class Phase5_ALNS {
 		Solution initSol = this.getInitialSol(startSchedule);
 		//System.out.println(initSol.toString()); 
 		this.globalOptimum = initSol.getObj(); // set the best found solution equal to this one
-		System.out.println("Best Solution so far: " + this.globalOptimum);
 		Solution currentSol = initSol.clone(); 
 		boolean accepted = true;
-
-		globalBestSol = currentSol.clone(); 
-
+		
+		this.globalBestSol = currentSol.clone();
+		System.out.println("Best Solution so far: " + this.globalOptimum);
+		System.out.println("request bank size: " +this.globalBestSol.getRequests().size());
+		 
+		for(ContractGroup group: instance.getContractGroups()) {
+			System.out.println(group.getNr() + " " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length);
+			}
 		//System.out.println(initSol);
 		//till the number of iterations is reached
 		while (n <= this.nIterations) {	
@@ -86,16 +90,20 @@ public class Phase5_ALNS {
 				}
 				UDestroy -= this.weightsDestroy[i];
 			}
-			double URepair = this.random.nextDouble();
+
+
 			int repairHeuristicNr = 0;
-			for (int i = 0; i < this.weightsRepair.length; i++) {
-				if (URepair < this.weightsRepair[i]) {
-					repairHeuristicNr = i;
-					break;
+			double URepair = this.random.nextDouble();
+				for (int i = 0; i < this.weightsRepair.length; i++) {
+					if (URepair < this.weightsRepair[i]) {
+						repairHeuristicNr = i;
+						break;
+					}
+					URepair -= this.weightsRepair[i];
 				}
-				URepair -= this.weightsRepair[i];
-			}
+			
 			Solution tempSol = currentSol.clone(); //get a temporary solution
+			System.out.println("request bank contains: "+ tempSol.getRequests().size());
 			//determine randomly the size of the neighborhood
 			int sizeNeighbourhood = this.random.nextInt(this.maxSizeNeighbourhood - this.minSizeNeighbourhood) + this.minSizeNeighbourhood;
 
@@ -110,25 +118,26 @@ public class Phase5_ALNS {
 			boolean globalOpt = false;
 			accepted = false;
 			if(tempSol.getRequests().size() == 0) {
-			//System.out.println("Number of request in request bank: " + tempSol.getRequests().size()); 
-			if (tempSol.getObj() < this.globalBestSol.getObj()) { //if we improve our global solution
-				this.globalBestSol = tempSol.clone();
-				globalOpt = true; //we found a new global optimum
-				accepted = true; //we always accept the solution 
-				currentSol = tempSol; //set the current solution to the temporary solution
-				System.out.println("-----------------------------------------------------------------------");
-				System.out.println("New global best solution (iteration " + n + "): " + this.globalBestSol.getObj());
-			}
-			//if we accept the solution by simulated annealing
-			else if (this.random.nextDouble() < Math.exp(-(tempSol.getObj() - currentSol.getObj()) / this.T)) {
-				accepted = true; //accept solution
-				currentSol = tempSol; //set the current solution to the temporary solution
-				System.out.println("We accepted the solution: " + currentSol.getObj());
-			}
-			
+				System.out.println("Number of request in request bank: " + tempSol.getRequests().size()); 
+				if (tempSol.getObj() <= this.globalBestSol.getObj()) { //if we improve our global solution
+					this.globalBestSol = tempSol.clone();
+					globalOpt = true; //we found a new global optimum
+					accepted = true; //we always accept the solution 
+					currentSol = tempSol.clone(); //set the current solution to the temporary solution
+					System.out.println("-----------------------------------------------------------------------");
+					System.out.println("New global best solution (iteration " + n + "): " + this.globalBestSol.getObj());
+					
+				}
+				//if we accept the solution by simulated annealing
+				else if (this.random.nextDouble() < Math.exp(-(tempSol.getObj() - currentSol.getObj()) / this.T)) {
+					accepted = true; //accept solution
+					currentSol = tempSol.clone(); //set the current solution to the temporary solution
+					System.out.println("We accepted the solution: " + currentSol.getObj());
+				}
 
-			// update weight adjustments
-			this.updateWeightAdj(globalOpt, accepted, unique, destroyHeuristicNr, repairHeuristicNr);
+
+				// update weight adjustments
+				this.updateWeightAdj(globalOpt, accepted, unique, destroyHeuristicNr, repairHeuristicNr);
 			}
 			// update weights if multiple of 100
 			if (n % 100 == 0 && n < nIterations) {
@@ -142,12 +151,20 @@ public class Phase5_ALNS {
 			this.T = this.T * this.c;
 			n++;
 		}
-		
+		System.out.println("end size"+ this.globalBestSol.getRequests().size());
+		for(ContractGroup group: instance.getContractGroups()) {
+			System.out.println("number of drivers of group " +group.getNr()+ " is: " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length);
+		}
 		return this.globalBestSol; //return our global solution
 	}
 	//method to get the initial solution 
 	public Solution getInitialSol(Map<ContractGroup, Schedule> startSol) {
 		Set<Request> emptyRequestSet = new HashSet<Request>();
+		List<Schedule> check = new ArrayList<>();
+		for(ContractGroup group: instance.getContractGroups()) {
+			check.add(startSol.get(group));
+		}
+		emptyRequestSet = this.missingDuties(check);
 		Solution initSol = new Solution(emptyRequestSet, startSol, instance);
 		return initSol;
 	}
@@ -165,17 +182,28 @@ public class Phase5_ALNS {
 		//execute a destroy heuristic depending on the generated number
 		if (destroyHeuristicNr == 0) {
 			currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood,  random,instance);
-		}else {
-			currentSol = this.destroyHeuristics.executeRandomOvertime(currentSol, sizeNeighbourhood, random, instance); 
 		}
-
-		this.repairHeuristics.setAllPlacements(currentSol).toString(); 
+		else if(destroyHeuristicNr == 1){
+			currentSol = this.destroyHeuristics.executeRandomOvertimeWithWeeks(currentSol, sizeNeighbourhood, random, instance); 
+		}
+		else  if(destroyHeuristicNr ==2){
+			currentSol = this.destroyHeuristics.executeRandomOvertimeWithSpecificDuties(currentSol, sizeNeighbourhood, random, instance);
+		}
+		else {
+			currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance);
+		}
+		
+		this.repairHeuristics.setAllPlacements(currentSol).toString();
+		
 		//execute a repair heuristic depending on the generated number
-		if (repairHeuristicNr == 0) {
-			currentSol = this.repairHeuristics.greedyRepair(currentSol);
-		} else {
+		//if (repairHeuristicNr == 0) {
+			//currentSol = this.repairHeuristics.greedyRepair(currentSol,2);
+		//} else {
 			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
-		} 
+		//}
+		
+		
+		
 
 		return currentSol;
 	}
@@ -187,7 +215,7 @@ public class Phase5_ALNS {
 		}
 		return false; 
 	}
-	
+
 	/**
 	 * This method updates the weight adjustments given the status of the new solution.
 	 * @param globalOpt					true if the new solution is a global optimum, false otherwise
@@ -233,6 +261,70 @@ public class Phase5_ALNS {
 		for (int i = 0; i < this.weightsRepair.length; i++) {
 			this.weightsRepair[i] = this.weightsRepair[i] / sum;
 		}
+	}
+	public Set<Request> missingDuties(List<Schedule> schedules) {
+		Set<Request> requests = new HashSet<Request>();
+		int counter = 0;
+		for (int s = 0; s < 7; s++) {
+			if(s == 0) {
+				for(Duty duty : instance.getSunday()) {
+					int included = 0;
+					for(Schedule schedule : schedules) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+							if(schedule.getScheduleArray()[(7*w) + s] == duty.getNr()) {
+								included++;
+							}
+						}
+					}
+					if(included < 1) {
+						counter++;
+						Request request = new Request(duty, null, s);
+						requests.add(request);
+					//	System.out.println(duty);
+					}
+				}
+			}
+			else if(s == 6) {
+				for(Duty duty : instance.getSaturday()) {
+					int included = 0;
+					for(Schedule schedule : schedules) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+							if(schedule.getScheduleArray()[(7*w) + s] == duty.getNr()) {
+								included++;
+								
+							}
+						}
+					}
+					if(included < 1) {
+						counter++;
+						Request request = new Request(duty, null, s);
+						requests.add(request);
+					//	System.out.println(duty);
+					}
+				}
+			}
+			else {
+				for(Duty duty : instance.getWorkingDays()) {
+					int included = 0;
+					for(Schedule schedule : schedules) {
+						for(int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+							//System.out.println(duty.getNr() + " " +  schedule.getSchedule()[(7*w) + s]);
+							if(schedule.getScheduleArray()[(7*w)+ s] == duty.getNr()) {
+								included++;
+							}
+						}
+					}
+					if(included < 1) {
+						counter++;
+						Request request = new Request(duty, null, s);
+						requests.add(request);
+					//	System.out.println(duty);
+					}
+				}
+			}
+		}
+		System.out.println("missing duties: " + counter);
+		return requests;
 	}
 
 }

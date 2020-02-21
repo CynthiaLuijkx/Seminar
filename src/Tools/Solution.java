@@ -7,22 +7,21 @@ import Tools.*;
 //This class is the solution information we want to have in every iteration of the adaptive large neighborhood search
 public class Solution {
 
-	private Set<Request> requests; //list with requests 
-	private Map<ContractGroup, Schedule> newSchedule = new HashMap<ContractGroup,Schedule>(); //the new schedule of the solution
-	private final Instance instance; //the instance information
+	private Set<Request> requests;
+	private Map<ContractGroup, Schedule> newSchedule = new HashMap<ContractGroup,Schedule>();
+	private final Instance instance;
 	private FeasCheck feasCheck; 
-	private final double[] penalties;
-	
-	//constructor of the solution
+	private final double[] softPenalties;
+	private final double[] feasPenalties; 
+
 	public Solution(Set<Request> requests, Map<ContractGroup,Schedule> schedule, Instance instance) {
 		this.requests = requests;
 		this.newSchedule = schedule;
 		this.instance = instance;
 		this.feasCheck= new FeasCheck(instance);
-		this.penalties = new Penalties().getSoftPenalties(); 
-		
+		this.softPenalties = new Penalties().getSoftPenalties(); 
+		this.feasPenalties = new Penalties().getFeasPenalties(); 
 	}
-	
 	
 	/**
 	 * This method executes a removal, i.e., it removes the request form its route, adds it to the request bank, 
@@ -82,7 +81,7 @@ public class Solution {
 		Schedule currentSchedule = this.getNewSchedule().get(placement.getTimeslot().getGroup());  //get the previous schedule
 		//System.out.println("duty number: "+ placement.getRequest().getDutyNumber());
 		currentSchedule.getScheduleArray()[placement.getTimeslot().getDay()] = placement.getRequest().getDutyNumber();  //add the placement on the right day with the new duty number
-		currentSchedule.setWeeklyOvertime(currentSchedule, instance); //determine the weekly overtime 
+		currentSchedule.setWeeklyOvertime(); //determine the weekly overtime 
 		this.requests.remove(placement.getRequest());  //remove the request from the set of requests
 	}
 	
@@ -91,17 +90,40 @@ public class Solution {
 	public String toString() {
 		return "Solution [ newSchedule=" + newSchedule + "]";
 	}
-	
-	//Determine the objective
+	/**
+	 * Calculates the objective of a solution
+	 * @return
+	 */
 	public double getObj() {
+
 		double objective = 0.0;
+		
+		//Soft constraints
 		for(ContractGroup group: this.getNewSchedule().keySet()) {
 			objective += this.QuarterlyOvertime(this.getNewSchedule().get(group).getScheduleArray(), group);
 			int[] violations = this.feasCheck.allViolations(this.getNewSchedule().get(group).getScheduleArray(), group);
-			
-			for(int i =0; i < this.penalties.length; i++) {
-			objective += violations[i]*this.penalties[i];
+
+			for(int i =0; i < this.softPenalties.length; i++) {
+				objective += violations[i]*this.softPenalties[i];
+			}
 		}
+
+		//Overtime 
+		double[] allEmployeesOvertime = new double[instance.getContractGroups().size()];
+		for(ContractGroup group:this.getNewSchedule().keySet()) {
+			allEmployeesOvertime[group.getNr()-1] = this.feasCheck.QuaterlyOvertime(this.getNewSchedule().get(group).getScheduleArray(), group);
+		}
+
+		for(int i =0; i < allEmployeesOvertime.length; i++) {
+			objective += this.feasPenalties[0] * allEmployeesOvertime[i];
+		}
+		
+		//Not solved request 
+		objective += this.requests.size()* Penalties.penaltyRequest; 
+		
+		//Fixed costs number of employees 
+		for(ContractGroup group: this.newSchedule.keySet()) {
+			objective += this.newSchedule.get(group).getScheduleArray().length/7 * 13 *group.getAvgDaysPerWeek() * group.getAvgHoursPerDay(); 
 		}
 
 		return objective;

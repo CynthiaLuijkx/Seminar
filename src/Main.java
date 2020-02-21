@@ -100,7 +100,7 @@ public class Main
 		
 		new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance);
 		new ScheduleVis(schedules.get(group2).getScheduleArray(), "" + group2.getNr() + "before", instance);
-		int iterations_phase5 = 1000; 
+		int iterations_phase5 = 100; 
 		Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, 0); 
 		Solution solutionALNS = alns.executeBasic(schedules);
 		System.out.println(solutionALNS.getObj());
@@ -363,7 +363,7 @@ public class Main
 		Map<ContractGroup, Schedule> schedules = new HashMap<>();
 		
 		for (int c = 1; c <= groups.size(); c++) {
-			Scanner sc = new Scanner(new File("Schedule_" + depot + "" + nDrivers + "" + c + ".txt"));
+			Scanner sc = new Scanner(new File("Schedule_" + depot + "_" + nDrivers + "_" + c + ".txt"));
 			int contractGroupNr = sc.nextInt();
 			int overtime = sc.nextInt();
 			int[] schedule = new int[sc.nextInt()];
