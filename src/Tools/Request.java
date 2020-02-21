@@ -100,11 +100,14 @@ public class Request {
 	}
 	
 	public void deletePlacements(ContractGroup group) {
+		Set<Placement> toDelete = new HashSet<Placement>(); 
 		for(Placement placement: this.listOfPlacements) {
 			if(placement.getTimeslot().getGroup().equals(group)) {
-				this.deletePlacement(placement);
+				toDelete.add(placement); 
 			}
 		}
+		
+		this.listOfPlacements.removeAll(toDelete); 
 	}
 	
 	public void deleteAllPlacements() {

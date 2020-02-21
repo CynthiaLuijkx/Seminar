@@ -42,7 +42,7 @@ public class Placement implements Comparable<Placement>{
 	public int compareTo(Placement o) {
 		if(this.getCost() > o.getCost()) {
 			return -1; 
-		}else if (this.getCost() > o.getCost()) {
+		}else if (this.getCost() < o.getCost()) {
 			return 1; 
 		}else {
 			return 0; 

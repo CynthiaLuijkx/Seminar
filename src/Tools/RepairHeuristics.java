@@ -4,30 +4,15 @@ import java.util.*;
 
 
 public class RepairHeuristics {
-	private List<Placement> placements ;
+
 	private FeasCheck feasCheck; 
-	private double[] penaltiesFeas;
+	private double[] softFeas;
+	private double[] feasPen; 
+
 	public RepairHeuristics(Instance instance) {
-		this.placements = new ArrayList<Placement>();
 		this.feasCheck = new FeasCheck(instance); 
-
-		/*
-		 *	Order of the penalties
-		 *	0: Feasibility 7*24 hours rest 
-		 *	1: Feasibility 14*24 hours rest 
-		 *	2: Check if overtime over the whole schedule is 0
-		 *	3: Check if the 11 hours between breaks is feasible 
-		 *	4: Check if the number of ATV days is satisfied 
-		 *	5: Quaterly overtime paid out
-		 */
-
-		this.penaltiesFeas = new double[6]; 
-		this.penaltiesFeas[0] = 1000;
-		this.penaltiesFeas[1] = 1000;
-		this.penaltiesFeas[2] = 10000; //more strict
-		this.penaltiesFeas[3] = 1000;
-		this.penaltiesFeas[4] = 10000; //more strict
-		this.penaltiesFeas[5] = 1;
+		this.softFeas = new Penalties().getSoftPenalties();
+		this.feasPen = new Penalties().getFeasPenalties(); 
 	}
 
 	/**
@@ -115,10 +100,12 @@ public class RepairHeuristics {
 			Schedule schedule = solution.getNewSchedule().get(group); 
 			for(int i = request.getWeekday(); i < schedule.getScheduleArray().length; i+=7) {
 				if(solution.getNewSchedule().get(group).getScheduleArray()[i] == 2) {
-					double costOfPlacement = calculateCosts(schedule, i, request); 
-					Placement newPlacement = new Placement(request, new TimeSlot(group,i), costOfPlacement); 
-					request.addPlacement(newPlacement);
-					updatedPlacements.add(newPlacement); 
+					if(checkFeasibility(schedule, i, request)) {
+						double costOfPlacement = calculateCosts(schedule, i, request); 
+						Placement newPlacement = new Placement(request, new TimeSlot(group,i), costOfPlacement); 
+						request.addPlacement(newPlacement);
+						updatedPlacements.add(newPlacement); 
+					}
 				}
 			}
 		}
@@ -148,35 +135,43 @@ public class RepairHeuristics {
 		return updatedPlacements; 
 	}
 
-	
-	public Solution regretRepair2(Solution solution, int q) {
-		
-		while(solution.getRequests().size()==0) {
 
+	public Solution regretRepair2(Solution solution, int q) {
+
+		while(solution.getRequests().size()!=0) {
 			Request mostRegretRequest = null; 
-			double maxRegret = Double.MIN_VALUE; 
+			double maxRegret = - Double.MAX_VALUE; 
 			for(Request request: solution.getRequests()) {
 				List<Placement> placements = request.getPlacements(); 
 				Collections.sort(placements);
 
+				double regret = 0; 
 				if(placements.size() != 0) {
-					double regret = placements.get(q).getCost() - placements.get(0).getCost(); 
+					if(placements.size() == 1 ) {
+						regret = Double.MAX_VALUE; 
+					}else if(placements.size() <=q) {
+						regret = Double.MAX_VALUE/2; 
+					}else {
+						regret = placements.get(q).getCost() - placements.get(0).getCost();	
+					}
+
 					if(regret > maxRegret) {
 						maxRegret = regret; 
 						mostRegretRequest = request; 
 					}
 				}
+
 			}
-			
+
 			if(mostRegretRequest == null) {
 				System.out.println("No more placements possible");
 				break; 
 			}
-			
+
 			Placement bestPlacement = mostRegretRequest.getPlacements().get(0); 
 			solution.addRequest(bestPlacement); //This method also deletes the request placed
 
-			System.out.println("Added: " + bestPlacement.getRequest().toString()); 
+			//System.out.println("Added: " + bestPlacement.getRequest().toString()); 
 
 			deleteInvalidPlacements(bestPlacement, solution); 
 
@@ -196,33 +191,28 @@ public class RepairHeuristics {
 	 * @return
 	 */
 	public Solution greedyRepair(Solution solution){
-		ArrayList<Placement> allPlacements = new ArrayList<Placement>(); 
-
-		for(Request request: solution.getRequests()) {
-			allPlacements.addAll(request.getPlacements()); 
-		}
 
 		while(solution.getRequests().size()!=0) { //until all requests are placed
-			if(allPlacements.size()== 0) {
-				System.out.println("Not all requests satisfied"); 
-				break; 
+
+			Request bestRequest = null; 
+			double minCosts = Double.MAX_VALUE; 
+			for(Request request: solution.getRequests()) {
+				List<Placement> placements = request.getPlacements(); 
+				Collections.sort(placements);
+				if(placements.size()!=0) {
+					if(placements.get(0).getCost() < minCosts) {
+						minCosts = placements.get(0).getCost(); 
+						bestRequest = request; 
+					}
+				}
 			}
 
-			Placement bestPlacement = Collections.max(allPlacements); 
+			Placement bestPlacement = bestRequest.getPlacements().get(0); 
 			solution.addRequest(bestPlacement); //This method also deletes the request placed
 
-			System.out.println("Added: " + bestPlacement.getRequest().toString()); 
+			//System.out.println("Added: " + bestPlacement.getRequest().toString()); 
 
-			Set<Placement> toRemove = new HashSet<Placement>(); 
-			for(Placement placement: allPlacements) {
-				if(placement.getRequest().equals(bestPlacement.getRequest())) {
-					toRemove.add(placement); 
-				}
-				if(placement.getTimeslot().getDay() == bestPlacement.getTimeslot().getDay() && placement.getTimeslot().getGroup().equals(bestPlacement.getTimeslot().getGroup())) {		
-					toRemove.add(placement); 
-				}
-			}
-			allPlacements.removeAll(toRemove); 
+			deleteInvalidPlacements(bestPlacement, solution); 
 
 			for(Request request: solution.getRequests()) {
 				updatePlacements(request, solution, bestPlacement.getTimeslot().getGroup(), bestPlacement.getTimeslot().getDay());
@@ -257,27 +247,31 @@ public class RepairHeuristics {
 	public double calculateCosts(Schedule schedule, int i, Request request) {
 
 		ContractGroup group = schedule.getC(); 
-		double[] newOvertime = schedule.getWeeklyOvertime(); 
+		int[] check = schedule.getScheduleArray().clone();
+		schedule.setWeeklyOvertime(); 
+		double[] curOvertime = schedule.getWeeklyOvertime();  
 		double costOfPlacement = 0;
 
-		int[] check = schedule.getScheduleArray();
+		int[] curSoftPenalties = this.feasCheck.allViolations(check, schedule.getC(), i); 
+
 		check[i] = request.getDutyNumber();
-		boolean[] checkFeasibility = new boolean[5]; //feasibilty7, feasibility14, overTimeFeasible, restTimeFeasible, ATVfeasible
-		checkFeasibility[0] = this.feasCheck.isFeasible7(check, i-7, i+7);
-		checkFeasibility[1] = this.feasCheck.isFeasible14(check, i-14, i+14);
-		checkFeasibility[2] = this.feasCheck.overTimeFeasible(check, request.getGroup());
-		checkFeasibility[3] = this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime());
-		checkFeasibility[4] = this.feasCheck.checkATVDays(check, request.getGroup());
+		costOfPlacement = this.feasCheck.checkATVDays(check, request.getGroup()) ?  this.feasPen[1] :0;
 
-		check[i] = 2; 
-		for(int j =0; j < checkFeasibility.length; j++) {
-			if(checkFeasibility[j] == false) {
-				costOfPlacement += this.penaltiesFeas[j];
-			}
-			costOfPlacement += newOvertime[group.getNr() - 1] - this.feasCheck.QuaterlyOvertime(check, group);
+		double newOverTime[] = this.feasCheck.setWeeklyOvertime(check, group); 
 
+		costOfPlacement += this.feasPen[0]* Math.max( Math.max(newOverTime[i/7] - Math.max(curOvertime[i/7], 0) , 0), 0); 
+
+		int[] softViol = this.feasCheck.allViolations(check, group, i); 
+		for(int j = 0; j<this.softFeas.length; j++) {
+			costOfPlacement += this.softFeas[i]* (softViol[i] - curSoftPenalties[i]); 
 		}
+
 		return costOfPlacement; 
+	}
+
+	public boolean checkFeasibility(Schedule schedule, int i, Request request) {
+		int[] check = schedule.getScheduleArray();
+		return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check); 
 	}
 
 	/**

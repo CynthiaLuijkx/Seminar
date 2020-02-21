@@ -65,28 +65,37 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB() +20;
+		int numberOfDrivers = instance.getLB() +25;
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		instance.setBasicSchedules(mip.getSolution());
 		
-		long phase3Start = System.nanoTime();
-		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
-		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
-		long phase3End = System.nanoTime();
-		System.out.println("Phase 3 runtime: " + (phase3End-phase3Start)/1000000000.0);
-		
+//		long phase3Start = System.nanoTime();
+//		Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
+//		HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+//		long phase3End = System.nanoTime();
+//		System.out.println("Phase 3 runtime: " + (phase3End-phase3Start)/1000000000.0);
+//		
 		int treshold = 0; //bigger than or equal 
-		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
-		List<Schedule> newSchedules = phase4.runILP();
-		new ScheduleVis(newSchedules.get(1).getScheduleArray(), ""+newSchedules.get(0).getC().getNr() , instance);
+//		Phase4 phase4 = new Phase4(getSchedulesAboveTreshold(solution, treshold), instance);
+//		List<Schedule> newSchedules = phase4.runILP();
+//		new ScheduleVis(newSchedules.get(1).getScheduleArray(), ""+newSchedules.get(0).getC().getNr() , instance);
+//		Map<ContractGroup, Schedule> mapSchedules = new HashMap<ContractGroup, Schedule>(); 
+//		for(Schedule schedule: newSchedules) {
+//			mapSchedules.put(schedule.getC(), schedule); 
+//		}
+		
+		Phase3_Constructive conHeur = new Phase3_Constructive(instance, mip.getSolution()); 
+		
 		Map<ContractGroup, Schedule> mapSchedules = new HashMap<ContractGroup, Schedule>(); 
-		for(Schedule schedule: newSchedules) {
+		
+		for(Schedule schedule: conHeur.getSchedule()) {
 			mapSchedules.put(schedule.getC(), schedule); 
 		}
-		int iterations_phase5 = 1; 
+		
+		int iterations_phase5 = 500; 
 		Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, mapSchedules, 0); 
 	}
 
@@ -173,7 +182,7 @@ public class Main
 		scReserve.close();
 
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, fromDutyNrToDuty, contractGroups, 
-				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32);
+				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32, dutyTypes);
 
 	}
 
