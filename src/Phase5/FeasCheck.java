@@ -336,9 +336,9 @@ public class FeasCheck {
 		int[] temp = this.checkSameDuties(schedule);
 		violations[9] = temp[0]; 
 		violations[10] = temp[1];
+		violations[2] = this.maxConsecutive(schedule); 
 		for(int i = 0; i < schedule.length; i+=7) {
 			violations[1] += this.reserveDuties(schedule, i, c);
-			violations[2] += this.maxConsecutive(schedule, i, c);
 			violations[3] += this.maxDuties(schedule, i, c);
 		}
 		int day = 0;
@@ -422,6 +422,38 @@ public class FeasCheck {
 			violations = counter -2;
 		}
 		return violations;
+	}
+	
+	/**
+	 * This method checks the number of violations of 5 consecutive duties for the whole schedule of a contractgroup
+	 * @param schedule 	Whole schedule of a contract group
+	 * @return
+	 */
+	public int maxConsecutive(int[] schedule) {
+		int counter = 0; 
+		int nViolations = 0; 
+
+		int j = 0; 
+		while(true) {
+			if(schedule[j] ==1|| schedule[j] == 2) {
+				break; 
+			}
+			j++;
+		}
+		
+		for(int i = 0; i<schedule.length; i++) {
+			int k = (i+j) % schedule.length; 
+			if(schedule[k]==1 || schedule[k] == 2) {
+				counter = 0; 
+			}else {
+				counter++; 
+			}
+			if(counter>5) {
+				nViolations++; 
+			}
+		}
+		
+		return nViolations; 
 	}
 
 	/**
