@@ -272,7 +272,7 @@ public class PricingProblem_Phase3
 
 		return negRedCostsSchedules;
 	}
-  
+	
 	//NO LONGER USED
 	public Label getLabel(Label prevLabel, DirectedGraphArc<Node, ArcData> curArc, ContractGroup c) {
 		if (!prevLabel.getDuties().get(curArc.getTo().getDayNr()%7).contains(curArc.getTo().getDutyNr())) {
@@ -404,7 +404,6 @@ public class PricingProblem_Phase3
 			} else {
 				start = instance.getFromRDutyNrToRDuty().get(schedule[t]).getStartTime();
 			}
-      
 			//For all days from this day on
 			for (int i = 1; i < 7; i++) {
 				//Only check if this day is an ATV or Rest day
@@ -417,7 +416,6 @@ public class PricingProblem_Phase3
 						consec += 24 * 60 - instance.getFromRDutyNrToRDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					}
 					//The day after
-					
 					//If it's the last day 
 					if (i == 6) {
 						//We only count up until the start of the previous duty, or the new duty if it starts earlier 
@@ -475,15 +473,14 @@ public class PricingProblem_Phase3
 				if ((schedule[(t+i)%schedule.length] == 1 || schedule[(t+i)%schedule.length] == 2) &&
 						(schedule[(t+i-1)%schedule.length] != 1 && schedule[(t+i-1)%schedule.length] != 2)) {
 					int consec = 24 * 60;	
+
 					//The previous day 
 					if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i-1)%schedule.length])) {
 						consec += 24 * 60 - instance.getFromDutyNrToDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					} else {
 						consec += 24 * 60 - instance.getFromRDutyNrToRDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					}
-
-          //The next day 
-					
+					//The next day 
 					//If it's the last day of the period 
 					if (i == 13) {
 						if (schedule[(t+14)%schedule.length] == 1 || schedule[(t+14)%schedule.length] == 2) {
@@ -512,7 +509,6 @@ public class PricingProblem_Phase3
 							}
 						}
 					}
-
 					//If this period is bigger than the required amount per week, count it 
 					if (consec >= this.consecFreeWeekly) {
 						consec14 += consec;
@@ -529,8 +525,8 @@ public class PricingProblem_Phase3
 
 		return false;
 	}
-
-  /**
+	
+	/**
 	 * This method determines the shortest path, moving backwards through the graph from one node to the end. Also tracks costs found along the way 
 	 * @param graph				the directed acyclic graph
 	 * @param from				the starting node
@@ -598,8 +594,8 @@ public class PricingProblem_Phase3
 
 		return distances.get(graph.getNodes().get(to));
 	}
-
-  /**
+	
+	/**
 	 * This method determines the shortest path between two nodes based on either the costs on the arc or the working hours.
 	 * @param graph				the directed acyclic graph
 	 * @param from				the starting node
@@ -735,7 +731,6 @@ public class PricingProblem_Phase3
 					} else {
 						toCreate = instance.getDutiesPerTypeW().get(type);
 					}
-          
 					//For all of these duties
 					for (Duty duty : toCreate) {
 						Node newNode = new Node(t, duty.getNr());
@@ -776,7 +771,7 @@ public class PricingProblem_Phase3
 			// Add the sink
 			Node sink = new Node(instance.getBasicSchedules().get(c).length, 0);
 			newGraph.addNode(sink);
-
+			
 			//Connect all arcs to the sink
 			for (Node prevNode : newGraph.getNodes()) {
 				if (prevNode.getDayNr() == instance.getBasicSchedules().get(c).length - 1) {
@@ -927,7 +922,6 @@ public class PricingProblem_Phase3
 					} else {
 						curArc.getData().setDualCosts(-dualsContractGroup[c.getNr() - 1]);
 					}
-
 				//For all nodes that aren't the source or the sink, and if it's a normal duty 
 				} else if (curArc.getTo().getDayNr() != instance.getBasicSchedules().get(c).length && instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
 					curArc.getData().setDualCosts(-dualsDuties.get(curArc.getTo().getDayNr()%7).get(curArc.getTo().getDutyNr()));
