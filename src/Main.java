@@ -404,7 +404,7 @@ public class Main
 				}
 			}
 			
-			schedules.put(group, new Schedule(group, overtime, schedule));
+			schedules.put(group, new Schedule(group, schedule, overtime));
 		}
 		
 		return schedules;
