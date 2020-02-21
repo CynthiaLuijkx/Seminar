@@ -35,7 +35,7 @@ public class Main
 		int restTwoWeek = 72 * 60;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
-		boolean phase123 = true;
+		boolean phase123 = false;
 		boolean ALNS = true;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
@@ -73,7 +73,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 
-		int numberOfDrivers = instance.getLB()+14;
+		int numberOfDrivers = instance.getLB()+12;
 		instance.setNrDrivers(numberOfDrivers);
 		
 		times[1] = System.nanoTime();
@@ -161,12 +161,27 @@ public class Main
 		
 		System.out.println("----------------------------------------------------------");
 		System.out.println("Nr. of drivers: " + numberOfDrivers);
-		System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
-		System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
-		System.out.println("Phase 1: " + (times[2] - times[1])/1000000000.0);
-		System.out.println("Phase 2: " + (times[3] - times[2])/1000000000.0);
-		System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
-		System.out.println("Phase 4: " + (times[5] - times[4])/1000000000.0);
+		
+		if(ALNS) {
+			System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
+			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
+			System.out.println("Phase 1: " + (times[2] - times[1])/1000000000.0);
+			System.out.println("Phase 2: " + (times[3] - times[2])/1000000000.0);
+			System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
+			System.out.println("Phase 4: " + (times[5] - times[4])/1000000000.0);
+		}
+		else if(!phase123) {
+			System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
+			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
+			System.out.println("Phase 4: " + (times[5] - times[4])/1000000000.0);
+		}
+		else {
+			System.out.println("Total time elapsed: " + (times[4] - times[0])/1000000000.0);
+			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
+			System.out.println("Phase 1: " + (times[2] - times[1])/1000000000.0);
+			System.out.println("Phase 2: " + (times[3] - times[2])/1000000000.0);
+			System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
+		}
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets

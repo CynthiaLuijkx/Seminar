@@ -163,8 +163,9 @@ public class Phase5_ALNS {
 		}
 		System.out.println("end size"+ this.globalBestSol.getRequests().size());
 		for(ContractGroup group: instance.getContractGroups()) {
-			System.out.println("number of drivers of group " +group.getNr()+ " is: " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length);
+			System.out.println("number of drivers of group " +group.getNr()+ " is: " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length/7);
 		}
+		System.out.println("Nr. of request bank: " + this.globalBestSol.getRequests().size());
 		return this.globalBestSol; //return our global solution
 	}
 
