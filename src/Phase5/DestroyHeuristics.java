@@ -381,7 +381,7 @@ public class DestroyHeuristics {
 					newSchedule[((m-7)%solution.getNewSchedule().get(group).getScheduleArray().length)%solution.getNewSchedule().get(group).getScheduleArray().length] = temp[m];
 				 }
 				}
-				Schedule newschedule = new Schedule(group, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group) , newSchedule);
+				Schedule newschedule = new Schedule(group, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group) );
 				if(this.checkFeasibility(newschedule, (index*7))) {
 				
 				 for(int k = 7*index; k <= index*7+6; k++) {

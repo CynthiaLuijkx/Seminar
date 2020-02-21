@@ -9,9 +9,13 @@ public class Schedule implements Cloneable
 	private double[] weeklyOvertime;
 	private static Instance instance; 
 	
-	
-	
 	public Schedule(ContractGroup c, int overTime, int[] schedule) {
+		this.c = c;
+		this.overTime = overTime;
+		this.schedule = schedule;
+	}
+	
+	public Schedule(ContractGroup c, int[] schedule, int overTime) {
 		this.c = c;
 		this.overTime = overTime;
 		this.schedule = schedule;
@@ -126,6 +130,6 @@ public class Schedule implements Cloneable
 	}
 	
 	public Schedule clone() {
-		return new Schedule(this.c, this.overTime, this.schedule.clone()); 
+		return new Schedule(this.c, this.schedule.clone(), this.overTime); 
 	}
 }

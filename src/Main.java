@@ -4,12 +4,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
+import Phase5.Solution;
 import Tools.ContractGroup;
 import Tools.DetermineViolations;
 import Tools.Duty;
@@ -33,6 +35,8 @@ public class Main
 		int restTwoWeek = 72 * 60;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
+		boolean phase123 = true;
+		boolean ALNS = true;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
@@ -54,10 +58,9 @@ public class Main
 
 		//Get all starting information
 		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound);
-
+		Schedule.setInstance(instance);
 		System.out.println("Instance " + depot + " initialised");
-
-
+		
 		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound, violationBound3Days); 
 		System.out.println("Violations Determined"); 
 
@@ -71,66 +74,78 @@ public class Main
 		int numberOfDrivers = instance.getLB()+19;
 		instance.setNrDrivers(numberOfDrivers);
 		
-//		Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
-//		System.out.println("Done");
-		
-//		Map<ContractGroup, String[]> schedules = readBasicSchedule(depot, numberOfDrivers, instance.getContractGroups());
-//		instance.setBasicSchedules(schedules);		
-		
-		Phase1_Penalties penalties = new Phase1_Penalties();
-		Set<Schedule> schedules = new HashSet<>();
-		int iteration = 0;
-		int maxIt = 5;
-		boolean scheduleForEveryGroup = false;
-		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
-		mip.solve();
-		if (mip.isFeasible()) {
-			//int nsol = mip.populate(maxIt); //When using populate
-			int nsol = 1; //When not using populate 
-			while (scheduleForEveryGroup == false && iteration < nsol) {
-				mip.makeSolution(iteration); 
-				instance.setBasicSchedules(mip.getSolution());
-				
-				for(ContractGroup c : instance.getContractGroups()) {
-					new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr());
-				}
-
-				long phase3Start = System.nanoTime();
-				Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
-				HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
-				long phase3End = System.nanoTime();
-				System.out.println("Phase 3 runtime: " + (phase3End - phase3Start) / 1000000000.0);
-
-				int treshold = 0; // bigger than or equal
-				schedules = getSchedulesAboveTreshold(solution, treshold);
-				scheduleForEveryGroup = true;
-				for (ContractGroup c : instance.getContractGroups()) {
-					int included = 0;
-					for (Schedule schedule : schedules) {
-						if(schedule.getC() == c) {
-							included++;
+		if (phase123) {
+			Phase1_Penalties penalties = new Phase1_Penalties();
+			Set<Schedule> schedules = new HashSet<>();
+			int iteration = 0;
+			int maxIt = 5;
+			boolean scheduleForEveryGroup = false;
+			MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
+			mip.solve();
+			if (mip.isFeasible()) {
+				//int nsol = mip.populate(maxIt); //When using populate
+				int nsol = 1; //When not using populate 
+				while (scheduleForEveryGroup == false && iteration < nsol) {
+					mip.makeSolution(iteration); 
+					instance.setBasicSchedules(mip.getSolution());
+					
+					for(ContractGroup c : instance.getContractGroups()) {
+						new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr());
+					}
+	
+					long phase3Start = System.nanoTime();
+					Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
+					HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+					long phase3End = System.nanoTime();
+					System.out.println("Phase 3 runtime: " + (phase3End - phase3Start) / 1000000000.0);
+	
+					int treshold = 0; // bigger than or equal
+					schedules = getSchedulesAboveTreshold(solution, treshold);
+					scheduleForEveryGroup = true;
+					for (ContractGroup c : instance.getContractGroups()) {
+						int included = 0;
+						for (Schedule schedule : schedules) {
+							if(schedule.getC() == c) {
+								included++;
+							}
+						}
+						if(included < 1) {
+							scheduleForEveryGroup = false;
 						}
 					}
-					if(included < 1) {
-						scheduleForEveryGroup = false;
+					iteration++;
+				}
+				
+				if(iteration == maxIt || schedules.size() == 0) {
+					System.out.println("No feasible schedules found on all " + maxIt + " basic schedules");
+				}
+				else {
+					Phase4 phase4 = new Phase4(schedules, instance);
+					List<Schedule> newSchedules = phase4.runILP();
+					for(Schedule schedule : newSchedules) {
+						new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance);
+						printSchedule(schedule, depot, numberOfDrivers, schedule.getC().getNr());
 					}
 				}
-				iteration++;
+			} else {
+				System.out.println("Basic schedule cannot be made.");
 			}
+		}
+		
+		if (ALNS) {
+			Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
+			Iterator<ContractGroup> iter = schedules.keySet().iterator(); 
+			ContractGroup group = iter.next(); 
+			ContractGroup group2 = iter.next(); 
 			
-			if(iteration == maxIt || schedules.size() == 0) {
-				System.out.println("No feasible schedules found on all " + maxIt + " basic schedules");
-			}
-			else {
-				Phase4 phase4 = new Phase4(schedules, instance);
-				List<Schedule> newSchedules = phase4.runILP();
-				for(Schedule schedule : newSchedules) {
-					new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance);
-					printSchedule(schedule, depot, numberOfDrivers, schedule.getC().getNr());
-				}
-			}
-		} else {
-			System.out.println("Basic schedule cannot be made.");
+			new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance);
+			new ScheduleVis(schedules.get(group2).getScheduleArray(), "" + group2.getNr() + "before", instance);
+			int iterations_phase5 = 100; 
+			Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, 0); 
+			Solution solutionALNS = alns.executeBasic(schedules);
+			System.out.println(solutionALNS.getObj());
+			new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance);
+			new ScheduleVis(solutionALNS.getNewSchedule().get(group2).getScheduleArray(), "" + group2.getNr() + "after", instance);
 		}
 	}
 
@@ -404,7 +419,7 @@ public class Main
 				}
 			}
 			
-			schedules.put(group, new Schedule(group, overtime, schedule));
+			schedules.put(group, new Schedule(group, schedule, overtime));
 		}
 		
 		return schedules;
