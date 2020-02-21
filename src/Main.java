@@ -1,8 +1,12 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -16,11 +20,11 @@ import Tools.ScheduleVis;
 import Tools.Violation;
 import ilog.concert.IloException;
 
-import java.util.Locale;
-
 public class Main 
 {
-	public static void main(String[] args) throws FileNotFoundException, IloException {
+	private static Scanner sc;
+
+	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
@@ -63,10 +67,16 @@ public class Main
 
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
-		
+
 		int numberOfDrivers = instance.getLB()+19;
 		instance.setNrDrivers(numberOfDrivers);
-
+		
+//		Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
+//		System.out.println("Done");
+		
+//		Map<ContractGroup, String[]> schedules = readBasicSchedule(depot, numberOfDrivers, instance.getContractGroups());
+//		instance.setBasicSchedules(schedules);		
+		
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		Set<Schedule> schedules = new HashSet<>();
 		int iteration = 0;
@@ -116,13 +126,12 @@ public class Main
 				List<Schedule> newSchedules = phase4.runILP();
 				for(Schedule schedule : newSchedules) {
 					new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance);
+					printSchedule(schedule, depot, numberOfDrivers, schedule.getC().getNr());
 				}
 			}
 		} else {
 			System.out.println("Basic schedule cannot be made.");
 		}
-		
-
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
@@ -358,5 +367,70 @@ public class Main
 			}
 		}
 		return output;
+	}
+	
+	public static void printSchedule(Schedule schedule, String depot, int nDrivers, int contractGroupNr) throws IOException {
+		FileWriter writer = new FileWriter("Schedule_" + depot + "_" + nDrivers + "_" + contractGroupNr + ".txt");
+		
+		writer.write(String.valueOf(contractGroupNr));
+		writer.write(System.getProperty("line.separator"));
+		writer.write(String.valueOf(schedule.getOvertime()));
+		writer.write(System.getProperty("line.separator"));
+		writer.write(String.valueOf(schedule.getSchedule().length));
+		for (int i = 0; i < schedule.getSchedule().length; i++) {
+			writer.write(System.getProperty("line.separator"));
+			writer.write(String.valueOf(schedule.getSchedule()[i]));
+		}
+		
+		writer.close();
+	}
+	
+	public static Map<ContractGroup, Schedule> readSchedules(String depot, int nDrivers, Set<ContractGroup> groups) throws FileNotFoundException {
+		Map<ContractGroup, Schedule> schedules = new HashMap<>();
+		
+		for (int c = 1; c <= groups.size(); c++) {
+			sc = new Scanner(new File("Schedule_" + depot + "_" + nDrivers + "_" + c + ".txt"));
+			int contractGroupNr = sc.nextInt();
+			int overtime = sc.nextInt();
+			int[] schedule = new int[sc.nextInt()];
+			for (int i = 0; i < schedule.length; i++) {
+				schedule[i] = sc.nextInt();
+			}
+			
+			ContractGroup group = null;
+			for (ContractGroup temp : groups) {
+				if (temp.getNr() == contractGroupNr) {
+					group = temp;
+				}
+			}
+			
+			schedules.put(group, new Schedule(group, overtime, schedule));
+		}
+		
+		return schedules;
+	}
+	
+	public static Map<ContractGroup, String[]> readBasicSchedule(String depot, int nDrivers, Set<ContractGroup> groups) throws FileNotFoundException {
+		Map<ContractGroup, String[]> schedules = new HashMap<>();
+		
+		for (int c = 1; c <= groups.size(); c++) {
+			sc = new Scanner(new File("BS_" + depot + "_" + nDrivers + "_" + c + ".txt"));
+			int contractGroupNr = sc.nextInt();
+			String[] schedule = new String[sc.nextInt()];
+			for (int i = 0; i < schedule.length; i++) {
+				schedule[i] = sc.next();
+			}
+			
+			ContractGroup group = null;
+			for (ContractGroup temp : groups) {
+				if (temp.getNr() == contractGroupNr) {
+					group = temp;
+				}
+			}
+			
+			schedules.put(group, schedule);
+		}
+		
+		return schedules;
 	}
 }

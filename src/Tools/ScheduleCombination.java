@@ -82,5 +82,4 @@ public class ScheduleCombination {
 	public Instance getInstance() {
 		return instance;
 	}
-	
 }

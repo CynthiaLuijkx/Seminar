@@ -6,16 +6,15 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import Tools.ArcData;
+import Phase3.ArcData;
+import Phase3.DirectedGraph;
+import Phase3.DirectedGraphArc;
+import Phase3.Node;
+import Phase3.Path;
+import Phase3.Pulse;
 import Tools.ContractGroup;
-import Tools.DirectedGraph;
-import Tools.DirectedGraphArc;
 import Tools.Duty;
 import Tools.Instance;
-import Tools.Label;
-import Tools.Node;
-import Tools.Path;
-import Tools.Pulse;
 import Tools.ReserveDutyType;
 import Tools.Schedule;
 
@@ -25,19 +24,19 @@ public class PricingProblem_Phase3
 	private final int minBreakBetweenShifts;
 	private final int consecFreeWeekly;
 	private final int freeTwoWeeks;
-	
+
 	private HashMap<ContractGroup, DirectedGraph<Node, ArcData>> graphs;
 	private HashMap<ContractGroup, List<Double>> overtimeSP;
 	private HashMap<ContractGroup, List<Double>> redCostsSP;
-	
+
 	private Set<Schedule> finalSchedules;
-	
+
 	private int maxSchedules = 1;
-	
+
 	private long startTime;
-	
+
 	private Random random;
-	
+
 	public PricingProblem_Phase3(Instance instance, int minBreakBetweenShifts, int consecWeek, int twoWeek) {
 		this.instance = instance;
 		this.minBreakBetweenShifts = minBreakBetweenShifts;
@@ -46,7 +45,7 @@ public class PricingProblem_Phase3
 		initGraphs();
 		this.random = new Random(1000); //set a random seed 
 	}
-	
+
 	/**
 	 * This method executes the pulsing algorithm to find negative reduced costs schedules.
 	 * @return				negative reduced costs schedules
@@ -64,12 +63,12 @@ public class PricingProblem_Phase3
 			}
 			redCostsSP.put(c, redCosts);
 		}
-		
+
 		for (ContractGroup c : instance.getContractGroups()) {			
 			//Initialisation
 			List<Set<Integer>> initDuties = new ArrayList<>();
 			this.startTime = System.nanoTime();
-			
+
 			finalSchedules = new HashSet<>();
 			for (int i = 0; i < 7; i++) {
 				initDuties.add(new HashSet<>());
@@ -119,40 +118,12 @@ public class PricingProblem_Phase3
 					}
 			}
 			
-			/*
-			// Execute the recursive pulse algorithm
-			for (DirectedGraphArc<Node, ArcData> outArc : graphs.get(c).getOutArcs(cur)) {
-				pulse(graphs.get(c), c, outArc, initPulse);
-				for (Schedule sched : finalSchedules) {
-					toAdd.add(sched);
-				}
-				finalSchedules = new HashSet<>();
-			}*/
-			
-
-//			Node cur = graphs.get(c).getNodes().get(0);
-//			while (graphs.get(c).getOutArcs(cur).size() == 1) {
-//				DirectedGraphArc<Node, ArcData> curArc = graphs.get(c).getOutArcs(cur).get(0);
-//				List<Set<Integer>> newDuties = new ArrayList<>();
-//				int[] schedule = this.copyIntArray(initPulse.getSchedule());
-//				schedule[curArc.getTo().getDayNr()] = curArc.getTo().getDutyNr();
-//				for (int i = 0; i < 7; i++) {
-//					newDuties.add(this.copySet(initPulse.getDuties().get(i)));
-//				}
-//				if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
-//					newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
-//				}
-//				initPulse = new Pulse(initPulse.getRedCosts() + curArc.getData().getDualCosts(), initPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
-//						schedule, newDuties, initPulse);
-//				cur = curArc.getTo();
-//			}
-			
 			negRedCostsSchedules.put(c, toAdd);
 		}
-		
+
 		return negRedCostsSchedules;
 	}
-	
+
 	/**
 	 * Recursive method for the pulsing algorithm: it decides whether the extension over the arc is possible and used pruning by feasibility and bound
 	 * to terminate pulses.
@@ -179,7 +150,6 @@ public class PricingProblem_Phase3
 					
 					// Check whether the overtime will not exceed using basic SP
 					if (curPulse.getTotMinWorked() + curArc.getData().getPaidMin() + this.overtimeSP.get(c).get(graph.getNodes().indexOf(curArc.getTo())) <= maxMin) {
-						
 						// Check whether the reduced cost will be negative using the basic SP 
 						if (curPulse.getRedCosts() + curArc.getData().getDualCosts() + this.redCostsSP.get(c).get(graph.getNodes().indexOf(curArc.getTo())) < 0) {
 							
@@ -189,7 +159,7 @@ public class PricingProblem_Phase3
 								
 								// Check whether the reduced costs will be negative using the advanced SP
 								SP = this.shortestPath(graph, graph.getNodes().indexOf(curArc.getTo()), graph.getNumberOfNodes()-1, true, curPulse.getDuties());
-								if (SP != null && (curPulse.getRedCosts() + curArc.getData().getDualCosts() + SP.getCosts()) < 0) {
+								if (SP != null && (curPulse.getRedCosts() + curArc.getData().getDualCosts() + SP.getCosts()) < -0.000001) {
 									List<Set<Integer>> newDuties = new ArrayList<>();
 									for (int i = 0; i < 7; i++) {
 										newDuties.add(this.copySet(curPulse.getDuties().get(i)));
@@ -200,13 +170,6 @@ public class PricingProblem_Phase3
 									Pulse newPulse = new Pulse(curPulse.getRedCosts() + curArc.getData().getDualCosts(), curPulse.getTotMinWorked() + curArc.getData().getPaidMin(), 
 											schedule, newDuties, curPulse);
 									// If final node, store the pulse that is (potentially) feasible
-//									for (DirectedGraphArc<Node, ArcData> outArc : graph.getOutArcs(curArc.getTo())) {
-//										if (!newPulse.getDuties().get(outArc.getTo().getDayNr()%7).contains(outArc.getTo().getDutyNr())) {
-//											this.pulse(graph, c, outArc, newPulse);
-//										}
-//									}
-									
-									
 									//Pick a random arc to extend the pulse from 
 									Set<DirectedGraphArc<Node, ArcData>> evaluated = new HashSet<>();
 									int nArcs = graph.getOutArcs(curArc.getTo()).size();
@@ -246,136 +209,6 @@ public class PricingProblem_Phase3
 		}
 	}
 	
-	//NO LONGER USED 
-	public Map<ContractGroup, Set<Schedule>> executeLabelling() {
-		Map<ContractGroup, Set<Schedule>> negRedCostsSchedules = new HashMap<ContractGroup, Set<Schedule>>();
-		
-		for (ContractGroup c : instance.getContractGroups()) {
-			Map<Node, Set<Label>> labelMap = new HashMap<>();
-			
-			// Initialise the label at the source: node with index 0
-			Set<Label> labels = new HashSet<>();
-			List<Set<Integer>> duties = new ArrayList<>();
-			for (int i = 0; i < 7; i++) { duties.add(new HashSet<>()); }
-			labels.add(new Label(0, 0, new int[instance.getBasicSchedules().get(c).length], duties));
-			labelMap.put(graphs.get(c).getNodes().get(0), labels);
-			
-			// Execute labelling for all other nodes
-			for (int i = 0; i < graphs.get(c).getNumberOfNodes() - 1; i++) {
-				Node curNode = graphs.get(c).getNodes().get(i);
-				for (DirectedGraphArc<Node, ArcData> curArc : graphs.get(c).getOutArcs(curNode)) {
-					if (!labelMap.containsKey(curArc.getTo())) {
-						labelMap.put(curArc.getTo(), new HashSet<Label>());
-					}
-					for (Label prevLabel : labelMap.get(curNode)) {
-						// Construct the label if its feasible
-						Label newLabel = this.getLabel(prevLabel, curArc, c);
-						if (newLabel != null) {
-							labelMap.get(curArc.getTo()).add(newLabel);
-						}
-					}
-				}
-				System.out.println("Node " + curNode + " forwarded");
-				labelMap.remove(curNode);
-			}
-//			for (int i = 1; i < graphs.get(c).getNumberOfNodes(); i++) {
-//				labels = new HashSet<>();
-//				Node curNode = graphs.get(c).getNodes().get(i);
-//				for (DirectedGraphArc<Node, ArcData> curArc : graphs.get(c).getInArcs(curNode)) {
-//					for (Label prevLabel : labelMap.get(curArc.getFrom())) {
-//						// Construct the label if its feasible
-//						Label newLabel = this.getLabel(prevLabel, curArc, c);
-//						if (newLabel != null) {
-//							labels.add(newLabel);
-//						}
-//					}
-//				}
-//				labelMap.put(curNode, labels);
-//			}
-			// For all labels at the sink with negative reduced costs, check 7x24 and 14x24 constraints from end to start and tot hours
-			Set<Schedule> schedules = new HashSet<>();
-			Node sink = graphs.get(c).getNodes().get(graphs.get(c).getNumberOfNodes() - 1);
-			for (Label curLabel : labelMap.get(sink)) {
-				if (curLabel.getRedCosts() < 0) {
-					int overtime = this.isFeasibleSchedule(curLabel.getSchedule(), c);
-					if (overtime != Integer.MAX_VALUE) {
-						schedules.add(new Schedule(c, overtime, curLabel.getSchedule()));
-					}
-				}
-			}
-			negRedCostsSchedules.put(c, schedules);
-		}
-		
-		return negRedCostsSchedules;
-	}
-	
-	//NO LONGER USED
-	public Label getLabel(Label prevLabel, DirectedGraphArc<Node, ArcData> curArc, ContractGroup c) {
-		if (!prevLabel.getDuties().get(curArc.getTo().getDayNr()%7).contains(curArc.getTo().getDutyNr())) {
-			int[] schedule = this.copyIntArray(prevLabel.getSchedule());
-			schedule[curArc.getTo().getDayNr()] = curArc.getTo().getDutyNr();
-			
-			if (curArc.getTo().getDayNr() >= 7) {
-				/*
-				 * For a schedule to be feasible:
-				 * 			- at least one period of 32 hours free in the past 7x24 hours
-				 * 			- at least 72 hours free in the past 14x24 hours of which at least 32 hours per period free
-				 */
-				
-				if (!this.isFeasible7(schedule, curArc.getTo().getDayNr() - 7)) {
-					return null;
-				}
-				
-				if (curArc.getTo().getDayNr() >= 14) {
-					if (!this.isFeasible14(schedule, curArc.getTo().getDayNr() - 7)) {
-						return null;
-					}
-				}
-			}
-			
-//			if (prevLabel.getTotMinWorked() + curArc.getData().getData(false) + this.shortestPath(graphs.get(c), 
-//					graphs.get(c).getNodes().indexOf(curArc.getFrom()), graphs.get(c).getNodes().indexOf(curArc.getTo()), false, prevLabel.getDuties()).getCosts() > 
-//					c.getAvgDaysPerWeek() * c.getAvgHoursPerDay() * 60 * instance.getBasicSchedules().get(c).length / 7) {
-//				return null;
-//			}
-//			if (prevLabel.getRedCosts() + curArc.getData().getData(true) + this.shortestPath(graphs.get(c), 
-//					graphs.get(c).getNodes().indexOf(curArc.getFrom()), graphs.get(c).getNodes().indexOf(curArc.getTo()), true, prevLabel.getDuties()).getCosts() > 
-//					0) {
-//				return null;
-//			}
-			
-			if (curArc.getTo().getDayNr() % 7 == 6) {
-				int totMin = 0;
-				for (int i = 0; i < 7; i++) {
-					if (schedule[curArc.getTo().getDayNr() - i] == 1 || instance.getFromRDutyNrToRDuty().containsKey(schedule[curArc.getTo().getDayNr() - i])) {
-						totMin += c.getAvgHoursPerDay() * 60;
-					} else if (instance.getFromDutyNrToDuty().containsKey(schedule[curArc.getTo().getDayNr() - i])) {
-						totMin += instance.getFromDutyNrToDuty().get(schedule[curArc.getTo().getDayNr() - i]).getPaidMin();
-					}
-				}
-				List<Set<Integer>> newDuties = new ArrayList<>();
-				for (int i = 0; i < 7; i++) {
-					newDuties.add(this.copySet(prevLabel.getDuties().get(i)));
-				}
-				if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
-					newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
-				}
-				return new Label(prevLabel.getRedCosts() + curArc.getData().getDualCosts(), prevLabel.getTotMinWorked() + totMin, schedule, newDuties);
-			} else {
-				List<Set<Integer>> newDuties = new ArrayList<>();
-				for (int i = 0; i < 7; i++) {
-					newDuties.add(this.copySet(prevLabel.getDuties().get(i)));
-				}
-				if (instance.getFromDutyNrToDuty().containsKey(curArc.getTo().getDutyNr())) {
-					newDuties.get(curArc.getTo().getDayNr()%7).add(curArc.getTo().getDutyNr());
-				}
-				return new Label(prevLabel.getRedCosts() + curArc.getData().getDualCosts(), prevLabel.getTotMinWorked(), schedule, newDuties);
-			}
-		} else {
-			return null;
-		}
-	}
-	
 	/**
 	 * This method returns whether a schedule is feasible from the end to the start of the schedule.
 	 * @param label					the label of the schedule of consideration
@@ -390,7 +223,6 @@ public class PricingProblem_Phase3
 				return Integer.MAX_VALUE;
 			}
 		}
-		
 		//Count the hours per week 
 		int[] weeklyHours = new int[instance.getBasicSchedules().get(c).length / 7];
 		for (int i = 0; i < weeklyHours.length; i++) {
@@ -419,13 +251,13 @@ public class PricingProblem_Phase3
 			for (int j = 0; j < 13; j++) {
 				totMin = weeklyHours[(i+j)%weeklyHours.length];
 			}
-			
+
 			totOvertime += Math.max(0, totMin - 13 * c.getAvgDaysPerWeek() * c.getAvgHoursPerDay() * 60);
 		}
-		
+
 		return totOvertime;
 	}
-	
+
 	/**
 	 * This method tests whether the 7x24 hour constraint is satisfied starting at day t
 	 * @param schedule			the schedule
@@ -441,22 +273,18 @@ public class PricingProblem_Phase3
 			} else {
 				start = instance.getFromRDutyNrToRDuty().get(schedule[t]).getStartTime();
 			}
-			
 			//For all days from this day on
 			for (int i = 1; i < 7; i++) {
 				//Only check if this day is an ATV or Rest day
 				if (schedule[(t+i)%schedule.length] == 1 || schedule[(t+i)%schedule.length] == 2) {
 					int consec = 24 * 60;
-					
 					//Check the day before 
 					if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i-1)%schedule.length])) {//Normal duty
 						consec += 24 * 60 - instance.getFromDutyNrToDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					} else {//Reserve duty
 						consec += 24 * 60 - instance.getFromRDutyNrToRDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					}
-					
 					//The day after
-					
 					//If it's the last day 
 					if (i == 6) {
 						//We only count up until the start of the previous duty, or the new duty if it starts earlier 
@@ -478,7 +306,7 @@ public class PricingProblem_Phase3
 							consec += instance.getFromRDutyNrToRDuty().get(schedule[(t+i+1)%schedule.length]).getStartTime();
 						}
 					}
-					
+
 					if (consec >= this.consecFreeWeekly) {
 						return true;
 					}
@@ -487,10 +315,10 @@ public class PricingProblem_Phase3
 		} else {
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * This method tests whether the 14x24 hour constraint is satisfied starting at day t
 	 * @param schedule			the schedule
@@ -507,24 +335,21 @@ public class PricingProblem_Phase3
 			} else {
 				start = instance.getFromRDutyNrToRDuty().get(schedule[t]).getStartTime();
 			}
-			
+
 			int consec14 = 0;
-			
 			//Count onwards 
 			for (int i = 1; i < 14; i++) {
 				if ((schedule[(t+i)%schedule.length] == 1 || schedule[(t+i)%schedule.length] == 2) &&
 						(schedule[(t+i-1)%schedule.length] != 1 && schedule[(t+i-1)%schedule.length] != 2)) {
-					int consec = 24 * 60;
-					
+					int consec = 24 * 60;	
+
 					//The previous day 
 					if (instance.getFromDutyNrToDuty().containsKey(schedule[(t+i-1)%schedule.length])) {
 						consec += 24 * 60 - instance.getFromDutyNrToDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					} else {
 						consec += 24 * 60 - instance.getFromRDutyNrToRDuty().get(schedule[(t+i-1)%schedule.length]).getEndTime();
 					}
-					
 					//The next day 
-					
 					//If it's the last day of the period 
 					if (i == 13) {
 						if (schedule[(t+14)%schedule.length] == 1 || schedule[(t+14)%schedule.length] == 2) {
@@ -553,12 +378,11 @@ public class PricingProblem_Phase3
 							}
 						}
 					}
-					
 					//If this period is bigger than the required amount per week, count it 
 					if (consec >= this.consecFreeWeekly) {
 						consec14 += consec;
 					}
-					
+
 					if (consec14 >= this.freeTwoWeeks) {
 						return true;
 					}
@@ -567,7 +391,7 @@ public class PricingProblem_Phase3
 		} else {
 			return true;
 		}
-		
+
 		return false;
 	}
 	
@@ -581,12 +405,12 @@ public class PricingProblem_Phase3
 	 */
 	public Map<Node, Path> shortestPathBackward(DirectedGraph<Node, ArcData> graph, int from, int to, boolean costs) {
 		Map<Node, Path> distances = new HashMap<>();
-		
+
 		// Initialise for the from node
 		List<Node> initPath = new ArrayList<>();
 		initPath.add(graph.getNodes().get(from));
 		distances.put(graph.getNodes().get(from), new Path(0, initPath));
-		
+
 		// For all nodes, starting from the from node, update the paths
 		for (int i = from; i >= to; i--) {
 			for (DirectedGraphArc<Node, ArcData> inArc : graph.getInArcs(graph.getNodes().get(i))) {
@@ -601,10 +425,10 @@ public class PricingProblem_Phase3
 				}
 			}
 		}
-		
+
 		return distances;
 	}
-	
+
 	/**
 	 * This method determines the shortest path between two nodes based on either the costs on the arc or the working hours.
 	 * @param graph				the directed acyclic graph
@@ -615,12 +439,12 @@ public class PricingProblem_Phase3
 	 */
 	public Path shortestPath(DirectedGraph<Node, ArcData> graph, int from, int to, boolean costs) {
 		Map<Node, Path> distances = new HashMap<>();
-		
+
 		// Initialise for the from node
 		List<Node> initPath = new ArrayList<>();
 		initPath.add(graph.getNodes().get(from));
 		distances.put(graph.getNodes().get(from), new Path(0, initPath));
-		
+
 		// For all nodes, starting from the from node, update the paths
 		for (int i = from; i < to; i++) {
 			for (DirectedGraphArc<Node, ArcData> outArc : graph.getOutArcs(graph.getNodes().get(i))) {
@@ -636,10 +460,9 @@ public class PricingProblem_Phase3
 				}
 			}
 		}
-		
+
 		return distances.get(graph.getNodes().get(to));
 	}
-	
 	
 	/**
 	 * This method determines the shortest path between two nodes based on either the costs on the arc or the working hours.
@@ -652,12 +475,12 @@ public class PricingProblem_Phase3
 	 */
 	public Path shortestPath(DirectedGraph<Node, ArcData> graph, int from, int to, boolean costs, List<Set<Integer>> forbidden) {
 		Map<Node, Path> distances = new HashMap<>();
-		
+
 		// Initialise for the from node
 		List<Node> initPath = new ArrayList<>();
 		initPath.add(graph.getNodes().get(from));
 		distances.put(graph.getNodes().get(from), new Path(0, initPath));
-		
+
 		// For all nodes, starting from the from node, update the paths
 		for (int i = from; i < to; i++) {
 			for (DirectedGraphArc<Node, ArcData> outArc : graph.getOutArcs(graph.getNodes().get(i))) {
@@ -676,10 +499,10 @@ public class PricingProblem_Phase3
 				}
 			}
 		}
-		
+
 		return distances.get(graph.getNodes().get(to));
 	}
-	
+
 	/**
 	 * This method creates the graphs for the contract groups.
 	 */
@@ -687,14 +510,14 @@ public class PricingProblem_Phase3
 		this.graphs = new HashMap<ContractGroup, DirectedGraph<Node, ArcData>>();
 		this.overtimeSP = new HashMap<ContractGroup, List<Double>>();
 		int minPerDay = 24 * 60;
-		
+
 		// Initialise the graphs for each contract group
 		for (ContractGroup c : instance.getContractGroups()) {
 			DirectedGraph<Node, ArcData> newGraph = new DirectedGraph<>();
-			
+
 			Node source = new Node(-1, -1);
 			newGraph.addNode(source);
-			
+
 			/*
 			 * For each day in the time horizon of the basic schedule for contract group c
 			 * 			Add all required nodes to the graph
@@ -708,7 +531,7 @@ public class PricingProblem_Phase3
 				if (type.equals("ATV")) {
 					Node newNode = new Node(t, 1); //ATV days get duty number 1 
 					newGraph.addNode(newNode);
-					
+
 					// All nodes on the day before an ATV day should get an arc as always feasible, duty duration equals the average length of a shift
 					for (Node prevNode : newGraph.getNodes()) {
 						if (prevNode.getDayNr() == t - 1) {
@@ -720,7 +543,7 @@ public class PricingProblem_Phase3
 				else if (type.equals("Rest")) {
 					Node newNode = new Node(t, 2); //Rest days get duty number 2
 					newGraph.addNode(newNode);
-					
+
 					// All nodes on the day before a rest day should get an arc as always feasible, no working hours
 					for (Node prevNode : newGraph.getNodes()) {
 						if (prevNode.getDayNr() == t - 1) {
@@ -732,7 +555,7 @@ public class PricingProblem_Phase3
 				else if (type.substring(0, 1).equals("R")) {
 					Node newNode = new Node(t, this.getReserveDutyType(type.substring(1), t).getNr());
 					newGraph.addNode(newNode);
-					
+
 					for (Node prevNode : newGraph.getNodes()) {
 						//If we come from the source
 						if (prevNode.equals(source) && t == 0) {
@@ -777,12 +600,11 @@ public class PricingProblem_Phase3
 					} else {
 						toCreate = instance.getDutiesPerTypeW().get(type);
 					}
-					
 					//For all of these duties
 					for (Duty duty : toCreate) {
 						Node newNode = new Node(t, duty.getNr());
 						newGraph.addNode(newNode);
-						
+
 						for (Node prevNode : newGraph.getNodes()) {
 							//From source
 							if (prevNode.equals(source) && t == 0) {
@@ -814,7 +636,7 @@ public class PricingProblem_Phase3
 					}
 				}
 			}
-			
+
 			// Add the sink
 			Node sink = new Node(instance.getBasicSchedules().get(c).length, 0);
 			newGraph.addNode(sink);
@@ -825,33 +647,34 @@ public class PricingProblem_Phase3
 					newGraph.addArc(prevNode, sink, new ArcData(0, 0));
 				}
 			}
-			
+
 			System.out.println(c);
 			System.out.println("Number of Nodes: " + newGraph.getNumberOfNodes());
 			System.out.println("Number of Arcs: " + newGraph.getNumberOfArcs());
-			
+
 			this.removeNodes(newGraph, c, source, sink);
-			
+
 			System.out.println("Remove 'loose' Nodes:");
 			System.out.println("Number of Nodes: " + newGraph.getNumberOfNodes());
 			System.out.println("Number of Arcs: " + newGraph.getNumberOfArcs());
-			
-//			this.shrinkGraphShortestPath(newGraph, c);
-//			
-//			System.out.println("Shortest Path Node and Arc Removal: ");
-//			System.out.println("Number of Nodes: " + newGraph.getNumberOfNodes());
-//			System.out.println("Number of Arcs: " + newGraph.getNumberOfArcs());
-			
+
+			//			this.shrinkGraphShortestPath(newGraph, c);
+			//			
+			//			System.out.println("Shortest Path Node and Arc Removal: ");
+			//			System.out.println("Number of Nodes: " + newGraph.getNumberOfNodes());
+			//			System.out.println("Number of Arcs: " + newGraph.getNumberOfArcs());
+
 			graphs.put(c, newGraph);
-			
+
+			Map<Node, Path> distances = this.shortestPathBackward(graphs.get(c), graphs.get(c).getNumberOfNodes()-1, 0, false);
 			List<Double> overtimes = new ArrayList<>();
-			for (int i = 0; i < newGraph.getNumberOfNodes(); i++) {
-				overtimes.add(this.shortestPath(newGraph, i, newGraph.getNumberOfNodes()-1, false).getCosts());
+			for (int i = 0; i < graphs.get(c).getNumberOfNodes(); i++) {
+				overtimes.add(distances.get(graphs.get(c).getNodes().get(i)).getCosts());
 			}
 			overtimeSP.put(c, overtimes);
 		}
 	}
-	
+
 	/**
 	 * This method checks if nodes or arcs can be removed based on the overtime shortest path.
 	 * @param graph				the graph
@@ -859,28 +682,28 @@ public class PricingProblem_Phase3
 	 */
 	public void shrinkGraphShortestPath(DirectedGraph<Node, ArcData> graph, ContractGroup c) {
 		boolean check = true;
-		
+
 		double maxMin = c.getAvgHoursPerDay() * 60 * c.getAvgDaysPerWeek() * instance.getBasicSchedules().get(c).length/7;
-		
+
 		while (check) {
 			check = false;
-			
+
 			Set<Node> toRemoveNodes = new HashSet<>();
 			// Check if a node can be removed based on shortest paths
 			for (int i = 1; i < graph.getNumberOfNodes() - 1; i++) {
 				Path toPath = this.shortestPath(graph, 0, i, false);
 				Path fromPath = this.shortestPath(graph, i, graph.getNumberOfNodes() - 1, false);
-				
+
 				if (toPath.getCosts() + fromPath.getCosts() > maxMin) {
 					toRemoveNodes.add(graph.getNodes().get(i));
 					check = true;
 				}
 			}
-			
+
 			for (Node remove : toRemoveNodes) {
 				graph.removeNode(remove);
 			}
-			
+
 			Set<DirectedGraphArc<Node, ArcData>> toRemoveArcs = new HashSet<>();
 			// Check if an arc can be removed based on shortest paths
 			for (int i = 1; i < instance.getBasicSchedules().get(c).length - 1; i++) {
@@ -893,13 +716,13 @@ public class PricingProblem_Phase3
 					}
 				}
 			}
-			
+
 			for (DirectedGraphArc<Node, ArcData> remove : toRemoveArcs) {
 				graph.removeArc(remove);
 			}
 		}
 	}
-	
+
 	/**
 	 * This method removes 'loose' nodes (i.e. nodes that have no in or out degree and that are not the source or sink) from the graph 
 	 * and the corresponding arcs. 
@@ -928,7 +751,7 @@ public class PricingProblem_Phase3
 			}
 		}
 	}
-	
+
 	/**
 	 * This method returns the reserve duty type to be considered for a certain day number and duty type
 	 * @param type				the duty type
@@ -956,7 +779,7 @@ public class PricingProblem_Phase3
 
 		throw new IllegalArgumentException("There is no reserve duty type " + type + " on day type " + dayType);
 	}
-	
+
 	public void updateDualCosts(double[] dualsContractGroup, List<HashMap<Integer, Double>> dualsDuties) {
 		// Put the dual costs of the contractgroup on the arc from source to the nodes of day 0
 		// For each ingoing arc, put the dual costs on that ingoing duty
@@ -975,7 +798,7 @@ public class PricingProblem_Phase3
 			}
 		}
 	}
-	
+
 	/**
 	 * This method creates a copy of a list with nodes.
 	 * @param toCopy				the list to be copied
@@ -988,7 +811,7 @@ public class PricingProblem_Phase3
 		}
 		return copy;
 	}
-	
+
 	/**
 	 * This method creates a deep copy of an array.
 	 * @param toCopy			the array to be copied
@@ -1001,7 +824,7 @@ public class PricingProblem_Phase3
 		}
 		return copy;
 	}
-	
+
 	/**
 	 * This method creates a deep copy of a set.
 	 * @param toCopy			the set to be copied
@@ -1012,7 +835,7 @@ public class PricingProblem_Phase3
 		for (Integer entry : toCopy) {
 			copy.add(entry);
 		}
-		
+
 		return copy;
 	}
 }
