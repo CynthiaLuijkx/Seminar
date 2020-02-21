@@ -436,7 +436,6 @@ public class Phase4_AddMissing {
 		}
 	}
 
-	
 	public int missingDuties(List<Schedule> schedules) {
 		int counter = 0;
 		for (int s = 0; s < 7; s++) {
@@ -452,6 +451,7 @@ public class Phase4_AddMissing {
 					}
 					if(included < 1) {
 						counter++;
+					//	System.out.println(duty);
 					}
 				}
 			}
@@ -467,6 +467,7 @@ public class Phase4_AddMissing {
 					}
 					if(included < 1) {
 						counter++;
+					//	System.out.println(duty);
 					}
 				}
 			}
@@ -483,6 +484,7 @@ public class Phase4_AddMissing {
 					}
 					if(included < 1) {
 						counter++;
+					//	System.out.println(duty);
 					}
 				}
 			}

@@ -99,7 +99,7 @@ public class MIP_Phase1
 		initSoft5(); //Min consecutive similar duties
 		initSoft6(); //Min consecutive rest + ATV 
 		initSoft7(); //Early to late duty 
-	//	initSoft8(); //Parttimers should work as little other duties as possible (implicit in constraint 10)
+		//initSoft8(); //Parttimers should work as little other duties as possible (implicit in constraint 10)
 		initSoft9(); //Maximum of 5 duties per calendar week on average
 		initSoft10(); //Penalize ATV days on weekends 
 		initSoft11(); //Penalize lone duties
@@ -109,9 +109,9 @@ public class MIP_Phase1
 		initObjective();
 		
 		//System.out.println(this.cplex.getModel());
-		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0);
+		this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, 0.01);
 		this.cplex.exportModel("MIP_Phase1.lp");
-		//this.cplex.setOut(null);	
+		this.cplex.setOut(null);	
 		
 		this.solution = new HashMap<>();
 	}
@@ -141,7 +141,10 @@ public class MIP_Phase1
 		this.cplex.setParam(IloCplex.DoubleParam.TimeLimit, 600);
 		this.cplex.populate();
 		System.out.println("Solution pool size: " + cplex.getSolnPoolNsolns());
-		return cplex.getSolnPoolNsolns();
+		int solutions = cplex.getSolnPoolNsolns();
+		clearModel();
+		return solutions;
+		
 	}
 	
 	public boolean isFeasible() throws IloException {

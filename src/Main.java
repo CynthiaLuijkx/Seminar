@@ -17,6 +17,7 @@ import Tools.Violation;
 import ilog.concert.IloException;
 
 import java.util.Locale;
+import java.util.Map;
 
 public class Main 
 {
@@ -53,7 +54,88 @@ public class Main
 
 		System.out.println("Instance " + depot + " initialised");
 
+		Map<ContractGroup, Integer> newDriverNrs = new HashMap<>();
+		int numberOfDrivers = instance.getLB()+17;
+		instance.setNrDrivers(numberOfDrivers);
+		for(ContractGroup group : instance.getContractGroups()) {
+			newDriverNrs.put(group, group.getTc()/7);
+			System.out.println(group + " " + group.getTc()/7);
+		}
+		DutyAssigner dutyAssigner = new DutyAssigner(instance, newDriverNrs);
+		int feasibleFound = 0;
+		for (int i = 0; i < 1000; i++) {
+			System.out.println(feasibleFound);
+			if(feasibleFound == 2) {
+				System.out.println("Found all schedules");
+				break;
+			}
+			feasibleFound = 0;
+			
+			Set<Instance> soloInstances = dutyAssigner.assignDuties();
 
+			for (Instance soloInstance : soloInstances) {
+				DetermineViolations temp = new DetermineViolations(soloInstance, dutyTypes, violationBound,
+						violationBound3Days);
+				soloInstance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
+				for (ContractGroup group : soloInstance.getContractGroups()) {
+					for (ContractGroup ogGroup : instance.getContractGroups()) {
+						if ((group.getAvgHoursPerDay() * group.getAvgDaysPerWeek()) == (ogGroup.getAvgHoursPerDay()
+								* ogGroup.getAvgDaysPerWeek())) {
+							soloInstance.setNrDrivers(newDriverNrs.get(ogGroup));
+							System.out.println(ogGroup.getTc() / 7);
+						}
+					}
+				}
+
+				Phase1_Penalties penalties = new Phase1_Penalties();
+				MIP_Phase1 mip = new MIP_Phase1(soloInstance, dutyTypes, penalties);
+				mip.solve();
+				if (mip.isFeasible()) {
+					mip.makeSolution(0);
+					soloInstance.setBasicSchedules(mip.getSolution());
+
+					for (ContractGroup c : soloInstance.getContractGroups()) {
+					//	new ScheduleVis(soloInstance.getBasicSchedules().get(c), "" + c.getNr());
+					}
+
+					long phase3Start = System.nanoTime();
+					Phase3 colGen = new Phase3(soloInstance, dailyRestMin, restDayMinCG, restTwoWeek);
+					HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+					long phase3End = System.nanoTime();
+					System.out.println("Phase 3 runtime: " + (phase3End - phase3Start) / 1000000000.0);
+
+					int treshold = 0; // bigger than or equal
+					Set<Schedule> schedules = getSchedulesAboveTreshold(solution, treshold);
+					boolean scheduleForEveryGroup = true;
+					for (ContractGroup c : soloInstance.getContractGroups()) {
+						int included = 0;
+						for (Schedule schedule : schedules) {
+							if (schedule.getC() == c) {
+								included++;
+							}
+						}
+						if (included < 1) {
+							scheduleForEveryGroup = false;
+						}
+					}
+					if(scheduleForEveryGroup){
+						feasibleFound++;
+					}
+						/*
+					Phase4 phase4 = new Phase4(schedules, soloInstance);
+					List<Schedule> newSchedules = phase4.runILP();
+					for (Schedule schedule : newSchedules) {
+					//	new ScheduleVis(schedule.getSchedule(), "" + schedule.getC().getNr(), soloInstance);
+					}*/
+				}
+				else {
+					mip.clearModel();
+					break;
+				}
+			}
+		}
+
+		/*
 		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound, violationBound3Days); 
 		System.out.println("Violations Determined"); 
 
@@ -64,13 +146,13 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 		
-		int numberOfDrivers = instance.getLB()+19;
+		int numberOfDrivers = instance.getUB();
 		instance.setNrDrivers(numberOfDrivers);
 
 		Phase1_Penalties penalties = new Phase1_Penalties();
 		Set<Schedule> schedules = new HashSet<>();
 		int iteration = 0;
-		int maxIt = 5;
+		int maxIt = 50;
 		boolean scheduleForEveryGroup = false;
 		MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
 		mip.solve();
@@ -120,7 +202,7 @@ public class Main
 			}
 		} else {
 			System.out.println("Basic schedule cannot be made.");
-		}
+		}*/
 		
 
 	}
