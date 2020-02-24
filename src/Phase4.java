@@ -22,8 +22,7 @@ public class Phase4 {
 		long end = System.nanoTime();
 		System.out.println("ILP runTime: " + (end-start)/1000000000.0);
 		List<Schedule> ilpSolution = ilp.getSolution();
-		Phase4_AddMissing addMissing = new Phase4_AddMissing(ilpSolution, this.instance);
-		return addMissing.getNewSchedules();
+		return ilpSolution;
 	}
 	
 	public void runRelaxFix() throws IloException {

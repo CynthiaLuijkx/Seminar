@@ -12,6 +12,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import Phase5.Solution;
+import Tools.Combination;
 import Tools.ContractGroup;
 import Tools.DetermineViolations;
 import Tools.Duty;
@@ -28,7 +29,7 @@ public class Main
 
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
@@ -73,8 +74,34 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 
-		int numberOfDrivers = instance.getLB()+12;
+		//Set based on bounds
+		int numberOfDrivers = instance.getLB()+30;
 		instance.setNrDrivers(numberOfDrivers);
+		
+		//Set manually
+		/*
+		int contractgroup1 = 37;
+		int contractgroup2 = 25;
+		int contractgroup3 = 0; //Heinenoord only
+		int contractgroup4 = 0; //Heinenoord only
+		for(ContractGroup group : instance.getContractGroups()) {
+			if(group.getNr() == 1) {
+				group.setTc(7*contractgroup1);
+				group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
+			}
+			if(group.getNr() == 2) {
+				group.setTc(7*contractgroup2);
+				group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
+			}
+			if(group.getNr() == 3) {
+				group.setTc(7*contractgroup3);
+				group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
+			}
+			if(group.getNr() == 4) {
+				group.setTc(7*contractgroup4);
+				group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
+			}
+		}*/
 		
 		times[1] = System.nanoTime();
 		
@@ -130,6 +157,11 @@ public class Main
 				else {
 					Phase4 phase4 = new Phase4(schedules, instance);
 					List<Schedule> newSchedules = phase4.runILP();
+					
+					//Turn this off if you don't want to do the swaps
+					Phase4_AddMissing addMissing = new Phase4_AddMissing(newSchedules, instance);
+					newSchedules = addMissing.getNewSchedules();
+					
 					for(Schedule schedule : newSchedules) {
 						new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance);
 						printSchedule(schedule, depot, numberOfDrivers, schedule.getC().getNr());
