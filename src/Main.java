@@ -35,8 +35,8 @@ public class Main
 		int restTwoWeek = 72 * 60;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
-		boolean phase123 = false;
-		boolean ALNS = true;
+		boolean phase123 = true;
+		boolean ALNS = false;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		long[] times = new long[6];
