@@ -232,7 +232,7 @@ public class RepairHeuristics {
 			}
 
 			if(mostRegretRequest == null) {
-				System.out.println("No more placements possible");
+//				System.out.println("No more placements possible");
 				break; 
 			}
 
@@ -276,7 +276,7 @@ public class RepairHeuristics {
 			}
 
 			if(bestRequest == null) {
-				System.out.println("No more placements possible");
+//				System.out.println("No more placements possible");
 				break; 
 			}
 

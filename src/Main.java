@@ -28,7 +28,7 @@ public class Main
 
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
@@ -36,7 +36,7 @@ public class Main
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
 		boolean phase123 = true;
-		boolean ALNS = false;
+		boolean ALNS = true;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		long[] times = new long[6];
@@ -73,7 +73,7 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 
-		int numberOfDrivers = instance.getLB()+12;
+		int numberOfDrivers = instance.getLB()+30;
 		instance.setNrDrivers(numberOfDrivers);
 		
 		times[1] = System.nanoTime();
@@ -149,10 +149,13 @@ public class Main
 			
 			new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance);
 			new ScheduleVis(schedules.get(group2).getScheduleArray(), "" + group2.getNr() + "before", instance);
-			int iterations_phase5 = 100; 
+			int iterations_phase5 = 10000; 
 			Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, 1000); 
 			Solution solutionALNS = alns.executeBasic(schedules);
-			System.out.println(solutionALNS.getObj());
+			System.out.println("Objective values: " + solutionALNS.getObj());
+			System.out.println("Costs: " + solutionALNS.getCosts());
+			System.out.println("Total Overtime: " + solutionALNS.getOvertime());
+			System.out.println("Total Minus Hours: " + solutionALNS.getMinusHours());
 			new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance);
 			new ScheduleVis(solutionALNS.getNewSchedule().get(group2).getScheduleArray(), "" + group2.getNr() + "after", instance);
 			
@@ -162,7 +165,7 @@ public class Main
 		System.out.println("----------------------------------------------------------");
 		System.out.println("Nr. of drivers: " + numberOfDrivers);
 		
-		if(ALNS) {
+		if(ALNS && phase123) {
 			System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
 			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
 			System.out.println("Phase 1: " + (times[2] - times[1])/1000000000.0);
@@ -170,10 +173,10 @@ public class Main
 			System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
 			System.out.println("Phase 4: " + (times[5] - times[4])/1000000000.0);
 		}
-		else if(!phase123) {
+		else if(ALNS) {
 			System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
 			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
-			System.out.println("Phase 4: " + (times[5] - times[4])/1000000000.0);
+			System.out.println("Phase 4: " + (times[5] - times[1])/1000000000.0);
 		}
 		else {
 			System.out.println("Total time elapsed: " + (times[4] - times[0])/1000000000.0);
