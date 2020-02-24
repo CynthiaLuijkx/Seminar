@@ -101,7 +101,7 @@ public class MIP_Phase1
 		initSoft6(); //Min consecutive rest + ATV 
 		initSoft7(); //Early to late duty 
 	//	initSoft8(); //Parttimers should work as little other duties as possible (implicit in constraint 10)
-	//	initSoft9(); //Maximum of 5 duties per calendar week on average
+		initSoft9(); //Maximum of 5 duties per calendar week on average
 		initSoft10(); //Penalize ATV days on weekends 
 		initSoft11(); //Penalize lone duties
 		initSoft12(); //Average of 2 split duties per week
