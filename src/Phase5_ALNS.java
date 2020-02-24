@@ -35,7 +35,7 @@ public class Phase5_ALNS {
 	private double[][] weightsDestroyAdj; //adjusted weights of the destroy methods
 	private double[] weightsRepair; //weights of the repair methods
 	private double[][] weightsRepairAdj; //adjusted weights of the repair methods
-	private int nDestroy = 2; //number of destroy methods
+	private int nDestroy = 3; //number of destroy methods
 	private int nRepair = 3;  // number of repair methods
 	private Solution globalBestSol;  //best solution found so far
 	private double T; //temperature used for simulated annealing
@@ -201,15 +201,18 @@ public class Phase5_ALNS {
 		if (destroyHeuristicNr == 0) {
 			currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood,  random,instance);
 		}
-//		else if(destroyHeuristicNr == 1){
+		else if (destroyHeuristicNr == 1){
+			currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance);
+		} 
+		else if (destroyHeuristicNr == 2) {
+			currentSol = this.destroyHeuristics.executeSwapWeek(currentSol, random, instance);
+		}
+//		else if(destroyHeuristicNr == 3){
 //			currentSol = this.destroyHeuristics.executeExtremeSpecificRemoval(currentSol, sizeNeighbourhood, random, instance);
 //		}
-//		else  if(destroyHeuristicNr == 2){
+//		else  if(destroyHeuristicNr == 4){
 //			currentSol = this.destroyHeuristics.executeExtremeRemoval(currentSol, sizeNeighbourhood, random, instance);
 //		}
-		else {
-			currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance);
-		}
 
 		this.repairHeuristics.setAllPlacements(currentSol).toString();
 

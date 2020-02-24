@@ -24,6 +24,38 @@ public class DestroyHeuristics {
 		this.instance = instance;
 		this.feasCheck = new FeasCheck(instance);
 	}
+	
+	public boolean checkRelativeGroupSize(Solution solution, Schedule schedule) {
+		double numberOfDrivers = 0;
+		double numberOfDrivers1 = 0;
+		double numberOfDrivers2 = 0;
+		boolean check = false;
+		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+			if(schedule.getC().equals(group)) {
+				numberOfDrivers1 += schedule.getScheduleArray().length/7;
+			}
+			else {
+				numberOfDrivers2 += solution.getNewSchedule().get(group).getScheduleArray().length/7;
+			}
+
+		}
+		numberOfDrivers = numberOfDrivers1 + numberOfDrivers2;
+
+		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+			if(schedule.getC().equals(group)) {
+				if( numberOfDrivers1/numberOfDrivers <= (group.getRelativeGroupSize()+0.05) && (group.getRelativeGroupSize()-0.05) <= numberOfDrivers1/numberOfDrivers) {
+					check = true;
+				}
+			}
+			else {
+				if( numberOfDrivers2/numberOfDrivers <= (group.getRelativeGroupSize() + 0.05) && (group.getRelativeGroupSize() - 0.05) <= numberOfDrivers2/numberOfDrivers) {
+					check = true;
+				}
+			}
+
+		}
+		return check;
+	}
 
 	//---------------------- Random Removal -------------------------------------------------------------------------------------------------------
 	/**
@@ -423,57 +455,126 @@ public class DestroyHeuristics {
 		if(check[i] == 1) {
 			Request request = new Request(1, schedule.getC(), i);
 			//			System.out.println("atv:  " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check); 
+			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
 		}
 		else if(instance.getFromRDutyNrToRDuty().containsKey(check[i])) {
 			ReserveDutyType reserveDuty = instance.getFromRDutyNrToRDuty().get(check[i]);
 			Request request = new Request(reserveDuty, schedule.getC(), i);
 			//			System.out.println("reserve: " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check); 
+			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
 		}
 		else if(instance.getFromDutyNrToDuty().containsKey(check[i])) {
 			Duty duty = instance.getFromDutyNrToDuty().get(check[i]);
 			Request request = new Request(duty, schedule.getC(), i);
 			//			System.out.println("duty: " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check); 
+			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
 		}
 		else {
 			Request request = new Request(2, schedule.getC(), i);
 			//			System.out.println("rest :  " +this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check); 
+			return this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
 
 		}
 	}
 
-	public boolean checkRelativeGroupSize(Solution solution, Schedule schedule) {
-		double numberOfDrivers = 0;
-		double numberOfDrivers1 = 0;
-		double numberOfDrivers2 = 0;
-		boolean check = false;
-		for(ContractGroup group: solution.getNewSchedule().keySet()) {
-			if(schedule.getC().equals(group)) {
-				numberOfDrivers1 += schedule.getScheduleArray().length/7;
-			}
-			else {
-				numberOfDrivers2 += solution.getNewSchedule().get(group).getScheduleArray().length/7;
-			}
-
+	//---------------------- Swap Removal ---------------------------------------------------------------------------------------------------------
+	/**
+	 * This method removes a week from a contract group and extends the planning horizon of another contract group.
+	 * @param solution
+	 * @param random
+	 * @param instance
+	 * @return
+	 */
+	public Solution executeSwapWeek(Solution solution, Random random, Instance instance) {
+		int number = random.nextInt(instance.getContractGroups().size());
+		int number2 = random.nextInt(instance.getContractGroups().size());
+		while(number == number2) {
+			number2 = random.nextInt(instance.getContractGroups().size());
 		}
-		numberOfDrivers = numberOfDrivers1 + numberOfDrivers2;
-
-		for(ContractGroup group: solution.getNewSchedule().keySet()) {
-			if(schedule.getC().equals(group)) {
-				if( numberOfDrivers1/numberOfDrivers <= (group.getRelativeGroupSize()+0.05) && (group.getRelativeGroupSize()-0.05) <= numberOfDrivers1/numberOfDrivers) {
-					check = true;
+		ContractGroup group1 = new ContractGroup(0,0, 0, 0, 0, null);
+		ContractGroup group2 = new ContractGroup(0,0, 0, 0, 0, null);
+		Set<TimeSlot> emptyTimeSlots = new HashSet<TimeSlot>();
+		for(ContractGroup g: instance.getContractGroups()) {
+				if(g.getNr()-1 == number) {
+					group1 = g;
+				} else if (g.getNr() - 1 == number2) {
+					group2 = g;
+			}
+		}
+		
+		int count = 0;
+		outer: while(count != 100) {
+			int index = random.nextInt(solution.getNewSchedule().get(group1).getScheduleArray().length/7-1);
+			if(index == solution.getNewSchedule().get(group1).getScheduleArray().length/7) {
+				index--;
+			}
+			int numberOfRestDays = 0;
+			for(int j = 7*index; j <= index*7+6; j++) {
+				if(solution.getNewSchedule().get(group1).getScheduleArray()[j] == 2) {
+					numberOfRestDays++;
 				}
 			}
-			else {
-				if( numberOfDrivers2/numberOfDrivers <= (group.getRelativeGroupSize() + 0.05) && (group.getRelativeGroupSize()- 0.05) <= numberOfDrivers2/numberOfDrivers) {
-					check = true;
+			if(numberOfRestDays >= 3) {
+				int[] newSchedule = new int[solution.getNewSchedule().get(group1).getScheduleArray().length-7];
+				int[] temp = solution.getNewSchedule().get(group1).getScheduleArray().clone();
+				for(int l =0; l < index*7; l++) {
+					newSchedule[l]= temp[l];
 				}
-			}
+				if(index + 1 < solution.getNewSchedule().get(group1).getScheduleArray().length/7) {
+					for(int m = (index+1)*7; m < solution.getNewSchedule().get(group1).getScheduleArray().length; m++) {
+						newSchedule[((m-7)%solution.getNewSchedule().get(group1).getScheduleArray().length)%solution.getNewSchedule().get(group1).getScheduleArray().length] = temp[m];
+					}
+				}
+				Schedule newschedule = new Schedule(group1, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group1) );
+				if(this.checkFeasibility(newschedule, (index*7)) && this.checkRelativeGroupSize(solution, newschedule)) {
 
+					for(int k = 7*index; k <= index*7+6; k++) {
+						if(solution.getNewSchedule().get(group1).getScheduleArray()[k] == 1) {
+							Request request = new Request(1, group1, k);
+							solution.removeRequest(request, solution, emptyTimeSlots, k);
+
+						}
+						else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(group1).getScheduleArray()[k])) {	
+							ReserveDutyType reserveDuty = instance.getFromRDutyNrToRDuty().get(solution.getNewSchedule().get(group1).getScheduleArray()[k]);
+							Request request = new Request(reserveDuty, group1, k);
+							solution.removeRequest(request, solution, emptyTimeSlots, k);
+
+						}
+						else if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(group1).getScheduleArray()[k])) {
+							Duty duty = instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(group1).getScheduleArray()[k]);
+							Request request =  new Request(duty, group1, k);
+							solution.removeRequest(request, solution, emptyTimeSlots, k);
+						}
+					}
+					solution.getNewSchedule().get(group1).setScheduleArray(newSchedule);
+				}
+				break outer;
+			}
+			else {
+				count++;
+			}
 		}
-		return check;
+		if(count != 100) {
+			int[] newSchedule = new int[solution.getNewSchedule().get(group2).getScheduleArray().length+7];
+			int[] temp = solution.getNewSchedule().get(group2).getScheduleArray().clone();
+			for(int i =0; i < temp.length; i++) {
+				newSchedule[i] = temp[i];
+			}
+			for(int j = temp.length; j < newSchedule.length; j++) {
+				newSchedule[j] =2;
+			}
+			//System.out.println(solution.getNewSchedule().get(group1).getScheduleArray().length + " " + newSchedule.length);
+			Schedule schedule = new Schedule(group2, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group2));
+//			System.out.println(newSchedule.length/7 + " " + schedule.getWeeklyOvertime().length);
+
+			if(this.checkRelativeGroupSize(solution, schedule)) {
+				solution.getNewSchedule().get(group2).setScheduleArray(newSchedule);
+				solution.setWeeklyOvertime(newSchedule, group2);
+//				System.out.println("2: "+ solution.getNewSchedule().get(group2).getWeeklyOvertime().length);
+//				System.out.println("YES");
+			}
+		}
+
+		return solution;
 	}
 }

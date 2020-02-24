@@ -280,6 +280,21 @@ public class FeasCheck {
 			return true;
 		}
 	}
+	
+	public boolean checkSundays(int[] schedule) {
+		int count = 0;
+		for (int i = 0; i < schedule.length; i+=7) {
+			if (schedule[i] != 1 && schedule[i] != 2) {
+				count++;
+			}
+		}
+		
+		if (count <= 0.75 * schedule.length/7) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 	/**
 	 * Checks if there are enough ATV days for that contract group

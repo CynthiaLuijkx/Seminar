@@ -4,7 +4,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -12,7 +11,6 @@ import java.util.Scanner;
 import java.util.Set;
 
 import Phase5.Solution;
-import Tools.Combination;
 import Tools.ContractGroup;
 import Tools.DetermineViolations;
 import Tools.Duty;
@@ -29,14 +27,14 @@ public class Main
 
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
+		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
-		boolean phase123 = true;
+		boolean phase123 = false;
 		boolean ALNS = true;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
@@ -75,7 +73,7 @@ public class Main
 		System.out.println("Instance " + depot + " initialised");
 
 		//Set based on bounds
-		int numberOfDrivers = instance.getLB()+30;
+		int numberOfDrivers = instance.getLB()+12;
 		instance.setNrDrivers(numberOfDrivers);
 		
 		//Set manually
@@ -121,7 +119,7 @@ public class Main
 					instance.setBasicSchedules(mip.getSolution());
 					
 					for(ContractGroup c : instance.getContractGroups()) {
-						new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr());
+						new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr(), depot);
 					}
 					
 					times[2] = System.nanoTime();
@@ -163,7 +161,7 @@ public class Main
 					newSchedules = addMissing.getNewSchedules();
 					
 					for(Schedule schedule : newSchedules) {
-						new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance);
+						new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance, depot);
 						printSchedule(schedule, depot, numberOfDrivers, schedule.getC().getNr());
 					}
 					times[4] = System.nanoTime();
@@ -175,12 +173,10 @@ public class Main
 		
 		if (ALNS) {
 			Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
-			Iterator<ContractGroup> iter = schedules.keySet().iterator(); 
-			ContractGroup group = iter.next(); 
-			ContractGroup group2 = iter.next(); 
 			
-			new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance);
-			new ScheduleVis(schedules.get(group2).getScheduleArray(), "" + group2.getNr() + "before", instance);
+			for (ContractGroup group : instance.getContractGroups()) {
+				new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
+			}
 			int iterations_phase5 = 10000; 
 			Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, 1000); 
 			Solution solutionALNS = alns.executeBasic(schedules);
@@ -188,8 +184,9 @@ public class Main
 			System.out.println("Costs: " + solutionALNS.getCosts());
 			System.out.println("Total Overtime: " + solutionALNS.getOvertime());
 			System.out.println("Total Minus Hours: " + solutionALNS.getMinusHours());
-			new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance);
-			new ScheduleVis(solutionALNS.getNewSchedule().get(group2).getScheduleArray(), "" + group2.getNr() + "after", instance);
+			for (ContractGroup group : instance.getContractGroups()) {
+				new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
+			}
 			
 			times[5] = System.nanoTime();
 		}
