@@ -3,7 +3,12 @@ import Tools.*;
 import java.util.*;
 import java.util.Random;
 
-//This class executes the Adaptive Large Neighbourhood Search
+import Phase5.DestroyHeuristics;
+import Phase5.RepairHeuristics;
+import Phase5.Request;
+import Phase5.Solution;
+
+
 public class Phase5_ALNS {
 
 	private double globalOptimum; //best solution value found so far
@@ -56,10 +61,13 @@ public class Phase5_ALNS {
 		this.weightsRepairAdj = new double[this.nRepair][2];
 
 		//this.executeBasic(startSchedule);
-
-
 	}
-	//Method that executes the Adaptive Large Neighborhood Search
+	
+	/**
+	 * This method executes the Adaptive Large Neighbourhood Search.
+	 * @param startSchedule				the initial solution
+	 * @return							the best global solution found
+	 */
 	public Solution executeBasic(Map<ContractGroup, Schedule> startSchedule) {
 		int n = 1; //start with the first iteration
 		// find initial solution
@@ -157,7 +165,12 @@ public class Phase5_ALNS {
 		}
 		return this.globalBestSol; //return our global solution
 	}
-	//method to get the initial solution 
+	
+	/**
+	 * This method is used to get the initial solution.
+	 * @param startSol			the initial solution
+	 * @return					the initial solution
+	 */
 	public Solution getInitialSol(Map<ContractGroup, Schedule> startSol) {
 		Set<Request> emptyRequestSet = new HashSet<Request>();
 		List<Schedule> check = new ArrayList<>();
@@ -174,13 +187,13 @@ public class Phase5_ALNS {
 	 * @param currentSol				the current solution
 	 * @param destroyHeuristicNr		the destroy heuristic number
 	 * @param repairHeuristicNr			the repair heuristic number
-	 * @param sizeNeighbourhood			the size of the neighborhood
+	 * @param sizeNeighbourhood			the size of the neighbourhood
 	 * @return							the updated solution
 	 */
 	public Solution executeDestroyAndRepair(Solution currentSol, int destroyHeuristicNr, int repairHeuristicNr, 
 			int sizeNeighbourhood) {
 		//execute a destroy heuristic depending on the generated number
-		if (destroyHeuristicNr == 0) {
+		/*if (destroyHeuristicNr == 0) {
 			currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood,  random,instance);
 		}
 		else if(destroyHeuristicNr == 1){
@@ -189,9 +202,9 @@ public class Phase5_ALNS {
 		else  if(destroyHeuristicNr ==2){
 			currentSol = this.destroyHeuristics.executeRandomOvertimeWithSpecificDuties(currentSol, sizeNeighbourhood, random, instance);
 		}
-		else {
+		else {*/
 			currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance);
-		}
+		//}
 		
 		this.repairHeuristics.setAllPlacements(currentSol).toString();
 		
@@ -201,13 +214,15 @@ public class Phase5_ALNS {
 		//} else {
 			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
 		//}
-		
-		
-		
 
 		return currentSol;
 	}
-	//Method that returns whether it is an unique solution
+	
+	/**
+	 * This method returns whether a solution is an unique solution.
+	 * @param currentSol				the solution
+	 * @return							a boolean denoting whether it is unique or not
+	 */
 	public boolean updateUniqueSol(Solution currentSol) {
 		if(!this.hashCodesSolutions.contains(currentSol.getHashCode())) {
 			this.hashCodesSolutions.add(currentSol.getHashCode()); 
@@ -262,6 +277,12 @@ public class Phase5_ALNS {
 			this.weightsRepair[i] = this.weightsRepair[i] / sum;
 		}
 	}
+	
+	/**
+	 * This method creates a set of requests for the missing duties.
+	 * @param schedules					the list with schedules
+	 * @return							a set of requests for the missing duties
+	 */
 	public Set<Request> missingDuties(List<Schedule> schedules) {
 		Set<Request> requests = new HashSet<Request>();
 		int counter = 0;
@@ -326,5 +347,4 @@ public class Phase5_ALNS {
 		System.out.println("missing duties: " + counter);
 		return requests;
 	}
-
 }

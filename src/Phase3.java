@@ -45,11 +45,11 @@ public class Phase3
 		
 		RMP_Phase3 model = new RMP_Phase3(instance);
 		model.solve();
-		/*System.out.println("-------------------------------------------");
+		System.out.println("-------------------------------------------");
 		System.out.println("Restricted Model: ");
 		System.out.println("-------------------------------------------");
 		System.out.println("Objective value: " + model.getObjective());
-		*/
+		
 		double[] dualValuesContractGroup = model.getDuals2();
 		List<HashMap<Integer, Double>> dualsDuties = model.getDuals1();
 		
@@ -57,15 +57,16 @@ public class Phase3
 		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, minBreakBetweenShifts, consecFreeWeekly, freeTwoWeeks);
 		
 		boolean negRedCosts = true;
+		boolean iteration1NoSchedule = false;
 		while (negRedCosts) {
 			model.clean();
 			
 			long start = System.nanoTime();
 			negRedCosts = false;
-			/*System.out.println("-------------------------------------------");
+			System.out.println("-------------------------------------------");
 			System.out.println("Iteration: " + iteration);
 			System.out.println("-------------------------------------------");
-			*/
+			
 			// Solve the pricing problem
 			pricing.updateDualCosts(dualValuesContractGroup, dualsDuties);
 			Map<ContractGroup, Set<Schedule>> newSchedules = pricing.executePulse();
@@ -85,7 +86,13 @@ public class Phase3
 				if (count > 0) {
 					negRedCosts = true;
 				}
-				//System.out.println("Number of schedules added for contractgroup " + c.getNr() +": " + count);
+				if(count < 1 && iteration == 1) {
+					iteration1NoSchedule = true;
+				}
+				System.out.println("Number of schedules added for contractgroup " + c.getNr() +": " + count);
+			}
+			if(iteration1NoSchedule) {
+				break;
 			}
 			
 			if (!negRedCosts) {
@@ -103,14 +110,14 @@ public class Phase3
 			model.solve();
 			long end = System.nanoTime();
 
-			/*System.out.println("-------------------------------------------");
+			System.out.println("-------------------------------------------");
 			System.out.println("Restricted Model:");
 			System.out.println("-------------------------------------------");
 			System.out.println("Is feasible? " + model.isFeasible());
 			System.out.println("Objective value: " + model.getObjective());
 			System.out.println("Running time: " + (end-start)/1000000000.0);
 			System.out.println("Of which pricing: " + (intermediate-start)/1000000000.0);
-			System.out.println("Of which RMP: " + (end-intermediate)/1000000000.0);*/
+			System.out.println("Of which RMP: " + (end-intermediate)/1000000000.0);
 			model.makeSolution();
 			solution = model.getSolution();
 			
@@ -120,9 +127,9 @@ public class Phase3
 			ArrayList<Double> solDummies1 = model.getSolutionDummies2();
 			ArrayList<ArrayList<Double>> solDummiesDuties = model.getSolutionDummiesDuties();
 			
-			/*for (int i = 0; i < dualValuesContractGroup.length; i++) {
+			for (int i = 0; i < dualValuesContractGroup.length; i++) {
 				System.out.println(dualValuesContractGroup[i]);
-			}*/
+			}
 			iteration++;
 			
 		}

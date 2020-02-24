@@ -313,7 +313,7 @@ public class DestroyHeuristics {
 		outer: while(count != 100) {
 			int index = random.nextInt(solution.getNewSchedule().get(group).getScheduleArray().length/7-1);
 			if(index == solution.getNewSchedule().get(group).getScheduleArray().length/7) {
-				
+				index--;
 			}
 			System.out.println("index:  " +index);
 			int numberOfRestDays = 0;
@@ -322,7 +322,8 @@ public class DestroyHeuristics {
 					numberOfRestDays++;
 				}
 			}
-			if(numberOfRestDays >= 3) {
+			System.out.println("number of rest days: " + numberOfRestDays);
+			if(numberOfRestDays >= 2) {
 				int[] newSchedule = new int[solution.getNewSchedule().get(group).getScheduleArray().length-7];
 				int[] temp = solution.getNewSchedule().get(group).getScheduleArray().clone();
 				for(int l =0; l < index*7; l++) {
@@ -334,8 +335,8 @@ public class DestroyHeuristics {
 				 }
 				}
 				Schedule newschedule = new Schedule(group, (int) this.feasCheck.QuaterlyOvertime(newSchedule, group) , newSchedule);
-				if(this.checkFeasibility(newschedule, (index*7))) {
-				
+				if(this.checkFeasibility(newschedule, (index+1)*7-6)) {
+					System.out.println(numberOfRestDays);
 				 for(int k = 7*index; k <= index*7+6; k++) {
 					if(solution.getNewSchedule().get(group).getScheduleArray()[k] == 1) {
 						Request request = new Request(1, group, k);
