@@ -15,7 +15,7 @@ import Tools.Schedule;
 public class DestroyHeuristics {
 	private FeasCheck feasCheck;
 	private Instance instance;
-	
+
 	/**
 	 * Constructor for the destroy heuristics.
 	 * @param instance				the problem instance
@@ -23,6 +23,38 @@ public class DestroyHeuristics {
 	public DestroyHeuristics(Instance instance) {
 		this.instance = instance;
 		this.feasCheck = new FeasCheck(instance);
+	}
+	
+	public boolean checkRelativeGroupSize(Solution solution, Schedule schedule) {
+		double numberOfDrivers = 0;
+		double numberOfDrivers1 = 0;
+		double numberOfDrivers2 = 0;
+		boolean check = false;
+		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+			if(schedule.getC().equals(group)) {
+				numberOfDrivers1 += schedule.getScheduleArray().length/7;
+			}
+			else {
+				numberOfDrivers2 += solution.getNewSchedule().get(group).getScheduleArray().length/7;
+			}
+
+		}
+		numberOfDrivers = numberOfDrivers1 + numberOfDrivers2;
+
+		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+			if(schedule.getC().equals(group)) {
+				if( numberOfDrivers1/numberOfDrivers <= (group.getRelativeGroupSize()+0.05) && (group.getRelativeGroupSize()-0.05) <= numberOfDrivers1/numberOfDrivers) {
+					check = true;
+				}
+			}
+			else {
+				if( numberOfDrivers2/numberOfDrivers <= (group.getRelativeGroupSize() + 0.05) && (group.getRelativeGroupSize() - 0.05) <= numberOfDrivers2/numberOfDrivers) {
+					check = true;
+				}
+			}
+
+		}
+		return check;
 	}
 
 	//---------------------- Random Removal -------------------------------------------------------------------------------------------------------
@@ -67,7 +99,7 @@ public class DestroyHeuristics {
 		//return the new solution with the ramdom removals
 		return solution; 
 	}
-	
+
 	//---------------------- Extreme Removal ------------------------------------------------------------------------------------------------------
 	/**
 	 * This method executes the extreme removal in which the largest duties are removed from the weeks with the most overtime and the smallest duties
@@ -78,7 +110,7 @@ public class DestroyHeuristics {
 	 * @param instance				the problem instance
 	 * @return						the new solution
 	 */
-	public Solution executeRandomOvertimeWithWeeks(Solution solution, int nRemove, Random random, Instance instance) {
+	public Solution executeExtremeRemoval(Solution solution, int nRemove, Random random, Instance instance) {
 		Set<TimeSlot> slots = new HashSet<TimeSlot>();
 		Map<ContractGroup, List<Integer>> removalDuties = new HashMap<ContractGroup, List<Integer>>(); //list of the weeks which have the largest overtime to remove
 		Map<ContractGroup,double[]> weeklyOvertimePGroup = new HashMap<ContractGroup,double[]>(); //the weekly overtime per contract group
@@ -149,20 +181,18 @@ public class DestroyHeuristics {
 		}
 		return solution;
 	}
-	
+
 	//---------------------- Extreme Specific Removal ---------------------------------------------------------------------------------------------
 	/**
 	 * This method executes the extreme specific removal in which the largest duties are removed from the weeks with the most overtime and the 
 	 * smallest duties are removed from the weeks with the least overtime/most minus hours.
-	 * 
-	 * DIFFERENCE WITH LAST ONE????
 	 * @param solution				the current solution
 	 * @param nRemove				the size of the destroy neighbourhood
 	 * @param random				the random number generator
 	 * @param instance				the problem instance
 	 * @return						the new solution
 	 */
-	public Solution executeRandomOvertimeWithSpecificDuties(Solution solution, int nRemove, Random random, Instance instance) {
+	public Solution executeExtremeSpecificRemoval(Solution solution, int nRemove, Random random, Instance instance) {
 		Set<TimeSlot> slots = new HashSet<TimeSlot>();
 		Map<ContractGroup, List<Integer>> removalDuties = new HashMap<ContractGroup, List<Integer>>(); //list of the weeks which have the largest overtime to remove
 		Map<ContractGroup,double[]> weeklyOvertimePGroup = new HashMap<ContractGroup,double[]>(); //the weekly overtime per contract group
@@ -361,9 +391,9 @@ public class DestroyHeuristics {
 		outer: while(count != 100) {
 			int index = random.nextInt(solution.getNewSchedule().get(group).getScheduleArray().length/7-1);
 			if(index == solution.getNewSchedule().get(group).getScheduleArray().length/7) {
-				
+
 			}
-			System.out.println("index:  " +index);
+			//			System.out.println("index:  " +index);
 			int numberOfRestDays = 0;
 			for(int j = 7*index; j <= index*7+6; j++) {
 				if(solution.getNewSchedule().get(group).getScheduleArray()[j] == 2) {
@@ -377,35 +407,34 @@ public class DestroyHeuristics {
 					newSchedule[l]= temp[l];
 				}
 				if(index + 1 < solution.getNewSchedule().get(group).getScheduleArray().length/7) {
-				for(int m = (index+1)*7; m < solution.getNewSchedule().get(group).getScheduleArray().length; m++) {
-					newSchedule[((m-7)%solution.getNewSchedule().get(group).getScheduleArray().length)%solution.getNewSchedule().get(group).getScheduleArray().length] = temp[m];
-				 }
+					for(int m = (index+1)*7; m < solution.getNewSchedule().get(group).getScheduleArray().length; m++) {
+						newSchedule[((m-7)%solution.getNewSchedule().get(group).getScheduleArray().length)%solution.getNewSchedule().get(group).getScheduleArray().length] = temp[m];
+					}
 				}
 				Schedule newschedule = new Schedule(group, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group) );
-				if(this.checkFeasibility(newschedule, (index*7))) {
-				
-				 for(int k = 7*index; k <= index*7+6; k++) {
-					if(solution.getNewSchedule().get(group).getScheduleArray()[k] == 1) {
-						Request request = new Request(1, group, k);
-						solution.removeRequest(request, solution, emptyTimeSlots, k);
-						
+				if(this.checkFeasibility(newschedule, (index*7)) && this.checkRelativeGroupSize(solution, newschedule)) {
+					for(int k = 7*index; k <= index*7+6; k++) {
+						if(solution.getNewSchedule().get(group).getScheduleArray()[k] == 1) {
+							Request request = new Request(1, group, k);
+							solution.removeRequest(request, solution, emptyTimeSlots, k);
+
+						}
+						else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(group).getScheduleArray()[k])) {	
+							ReserveDutyType reserveDuty = instance.getFromRDutyNrToRDuty().get(solution.getNewSchedule().get(group).getScheduleArray()[k]);
+							Request request = new Request(reserveDuty, group, k);
+							solution.removeRequest(request, solution, emptyTimeSlots, k);
+
+						}
+						else if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(group).getScheduleArray()[k])) {
+							Duty duty = instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(group).getScheduleArray()[k]);
+							Request request =  new Request(duty, group, k);
+							solution.removeRequest(request, solution, emptyTimeSlots, k);
+
+						}
 					}
-					else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(group).getScheduleArray()[k])) {	
-						ReserveDutyType reserveDuty = instance.getFromRDutyNrToRDuty().get(solution.getNewSchedule().get(group).getScheduleArray()[k]);
-						Request request = new Request(reserveDuty, group, k);
-						solution.removeRequest(request, solution, emptyTimeSlots, k);
-						
-					}
-					else if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(group).getScheduleArray()[k])) {
-						Duty duty = instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(group).getScheduleArray()[k]);
-						Request request =  new Request(duty, group, k);
-						solution.removeRequest(request, solution, emptyTimeSlots, k);
-					
-					}
+					solution.getNewSchedule().get(group).setScheduleArray(newSchedule);
 				}
-				solution.getNewSchedule().get(group).setScheduleArray(newSchedule);
-			}
-				
+
 				break outer;
 			}
 			else {
@@ -414,7 +443,7 @@ public class DestroyHeuristics {
 		}
 		return solution;
 	}
-	
+
 	/**
 	 * This method checks the feasibility of a schedule.
 	 * @param schedule			the schedule
@@ -425,26 +454,127 @@ public class DestroyHeuristics {
 		int[] check = schedule.getScheduleArray();
 		if(check[i] == 1) {
 			Request request = new Request(1, schedule.getC(), i);
-			System.out.println("atv:  " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check); 
+			//			System.out.println("atv:  " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
+			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
 		}
 		else if(instance.getFromRDutyNrToRDuty().containsKey(check[i])) {
 			ReserveDutyType reserveDuty = instance.getFromRDutyNrToRDuty().get(check[i]);
 			Request request = new Request(reserveDuty, schedule.getC(), i);
-			System.out.println("reserve: " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check); 
+			//			System.out.println("reserve: " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
+			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
 		}
 		else if(instance.getFromDutyNrToDuty().containsKey(check[i])) {
 			Duty duty = instance.getFromDutyNrToDuty().get(check[i]);
 			Request request = new Request(duty, schedule.getC(), i);
-			System.out.println("duty: " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check); 
+			//			System.out.println("duty: " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
+			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
 		}
 		else {
 			Request request = new Request(2, schedule.getC(), i);
-			System.out.println("rest :  " +this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check); 
+			//			System.out.println("rest :  " +this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
+			return this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
 
 		}
+	}
+
+	//---------------------- Swap Removal ---------------------------------------------------------------------------------------------------------
+	/**
+	 * This method removes a week from a contract group and extends the planning horizon of another contract group.
+	 * @param solution
+	 * @param random
+	 * @param instance
+	 * @return
+	 */
+	public Solution executeSwapWeek(Solution solution, Random random, Instance instance) {
+		int number = random.nextInt(instance.getContractGroups().size());
+		int number2 = random.nextInt(instance.getContractGroups().size());
+		while(number == number2) {
+			number2 = random.nextInt(instance.getContractGroups().size());
+		}
+		ContractGroup group1 = new ContractGroup(0,0, 0, 0, 0, null);
+		ContractGroup group2 = new ContractGroup(0,0, 0, 0, 0, null);
+		Set<TimeSlot> emptyTimeSlots = new HashSet<TimeSlot>();
+		for(ContractGroup g: instance.getContractGroups()) {
+				if(g.getNr()-1 == number) {
+					group1 = g;
+				} else if (g.getNr() - 1 == number2) {
+					group2 = g;
+			}
+		}
+		
+		int count = 0;
+		outer: while(count != 100) {
+			int index = random.nextInt(solution.getNewSchedule().get(group1).getScheduleArray().length/7-1);
+			if(index == solution.getNewSchedule().get(group1).getScheduleArray().length/7) {
+				index--;
+			}
+			int numberOfRestDays = 0;
+			for(int j = 7*index; j <= index*7+6; j++) {
+				if(solution.getNewSchedule().get(group1).getScheduleArray()[j] == 2) {
+					numberOfRestDays++;
+				}
+			}
+			if(numberOfRestDays >= 3) {
+				int[] newSchedule = new int[solution.getNewSchedule().get(group1).getScheduleArray().length-7];
+				int[] temp = solution.getNewSchedule().get(group1).getScheduleArray().clone();
+				for(int l =0; l < index*7; l++) {
+					newSchedule[l]= temp[l];
+				}
+				if(index + 1 < solution.getNewSchedule().get(group1).getScheduleArray().length/7) {
+					for(int m = (index+1)*7; m < solution.getNewSchedule().get(group1).getScheduleArray().length; m++) {
+						newSchedule[((m-7)%solution.getNewSchedule().get(group1).getScheduleArray().length)%solution.getNewSchedule().get(group1).getScheduleArray().length] = temp[m];
+					}
+				}
+				Schedule newschedule = new Schedule(group1, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group1) );
+				if(this.checkFeasibility(newschedule, (index*7)) && this.checkRelativeGroupSize(solution, newschedule)) {
+
+					for(int k = 7*index; k <= index*7+6; k++) {
+						if(solution.getNewSchedule().get(group1).getScheduleArray()[k] == 1) {
+							Request request = new Request(1, group1, k);
+							solution.removeRequest(request, solution, emptyTimeSlots, k);
+
+						}
+						else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(group1).getScheduleArray()[k])) {	
+							ReserveDutyType reserveDuty = instance.getFromRDutyNrToRDuty().get(solution.getNewSchedule().get(group1).getScheduleArray()[k]);
+							Request request = new Request(reserveDuty, group1, k);
+							solution.removeRequest(request, solution, emptyTimeSlots, k);
+
+						}
+						else if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(group1).getScheduleArray()[k])) {
+							Duty duty = instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(group1).getScheduleArray()[k]);
+							Request request =  new Request(duty, group1, k);
+							solution.removeRequest(request, solution, emptyTimeSlots, k);
+						}
+					}
+					solution.getNewSchedule().get(group1).setScheduleArray(newSchedule);
+				}
+				break outer;
+			}
+			else {
+				count++;
+			}
+		}
+		if(count != 100) {
+			int[] newSchedule = new int[solution.getNewSchedule().get(group2).getScheduleArray().length+7];
+			int[] temp = solution.getNewSchedule().get(group2).getScheduleArray().clone();
+			for(int i =0; i < temp.length; i++) {
+				newSchedule[i] = temp[i];
+			}
+			for(int j = temp.length; j < newSchedule.length; j++) {
+				newSchedule[j] =2;
+			}
+			//System.out.println(solution.getNewSchedule().get(group1).getScheduleArray().length + " " + newSchedule.length);
+			Schedule schedule = new Schedule(group2, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group2));
+//			System.out.println(newSchedule.length/7 + " " + schedule.getWeeklyOvertime().length);
+
+			if(this.checkRelativeGroupSize(solution, schedule)) {
+				solution.getNewSchedule().get(group2).setScheduleArray(newSchedule);
+				solution.setWeeklyOvertime(newSchedule, group2);
+//				System.out.println("2: "+ solution.getNewSchedule().get(group2).getWeeklyOvertime().length);
+//				System.out.println("YES");
+			}
+		}
+
+		return solution;
 	}
 }

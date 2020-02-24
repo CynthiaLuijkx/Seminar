@@ -280,6 +280,21 @@ public class FeasCheck {
 			return true;
 		}
 	}
+	
+	public boolean checkSundays(int[] schedule) {
+		int count = 0;
+		for (int i = 0; i < schedule.length; i+=7) {
+			if (schedule[i] != 1 && schedule[i] != 2) {
+				count++;
+			}
+		}
+		
+		if (count <= 0.75 * schedule.length/7) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 	/**
 	 * Checks if there are enough ATV days for that contract group
@@ -290,13 +305,13 @@ public class FeasCheck {
 	public int checkATVDays(int[] schedule, ContractGroup c) {
 		int nATVdays = 0; 
 
-		if (c.getATVc() > 0) {
+		if ((int) Math.floor((schedule.length/7)/52.0 * c.getATVPerYear()) > 0) {
 			for(int i = 0; i<schedule.length; i++) {
 				if(schedule[i] == 1) {
 					nATVdays++; 
 				}
 			}
-			return c.getATVc() - nATVdays;
+			return (int) Math.floor((schedule.length/7)/52 * c.getATVPerYear() ) - nATVdays;
 		} else {
 			return 0;
 		}
@@ -466,22 +481,24 @@ public class FeasCheck {
 	public int maxConsecutive(int[] schedule, int index, ContractGroup c) {
 		// check nr of consecutive forward
 		int counter = 1;
-		int loc = index;
-		while (true) {
-			loc = (loc + 1)%schedule.length;
-			if (schedule[loc] != 1 && schedule[loc] != 2) {
-				counter++;
-			} else {
-				break;
+		if (schedule[index] != 1 && schedule[index]  != 2) {
+			int loc = index;
+			while (true) {
+				loc = (loc + 1)%schedule.length;
+				if (schedule[loc] != 1 && schedule[loc] != 2) {
+					counter++;
+				} else {
+					break;
+				}
 			}
-		}
-		loc = index;
-		while (true) {
-			loc = (loc - 1 + schedule.length)%schedule.length;
-			if (schedule[loc] != 1 && schedule[loc] != 2) {
-				counter++;
-			} else {
-				break;
+			loc = index;
+			while (true) {
+				loc = (loc - 1 + schedule.length)%schedule.length;
+				if (schedule[loc] != 1 && schedule[loc] != 2) {
+					counter++;
+				} else {
+					break;
+				}
 			}
 		}
 
@@ -581,6 +598,27 @@ public class FeasCheck {
 			totOvertime += Math.max(0, overtime);
 		}
 		return totOvertime;
+	}
+	
+	/**
+	 * This method determines the quarterly minus hours of a schedule for contract group c.
+	 * @param solution
+	 * @param c
+	 * @return
+	 */
+	public double QuarterlyMinus(int[] solution, ContractGroup c) {
+		double totMinus = 0;
+		
+		double[] weeklyOvertime = this.setWeeklyOvertime(solution, c);
+		for (int empl = 0; empl < solution.length/7; empl++) {
+			double minus = 0;
+			for (int i = 0; i < 13; i++) {
+				minus += weeklyOvertime[(empl+i)%weeklyOvertime.length];
+			}
+			totMinus += Math.max(0, -minus);
+		}
+		
+		return totMinus;
 	}
 
 	/**

@@ -25,8 +25,11 @@ public class ScheduleVis extends JPanel {
 	private int yBuffer; 
 	private int[] schedule; 
 	private Instance instance; 
+	private String depot;
 
-	public ScheduleVis(int nWeeks, int heightpWeek, int widthpDay, int xLegend, int yBuffer, String[] duties) {
+	private int dutyNrCorrector;
+
+	public ScheduleVis(int nWeeks, int heightpWeek, int widthpDay, int xLegend, int yBuffer, String[] duties, String depot) {
 		this.nWeeks = nWeeks; 
 		this.boundX = 7*100; 
 		this.heightpWeek = heightpWeek; 
@@ -37,9 +40,17 @@ public class ScheduleVis extends JPanel {
 		this.basic = true; 
 		this.yBuffer = yBuffer; 
 		this.schedule = null; 
+		this.depot = depot;
+
+		this.dutyNrCorrector = 0;
+		if (depot.equals("Dirksland")) {
+			this.dutyNrCorrector = 820400;
+		} else if (depot.equals("Heinenoord")) {
+			this.dutyNrCorrector = 200000;
+		}
 	}
 
-	public ScheduleVis(int nWeeks, int heightpWeek, int widthpDay, int xLegend, int yBuffer,  int[] schedule, Instance instance) {
+	public ScheduleVis(int nWeeks, int heightpWeek, int widthpDay, int xLegend, int yBuffer,  int[] schedule, Instance instance, String depot) {
 		this.nWeeks = nWeeks; 
 		this.boundX = 7*100;  
 		this.heightpWeek = heightpWeek; 
@@ -51,20 +62,36 @@ public class ScheduleVis extends JPanel {
 		this.yBuffer = yBuffer; 
 		this.schedule = schedule ;
 		this.instance = instance; 
+		this.depot = depot;
+
+		this.dutyNrCorrector = 0;
+		if (depot.equals("Dirksland")) {
+			this.dutyNrCorrector = 820400;
+		} else if (depot.equals("Heinenoord")) {
+			this.dutyNrCorrector = 200000;
+		}
 	}
 
-	public ScheduleVis(String[] duties, String contractGroupNr ) {
+	public ScheduleVis(String[] duties, String contractGroupNr, String depot) {
+		this.depot = depot;
+
+		this.dutyNrCorrector = 0;
+		if (depot.equals("Dirksland")) {
+			this.dutyNrCorrector = 820400;
+		} else if (depot.equals("Heinenoord")) {
+			this.dutyNrCorrector = 200000;
+		}
 		SwingUtilities.invokeLater(new Runnable()
 		{
 			public void run()
 			{
 				int nWeeks = duties.length/7; 
-//				System.out.println(nWeeks); 
+				//				System.out.println(nWeeks); 
 				int heightpWeek = 50; 
 				int widthpDay = 100; 
 				int xLegend = 100; 
 				int yBuffer = 50; 
-				JPanel canvas = new ScheduleVis(nWeeks, heightpWeek, widthpDay, xLegend, yBuffer, duties);
+				JPanel canvas = new ScheduleVis(nWeeks, heightpWeek, widthpDay, xLegend, yBuffer, duties, depot);
 				canvas.setPreferredSize(new Dimension(7*widthpDay + xLegend + 10, yBuffer + Math.max(15*heightpWeek ,nWeeks*heightpWeek) ));
 				JScrollPane scrollPane = new JScrollPane(canvas); 
 				scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -77,18 +104,26 @@ public class ScheduleVis extends JPanel {
 		});
 	}
 
-	public ScheduleVis(int[] schedule, String contractGroupNr , Instance instance) {
+	public ScheduleVis(int[] schedule, String contractGroupNr , Instance instance, String depot) {
+		this.depot = depot;
+
+		this.dutyNrCorrector = 0;
+		if (depot.equals("Dirksland")) {
+			this.dutyNrCorrector = 820400;
+		} else if (depot.equals("Heinenoord")) {
+			this.dutyNrCorrector = 200000;
+		}
 		SwingUtilities.invokeLater(new Runnable()
 		{
 			public void run()
 			{
 				int nWeeks = schedule.length/7; 
-//				System.out.println(nWeeks); 
+				//				System.out.println(nWeeks); 
 				int heightpWeek = 50; 
 				int widthpDay = 100; 
 				int xLegend = 100; 
 				int yBuffer = 50; 
-				JPanel canvas = new ScheduleVis(nWeeks, heightpWeek, widthpDay, xLegend, yBuffer, schedule, instance);
+				JPanel canvas = new ScheduleVis(nWeeks, heightpWeek, widthpDay, xLegend, yBuffer, schedule, instance, depot);
 				canvas.setPreferredSize(new Dimension(7*widthpDay + xLegend + 10, yBuffer + Math.max(15*heightpWeek ,nWeeks*heightpWeek) ));
 				JScrollPane scrollPane = new JScrollPane(canvas); 
 				scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -177,7 +212,7 @@ public class ScheduleVis extends JPanel {
 					}
 				}
 				else {
-					
+
 					int dutynr = schedule[j + i*7]; 
 					if(dutynr == 1) {
 						dutyType = "ATV"; 
@@ -197,11 +232,11 @@ public class ScheduleVis extends JPanel {
 					}else {
 						Duty duty = this.instance.getFromDutyNrToDuty().get(dutynr); 
 						c = new Color(111,175,240); 
-						dutyType = duty.getType() + (dutynr -820400); 
+						dutyType = duty.getType() + (dutynr - dutyNrCorrector); 
 						startTime = duty.getStartTime(); 
 						endTime = duty.getEndTime(); 
 					}
-					
+
 				}
 				int duration = endTime - startTime; 
 				g.drawRect((startTime*widthpDay/minpDay) + xBuffer + j*widthpDay,yBuffer+  heightpWeek/2 + i* heightpWeek - heightDutyBlock/2 , duration*widthpDay/minpDay, heightDutyBlock);
@@ -210,13 +245,13 @@ public class ScheduleVis extends JPanel {
 
 				//Write type of duty 
 				g.setColor(Color.BLACK);
-				
+
 				int nLetters =  dutyType.length(); 
 				int yString = heightpWeek/2 + i* heightpWeek - heightDutyBlock/2 + fontSize ; 
 				fontSize = 10; 
 				int xString = (startTime*widthpDay/minpDay) + xBuffer + j*widthpDay +  duration*widthpDay/(2*minpDay) - fontSize*nLetters/2; 
-				
-				
+
+
 				g.drawString(dutyType,xString ,yBuffer+  yString);
 				fontSize = 15;
 			}	

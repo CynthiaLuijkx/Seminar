@@ -50,8 +50,11 @@ public class Schedule implements Cloneable
 	public int[] getScheduleArray() {
 		return schedule;
 	}
+	
 	public int[] setScheduleArray(int[] newSchedule) {
 		this.schedule = newSchedule;
+		this.weeklyOvertime = new double[schedule.length/7];
+		this.setWeeklyOvertime();
 		return this.schedule;
 	}
 	
