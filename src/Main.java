@@ -35,10 +35,12 @@ public class Main
 		int restTwoWeek = 72 * 60;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
-		boolean phase123 = true;
+		boolean phase123 = false;
 		boolean ALNS = true;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
+		long[] times = new long[6];
+		times[0] = System.nanoTime();
 		Set<String> dutyTypes = new HashSet<>(); //types of duties
 		//add the duty types
 		dutyTypes.add("V");	dutyTypes.add("G");	dutyTypes.add("D");	dutyTypes.add("L");	dutyTypes.add("P"); dutyTypes.add("ATV"); 
@@ -71,9 +73,12 @@ public class Main
 		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
 		System.out.println("Instance " + depot + " initialised");
 
-		int numberOfDrivers = instance.getLB()+17;
-		instance.setNrDrivers(numberOfDrivers);
-		/*
+		int numberOfDrivers = instance.getLB()+12;
+
+	
+		
+		times[1] = System.nanoTime();
+
 		if (phase123) {
 			Phase1_Penalties penalties = new Phase1_Penalties();
 			Set<Schedule> schedules = new HashSet<>();
@@ -92,6 +97,8 @@ public class Main
 					for(ContractGroup c : instance.getContractGroups()) {
 						new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr());
 					}
+					
+					times[2] = System.nanoTime();
 	
 					long phase3Start = System.nanoTime();
 					Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
@@ -114,6 +121,8 @@ public class Main
 						}
 					}
 					iteration++;
+					
+					times[3] = System.nanoTime();
 				}
 				
 				if(iteration == maxIt || schedules.size() == 0) {
@@ -126,12 +135,13 @@ public class Main
 						new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance);
 						printSchedule(schedule, depot, numberOfDrivers, schedule.getC().getNr());
 					}
+					times[4] = System.nanoTime();
 				}
 			} else {
 				System.out.println("Basic schedule cannot be made.");
 			}
 		}
-		*/
+		
 		if (ALNS) {
 			Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
 			Iterator<ContractGroup> iter = schedules.keySet().iterator(); 
@@ -140,12 +150,40 @@ public class Main
 			
 			new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance);
 			new ScheduleVis(schedules.get(group2).getScheduleArray(), "" + group2.getNr() + "before", instance);
-			int iterations_phase5 = 100; 
-			Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, 0); 
+			int iterations_phase5 = 10000; 
+			Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, 1000); 
 			Solution solutionALNS = alns.executeBasic(schedules);
-			System.out.println(solutionALNS.getObj());
+			System.out.println("Objective values: " + solutionALNS.getObj());
+			System.out.println("Costs: " + solutionALNS.getCosts());
+			System.out.println("Total Minus Hours: " + solutionALNS.getMinusHours());
 			new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance);
 			new ScheduleVis(solutionALNS.getNewSchedule().get(group2).getScheduleArray(), "" + group2.getNr() + "after", instance);
+			
+			times[5] = System.nanoTime();
+		}
+		
+		System.out.println("----------------------------------------------------------");
+		System.out.println("Nr. of drivers: " + numberOfDrivers);
+		
+		if(ALNS && phase123) {
+			System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
+			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
+			System.out.println("Phase 1: " + (times[2] - times[1])/1000000000.0);
+			System.out.println("Phase 2: " + (times[3] - times[2])/1000000000.0);
+			System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
+			System.out.println("Phase 4: " + (times[5] - times[4])/1000000000.0);
+		}
+		else if(ALNS) {
+			System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
+			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
+			System.out.println("Phase 4: " + (times[5] - times[1])/1000000000.0);
+		}
+		else {
+			System.out.println("Total time elapsed: " + (times[4] - times[0])/1000000000.0);
+			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
+			System.out.println("Phase 1: " + (times[2] - times[1])/1000000000.0);
+			System.out.println("Phase 2: " + (times[3] - times[2])/1000000000.0);
+			System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
 		}
 	}
 

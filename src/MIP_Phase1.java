@@ -53,6 +53,7 @@ public class MIP_Phase1
 	private Set<IloNumVar> lonelyDuty;
 	private Set<IloNumVar> splitDuties;
 	private Set<IloNumVar> RestSpread;
+	private Set<IloNumVar> reserveDivision;
 	
 	//Output
 	private final HashMap<ContractGroup, String[]> solution;
@@ -100,11 +101,12 @@ public class MIP_Phase1
 		initSoft6(); //Min consecutive rest + ATV 
 		initSoft7(); //Early to late duty 
 	//	initSoft8(); //Parttimers should work as little other duties as possible (implicit in constraint 10)
-		initSoft9(); //Maximum of 5 duties per calendar week on average
+	//	initSoft9(); //Maximum of 5 duties per calendar week on average
 		initSoft10(); //Penalize ATV days on weekends 
 		initSoft11(); //Penalize lone duties
 		initSoft12(); //Average of 2 split duties per week
 		initSoft13(); //Even spread of rest (no more than 3 per week)
+		initSoft14(); //Even spread of reserve duties between contract groups 
 		
 		initObjective();
 		
@@ -234,6 +236,7 @@ public class MIP_Phase1
 		this.lonelyDuty = new HashSet<>();
 		this.splitDuties = new HashSet<>();
 		this.RestSpread = new HashSet<>();
+		this.reserveDivision = new HashSet<>();
 	}
 	
 	public void initConstraint1() throws IloException { //Max one activity per day
@@ -583,7 +586,7 @@ public class MIP_Phase1
 				this.reservePenalty.add(penalty);
 				
 				constraint.addTerm(penalty, -1);
-				this.cplex.addLe(constraint, 2, group.groupNumberToString() + "Reserve_W" + w);
+				this.cplex.addLe(constraint, 1, group.groupNumberToString() + "Reserve_W" + w);
 			}
 		}
 	}
@@ -841,7 +844,7 @@ public class MIP_Phase1
 				this.fivePerWeek.add(penalty);
 
 				constraint.addTerm(penalty, -1);
-				this.cplex.addLe(constraint, 5*group.getTc()/7, group.groupNumberToString() + "Average5<40");
+				this.cplex.addLe(constraint, 4*group.getTc()/7, group.groupNumberToString() + "Average5<40");
 			}
 			else {
 				IloNumVar penalty = this.cplex.numVar(0, Integer.MAX_VALUE);
@@ -849,7 +852,7 @@ public class MIP_Phase1
 				this.fivePerWeek40.add(penalty);
 
 				constraint.addTerm(penalty, -1);
-				this.cplex.addLe(constraint, 5*group.getTc()/7, group.groupNumberToString() + "Average5=40");
+				this.cplex.addLe(constraint, 4*group.getTc()/7, group.groupNumberToString() + "Average5=40");
 			}
 		}
 	}
@@ -962,6 +965,27 @@ public class MIP_Phase1
 		}
 	}
 	
+	public void initSoft14() throws IloException {
+		for(ContractGroup group : instance.getContractGroups()) {
+			IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+			for(int t = 0; t < group.getTc(); t++) {
+				for(IloNumVar decVar : this.daysPerGroup.get(group).get(t)) {
+					String type = this.decVarToCombination.get(decVar).getType();
+					Character firstChar = type.charAt(0);
+					if(firstChar.equals('R')) {
+						constraint.addTerm(decVar, 1);
+					}
+				}
+			}
+			int rhs = (int) Math.ceil(instance.getNrReserveDuties() * group.getRelativeGroupSize());
+			IloNumVar penalty = this.cplex.intVar(0, Integer.MAX_VALUE);
+			penalty.setName(group.groupNumberToString() + "ReserveDivision");
+			this.reserveDivision.add(penalty);
+			constraint.addTerm(penalty, -1);
+			this.cplex.addLe(constraint, rhs);
+		}
+	}
+	
 	public void initObjective() throws IloException {
 		//Edit this later 
 		IloLinearNumExpr objective = this.cplex.linearNumExpr();
@@ -1011,6 +1035,9 @@ public class MIP_Phase1
 		}
 		for(IloNumVar restSpread : this.RestSpread) {
 			objective.addTerm(restSpread,  -penalties.getRestSpreadParam());
+		}
+		for(IloNumVar reserveDiv : this.reserveDivision) {
+			objective.addTerm(reserveDiv, -penalties.getReserveDivisionParam());
 		}
 		
 		this.cplex.addMaximize(objective);

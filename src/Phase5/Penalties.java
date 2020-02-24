@@ -10,11 +10,12 @@ public class Penalties {
 	public final static double penaltyRequest = 10000;
 	
 	public Penalties() {
-		feasPenalties = new double[2];
+		feasPenalties = new double[3];
 		softPenalties = new double[11];
 		
 		feasPenalties[0] = 1.35;//Quarterly overtime
-		feasPenalties[1] = 100; //number of ATV days
+		feasPenalties[1] = 1000; //number of ATV days
+		
 		
 		/*
 		 * 0: ATV spread
@@ -29,17 +30,17 @@ public class Penalties {
 		 * 9: check at least 2 duties of the same type in a row
 		 * 10 check that at most 3 duties of the same type are in a row
 		 */
-		softPenalties[0] = 100; 
-		softPenalties[1] = 50; 
-		softPenalties[2] = 50; 
-		softPenalties[3] = 50; 
-		softPenalties[4] = 100; 
-		softPenalties[5] = 100; 
-		softPenalties[6] = 100; 
-		softPenalties[7] = 100; 
-		softPenalties[8] = 100; 
-		softPenalties[9] = 100; 
-		softPenalties[10] = 100; 
+		softPenalties[0] = 5; 
+		softPenalties[1] = 5; 
+		softPenalties[2] = 5; 
+		softPenalties[3] = 5; 
+		softPenalties[4] = 10; 
+		softPenalties[5] = 10; 
+		softPenalties[6] = 10; 
+		softPenalties[7] = 10; 
+		softPenalties[8] = 10; 
+		softPenalties[9] = 10; 
+		softPenalties[10] = 10; 
 
 	}
 

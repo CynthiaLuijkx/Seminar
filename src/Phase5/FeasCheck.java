@@ -287,23 +287,18 @@ public class FeasCheck {
 	 * @param c
 	 * @return
 	 */
-	public boolean checkATVDays(int[] schedule, ContractGroup c) {
+	public int checkATVDays(int[] schedule, ContractGroup c) {
 		int nATVdays = 0; 
 
-		for(int i = 0; i<schedule.length; i++) {
-			if(schedule[i] == 1) {
-				nATVdays++; 
+		if ((int) Math.floor((schedule.length/7)/52.0 * c.getATVPerYear()) > 0) {
+			for(int i = 0; i<schedule.length; i++) {
+				if(schedule[i] == 1) {
+					nATVdays++; 
+				}
 			}
-		}
-		if(c.getATVPerYear() > 0) {
-			if(nATVdays >= c.getATVc()) {
-				return true; 
-			}else {
-				return false;
-			}
-		}
-		else {
-			return true;
+			return (int) Math.floor((schedule.length/7)/52.0 * c.getATVPerYear() ) - nATVdays;
+		} else {
+			return 0;
 		}
 	}
 
@@ -341,9 +336,9 @@ public class FeasCheck {
 		int[] temp = this.checkSameDuties(schedule);
 		violations[9] = temp[0]; 
 		violations[10] = temp[1];
+		violations[2] = this.maxConsecutive(schedule); 
 		for(int i = 0; i < schedule.length; i+=7) {
 			violations[1] += this.reserveDuties(schedule, i, c);
-			violations[2] += this.maxConsecutive(schedule, i, c);
 			violations[3] += this.maxDuties(schedule, i, c);
 		}
 		int day = 0;
@@ -428,6 +423,38 @@ public class FeasCheck {
 		}
 		return violations;
 	}
+	
+	/**
+	 * This method checks the number of violations of 5 consecutive duties for the whole schedule of a contractgroup
+	 * @param schedule 	Whole schedule of a contract group
+	 * @return
+	 */
+	public int maxConsecutive(int[] schedule) {
+		int counter = 0; 
+		int nViolations = 0; 
+
+		int j = 0; 
+		while(true) {
+			if(schedule[j] ==1|| schedule[j] == 2) {
+				break; 
+			}
+			j++;
+		}
+		
+		for(int i = 0; i<schedule.length; i++) {
+			int k = (i+j) % schedule.length; 
+			if(schedule[k]==1 || schedule[k] == 2) {
+				counter = 0; 
+			}else {
+				counter++; 
+			}
+			if(counter>5) {
+				nViolations++; 
+			}
+		}
+		
+		return nViolations; 
+	}
 
 	/**
 	 * This method checks the number of violations of 5 consecutive duties around a duty on an index.
@@ -439,22 +466,24 @@ public class FeasCheck {
 	public int maxConsecutive(int[] schedule, int index, ContractGroup c) {
 		// check nr of consecutive forward
 		int counter = 1;
-		int loc = index;
-		while (true) {
-			loc = (loc + 1)%schedule.length;
-			if (schedule[loc] != 1 && schedule[loc] != 2) {
-				counter++;
-			} else {
-				break;
+		if (schedule[index] != 1 && schedule[index]  != 2) {
+			int loc = index;
+			while (true) {
+				loc = (loc + 1)%schedule.length;
+				if (schedule[loc] != 1 && schedule[loc] != 2) {
+					counter++;
+				} else {
+					break;
+				}
 			}
-		}
-		loc = index;
-		while (true) {
-			loc = (loc - 1 + schedule.length)%schedule.length;
-			if (schedule[loc] != 1 && schedule[loc] != 2) {
-				counter++;
-			} else {
-				break;
+			loc = index;
+			while (true) {
+				loc = (loc - 1 + schedule.length)%schedule.length;
+				if (schedule[loc] != 1 && schedule[loc] != 2) {
+					counter++;
+				} else {
+					break;
+				}
 			}
 		}
 
@@ -554,6 +583,26 @@ public class FeasCheck {
 			totOvertime += Math.max(0, overtime);
 		}
 		return totOvertime;
+	}
+	/**
+	 * This method determines the quarterly minus hours of a schedule for contract group c.
+	 * @param solution
+	 * @param c
+	 * @return
+	 */
+	public double QuarterlyMinus(int[] solution, ContractGroup c) {
+		double totMinus = 0;
+		
+		double[] weeklyOvertime = this.setWeeklyOvertime(solution, c);
+		for (int empl = 0; empl < solution.length/7; empl++) {
+			double minus = 0;
+			for (int i = 0; i < 13; i++) {
+				minus += weeklyOvertime[(empl+i)%weeklyOvertime.length];
+			}
+			totMinus += Math.max(0, -minus);
+		}
+		
+		return totMinus;
 	}
 
 	/**
@@ -803,6 +852,11 @@ public class FeasCheck {
 				}else {
 					count++; 
 				}
+			} else {
+				currentType = this.instance.getDutyTypeFromDutyNR(schedule[(i+1)%schedule.length]);
+				if (currentType.length() == 2) {
+					currentType = currentType.substring(1);
+				}
 			}
 		}
 		return nViolations; 
@@ -945,4 +999,5 @@ public class FeasCheck {
 		}
 		return 0; 
 	}
+	
 }

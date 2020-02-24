@@ -14,6 +14,7 @@ public class Phase1_Penalties {
 	private final int lonelyDutyParam;
 	private final int splitDutiesParam;
 	private final int restSpreadParam;
+	private final int reserveDivisionParam;
 	
 	public Phase1_Penalties() {
 		this.ATVSpreadPenaltyParam = 1;
@@ -24,12 +25,13 @@ public class Phase1_Penalties {
 		this.consecutiveRestParam = 1;
 		this.earlyToLateParam = 1;
 		this.partTimeParam = 1;
-		this.fivePerWeekParam = 1;
-		this.fivePerWeek40Param = 1;
+		this.fivePerWeekParam = 1000;
+		this.fivePerWeek40Param = 1000;
 		this.ATVonWeekendParam = 1;
 		this.lonelyDutyParam = 1;
 		this.splitDutiesParam = 1000;
 		this.restSpreadParam = 1;
+		this.reserveDivisionParam = 1000;
 	}
 
 	public int getATVSpreadPenaltyParam() {
@@ -86,5 +88,9 @@ public class Phase1_Penalties {
 	
 	public int getRestSpreadParam() {
 		return restSpreadParam;
+	}
+
+	public int getReserveDivisionParam() {
+		return reserveDivisionParam;
 	}
 }

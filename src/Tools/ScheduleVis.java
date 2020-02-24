@@ -59,7 +59,7 @@ public class ScheduleVis extends JPanel {
 			public void run()
 			{
 				int nWeeks = duties.length/7; 
-				System.out.println(nWeeks); 
+//				System.out.println(nWeeks); 
 				int heightpWeek = 50; 
 				int widthpDay = 100; 
 				int xLegend = 100; 
@@ -83,7 +83,7 @@ public class ScheduleVis extends JPanel {
 			public void run()
 			{
 				int nWeeks = schedule.length/7; 
-				System.out.println(nWeeks); 
+//				System.out.println(nWeeks); 
 				int heightpWeek = 50; 
 				int widthpDay = 100; 
 				int xLegend = 100; 

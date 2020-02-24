@@ -91,9 +91,28 @@ public class Solution {
 	public void addRequest(Placement placement) {
 		Schedule currentSchedule = this.getNewSchedule().get(placement.getTimeslot().getGroup());  //get the previous schedule
 		//System.out.println("duty number: "+ placement.getRequest().getDutyNumber());
-		currentSchedule.getScheduleArray()[placement.getTimeslot().getDay()] = placement.getRequest().getDutyNumber();  //add the placement on the right day with the new duty number
-		currentSchedule.setWeeklyOvertime(); //determine the weekly overtime 
-		this.requests.remove(placement.getRequest());  //remove the request from the set of requests
+		if(placement.getRequest().getDutyNumber() == 1) {
+			int numberOfATVdays = 0;
+			for(int i =0; i < currentSchedule.getScheduleArray().length; i++) {
+				if(currentSchedule.getScheduleArray()[i] ==1) {
+					numberOfATVdays++;
+				}
+			}
+			if(numberOfATVdays >= (int) Math.floor((currentSchedule.getScheduleArray().length/7)/52.0 *placement.getRequest().getGroup().getATVPerYear())){
+				this.requests.remove(placement.getRequest());
+			}
+			else {
+		
+				currentSchedule.getScheduleArray()[placement.getTimeslot().getDay()] = placement.getRequest().getDutyNumber();  //add the placement on the right day with the new duty number
+				currentSchedule.setWeeklyOvertime(); //determine the weekly overtime 
+				this.requests.remove(placement.getRequest());  //remove the request from the set of requests
+		}
+		}
+		else {
+			currentSchedule.getScheduleArray()[placement.getTimeslot().getDay()] = placement.getRequest().getDutyNumber();  //add the placement on the right day with the new duty number
+			currentSchedule.setWeeklyOvertime(); //determine the weekly overtime 
+			this.requests.remove(placement.getRequest());  //remove the request from the set of requests
+		}
 	}
 	
 	@Override
@@ -217,5 +236,41 @@ public class Solution {
 			result = prime*result + schedule.getScheduleArray().hashCode();  
 		}
 		return result;
+	}
+	public double getCosts() {
+		double costs = 0;
+
+		//Fixed costs number of employees 
+		for(ContractGroup group: this.newSchedule.keySet()) {
+			costs += this.newSchedule.get(group).getScheduleArray().length/7 * 13 *group.getAvgDaysPerWeek() * group.getAvgHoursPerDay(); 
+		}
+
+		//Overtime 
+		double[] allEmployeesOvertime = new double[instance.getContractGroups().size()];
+		for(ContractGroup group:this.getNewSchedule().keySet()) {
+			allEmployeesOvertime[group.getNr()-1] = this.feasCheck.QuarterlyOvertime(this.getNewSchedule().get(group).getScheduleArray(), group);
+		}
+		for(int i =0; i < allEmployeesOvertime.length; i++) {
+			costs += this.feasPenalties[0] * allEmployeesOvertime[i];
+		}
+
+		return costs;
+	}
+	/**
+	 * This method calculates the total number of minus hours.
+	 * @return
+	 */
+	public double getMinusHours() {
+		double totMinus = 0;
+		
+		double[] allEmployeesMinus = new double[instance.getContractGroups().size()];
+		for (ContractGroup group : this.getNewSchedule().keySet()) {
+			allEmployeesMinus[group.getNr()-1] = this.feasCheck.QuarterlyMinus(this.getNewSchedule().get(group).getScheduleArray(), group);
+		}
+		for (int i = 0; i < allEmployeesMinus.length; i++) {
+			totMinus += allEmployeesMinus[i];
+		}
+		
+		return totMinus;
 	}
 }
