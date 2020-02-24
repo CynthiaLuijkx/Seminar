@@ -425,23 +425,14 @@ public class DestroyHeuristics {
 		ContractGroup group2 = new ContractGroup(0,0, 0, 0, 0, null);
 		Set<TimeSlot> emptyTimeSlots = new HashSet<TimeSlot>();
 		for(ContractGroup g: instance.getContractGroups()) {
-			if(number >= number2) {
 				if(g.getNr()-1 == number) {
 					group1 = g;
 				}
 				else if(g.getNr()-1 == number2) {
 					group2 = g;
 				}
-			}
-			else {
-				if(g.getNr()-1 == number) {
-					group2 = g;
-				}
-				else if(g.getNr()-1 == number2) {
-					group1 = g;
-				}
-			}
 		}
+		
 		int count = 0;
 		outer: while(count != 100) {
 			int index = random.nextInt(solution.getNewSchedule().get(group1).getScheduleArray().length/7-1);
@@ -501,17 +492,17 @@ public class DestroyHeuristics {
 				newSchedule[i] = temp[i];
 			}
 			for(int j = temp.length; j < newSchedule.length; j++) {
-				newSchedule[j] =2;
+				newSchedule[j] = 2;
 			}
 			//System.out.println(solution.getNewSchedule().get(group1).getScheduleArray().length + " " + newSchedule.length);
 			Schedule schedule = new Schedule(group2, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group2));
-			System.out.println(newSchedule.length/7 + " " + schedule.getWeeklyOvertime().length);
+			//System.out.println(newSchedule.length/7 + " " + schedule.getWeeklyOvertime().length);
 				
 			if(this.checkRelativeGroupSize(solution, schedule)) {
 				solution.getNewSchedule().get(group2).setScheduleArray(newSchedule);
-				solution.setWeeklyOvertime(newSchedule, group2);
-				System.out.println("2: "+ solution.getNewSchedule().get(group2).getWeeklyOvertime().length);
-				System.out.println("YES");
+				//solution.setWeeklyOvertime(newSchedule, group2);
+				//System.out.println("2: "+ solution.getNewSchedule().get(group2).getWeeklyOvertime().length);
+				//System.out.println("YES");
 			}
 		}
 

@@ -35,8 +35,8 @@ public class Phase5_ALNS {
 	private double[][] weightsDestroyAdj; //adjusted weights of the destroy methods
 	private double[] weightsRepair; //weights of the repair methods
 	private double[][] weightsRepairAdj; //adjusted weights of the repair methods
-	private int nDestroy = 2; //number of destroy methods
-	private int nRepair = 1;  // number of repair methods
+	private int nDestroy = 3; //number of destroy methods
+	private int nRepair = 3;  // number of repair methods
 	private Solution globalBestSol;  //best solution found so far
 	private double T; //temperature used for simulated annealing
 
@@ -206,24 +206,26 @@ public class Phase5_ALNS {
 		//		else  if(destroyHeuristicNr ==2){
 		//			currentSol = this.destroyHeuristics.executeRandomOvertimeWithSpecificDuties(currentSol, sizeNeighbourhood, random, instance);
 		//		}
-			//	else if(destroyHeuristicNr == 3) {
-				//	currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance);
-				//}
+				else if(destroyHeuristicNr == 1) {
+					currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance);
+				}
 				else {
 					currentSol = this.destroyHeuristics.executeSwapWeek(currentSol, random, instance);
 				}
-				for(ContractGroup group: currentSol.getNewSchedule().keySet()) {
-				System.out.println(currentSol.getNewSchedule().get(group).getWeeklyOvertime().length);
-				}
+				
 		this.repairHeuristics.setAllPlacements(currentSol).toString();
 
 		//execute a repair heuristic depending on the generated number
-		currentSol = this.repairHeuristics.greedyRepair(currentSol);
-		//if (repairHeuristicNr == 0) {
-		 //currentSol = this.repairHeuristics.greedyRepair(currentSol,2);
-		//} else {
-		//		currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
-		//}
+
+		if (repairHeuristicNr == 0) {
+		 currentSol = this.repairHeuristics.greedyRepair(currentSol);
+		}
+		else if(repairHeuristicNr == 1) {
+				currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
+		}
+		else {
+			currentSol = this.repairHeuristics.regretRepair2(currentSol,3);
+		}
 
 		return currentSol;
 	}
