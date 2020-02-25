@@ -29,17 +29,17 @@ public class Penalties {
 		 * 9: check at least 2 duties of the same type in a row
 		 * 10 check that at most 3 duties of the same type are in a row
 		 */
-		softPenalties[0] = 5;
-		softPenalties[1] = 5;
-		softPenalties[2] = 5;
-		softPenalties[3] = 5;
-		softPenalties[4] = 10;
-		softPenalties[5] = 10;
-		softPenalties[6] = 10;
-		softPenalties[7] = 10;
-		softPenalties[8] = 10;
-		softPenalties[9] = 10;
-		softPenalties[10] = 10;
+		softPenalties[0] = 100;
+		softPenalties[1] = 100;
+		softPenalties[2] = 50;
+		softPenalties[3] = 50;
+		softPenalties[4] = 200;
+		softPenalties[5] = 50;
+		softPenalties[6] = 50;
+		softPenalties[7] = 100;
+		softPenalties[8] = 100;
+		softPenalties[9] = 100;
+		softPenalties[10] = 200;
 
 	}
 

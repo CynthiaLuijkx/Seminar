@@ -124,7 +124,7 @@ public class Solution {
 		double costs = 0;
 		//Fixed costs number of employees 
 		for(ContractGroup group: this.newSchedule.keySet()) {
-			costs += this.newSchedule.get(group).getScheduleArray().length/7 * 13 *group.getAvgDaysPerWeek() * group.getAvgHoursPerDay(); 
+			costs += this.newSchedule.get(group).getScheduleArray().length/7 * 13 *group.getAvgDaysPerWeek() * group.getAvgHoursPerDay() * 60; 
 		}
 
 		//Overtime 
@@ -170,7 +170,7 @@ public class Solution {
 
 		//Fixed costs number of employees 
 		for(ContractGroup group: this.newSchedule.keySet()) {
-			objective += this.newSchedule.get(group).getScheduleArray().length/7 * 13 *group.getAvgDaysPerWeek() * group.getAvgHoursPerDay(); 
+			objective += this.newSchedule.get(group).getScheduleArray().length/7 * 13 *group.getAvgDaysPerWeek() * group.getAvgHoursPerDay() * 60; 
 		}
 
 		return objective;
