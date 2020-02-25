@@ -244,11 +244,11 @@ public class FeasCheck {
 					.containsKey(scheduleArray[(current + 1) % scheduleArray.length])) {
 				startTimeNext = instance.getFromDutyNrToDuty()
 						.get(scheduleArray[(current + 1) % scheduleArray.length])
-						.getEndTime();
+						.getStartTime();
 			} else {
 				startTimeNext = instance.getFromRDutyNrToRDuty()
 						.get(scheduleArray[(current + 1) % scheduleArray.length])
-						.getEndTime();
+						.getStartTime();
 			}
 			if (startTimeNext + (24 * 60 - endTimeNewDuty) < instance.getMinBreak()) {
 				return false;

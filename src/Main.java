@@ -186,6 +186,7 @@ public class Main
 			System.out.println("Total Minus Hours: " + solutionALNS.getMinusHours());
 			for (ContractGroup group : instance.getContractGroups()) {
 				new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
+				System.out.println(solutionALNS.getNewSchedule().get(group));
 			}
 			
 			times[5] = System.nanoTime();

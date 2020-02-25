@@ -314,6 +314,16 @@ public class Phase5_ALNS {
 						Request request = new Request(duty, null, s);
 						requests.add(request);
 						//	System.out.println(duty);
+					} else if (included > 1) {
+						Request request = new Request(duty, null, s);
+						requests.add(request);
+						for (Schedule schedule : schedules) {
+							for (int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+								if (schedule.getScheduleArray()[7*w + s] == duty.getNr()) {
+									schedule.getScheduleArray()[7*w + s] = 2;
+								}
+							}
+						}
 					}
 				}
 			}
@@ -333,6 +343,16 @@ public class Phase5_ALNS {
 						Request request = new Request(duty, null, s);
 						requests.add(request);
 						//	System.out.println(duty);
+					} else if (included > 1) {
+						Request request = new Request(duty, null, s);
+						requests.add(request);
+						for (Schedule schedule : schedules) {
+							for (int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+								if (schedule.getScheduleArray()[7*w + s] == duty.getNr()) {
+									schedule.getScheduleArray()[7*w + s] = 2;
+								}
+							}
+						}
 					}
 				}
 			}
@@ -352,6 +372,16 @@ public class Phase5_ALNS {
 						Request request = new Request(duty, null, s);
 						requests.add(request);
 						//	System.out.println(duty);
+					} else if (included > 1) {
+						Request request = new Request(duty, null, s);
+						requests.add(request);
+						for (Schedule schedule : schedules) {
+							for (int w = 0; w < schedule.getScheduleArray().length/7; w++) {
+								if (schedule.getScheduleArray()[7*w + s] == duty.getNr()) {
+									schedule.getScheduleArray()[7*w + s] = 2;
+								}
+							}
+						}
 					}
 				}
 			}

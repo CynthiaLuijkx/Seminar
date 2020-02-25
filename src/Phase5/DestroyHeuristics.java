@@ -43,12 +43,12 @@ public class DestroyHeuristics {
 
 		for(ContractGroup group: solution.getNewSchedule().keySet()) {
 			if(schedule.getC().equals(group)) {
-				if( numberOfDrivers1/numberOfDrivers <= (group.getRelativeGroupSize()+0.05) && (group.getRelativeGroupSize()-0.05) <= numberOfDrivers1/numberOfDrivers) {
+				if( numberOfDrivers1/numberOfDrivers <= (group.getRelativeGroupSize()*1.05) && (group.getRelativeGroupSize()*0.95) <= numberOfDrivers1/numberOfDrivers) {
 					check = true;
 				}
 			}
 			else {
-				if( numberOfDrivers2/numberOfDrivers <= (group.getRelativeGroupSize() + 0.05) && (group.getRelativeGroupSize() - 0.05) <= numberOfDrivers2/numberOfDrivers) {
+				if( numberOfDrivers2/numberOfDrivers <= (group.getRelativeGroupSize() * 1.05) && (group.getRelativeGroupSize() * 0.95) <= numberOfDrivers2/numberOfDrivers) {
 					check = true;
 				}
 			}
