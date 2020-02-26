@@ -1015,4 +1015,118 @@ public class FeasCheck {
 		}
 		return 0; 
 	}
+	
+	public double[] getAllFairness(int[] schedule) {
+		double[] fairCount = new double[new Penalties().getFairPenalties().length]; 
+		
+		/*
+		 * 0	:	ReserveDuties Distribution 
+		 * 1:	Working Sundays Distribution 
+		 * 2: 	Desirability Distribution 
+		 */
+		
+		fairCount[0] = this.getNReserveDuties(schedule); 
+		fairCount[1] = this.getSundayProp(schedule); 
+		fairCount[2] = this.getDesirability(schedule); 
+		
+		return fairCount; 
+		
+	}
+	
+	public double[][] getAllFairness(Solution solution){
+		double[][] result = new double[new Penalties().getFairPenalties().length][solution.getNewSchedule().keySet().size()]; 
+		
+		for(ContractGroup group :solution.getNewSchedule().keySet()) {
+			double[] temp = getAllFairness(solution.getNewSchedule().get(group).getScheduleArray()); 
+			for(int i = 0 ; i<temp.length; i++) {
+				result[i][group.getNr()-1]  = temp[i]; 
+			}
+		}
+		return result;
+	}
+	
+	public double getSunDist(Solution solution) {
+		double[] nSunDriver = new double[solution.getNewSchedule().keySet().size()]; 
+		int i = 0; 
+		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+			int[] schedule = solution.getNewSchedule().get(group).getScheduleArray(); 
+			nSunDriver[i] = getNReserveDuties(schedule) / (double) schedule.length/7; 
+			i++; 
+		}
+
+		return getCoefVariance(nSunDriver); 
+	}
+	
+	public double getSundayProp(int[] schedule) {
+		int count = 0; 
+		
+		for(int i = 0 ; i<schedule.length; i+= 7 ) {
+			if(schedule[i] != 2) {
+				count++; 
+			}
+		}
+		
+		return count / (double) (schedule.length/7); 
+	}
+
+	public double getResDutDist(Solution solution) {
+
+		double[] nResDutPDriver = new double[solution.getNewSchedule().keySet().size()]; 
+		int i = 0; 
+		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+			int[] schedule = solution.getNewSchedule().get(group).getScheduleArray(); 
+			nResDutPDriver[i] = getNReserveDuties(schedule); 
+			i++; 
+		}
+
+		return getCoefVariance(nResDutPDriver); 
+	}
+
+	public double getNReserveDuties(int[] schedule) {
+		int counter=0; 
+
+		for(int i = 0; i<schedule.length; i++) {
+			if(schedule[i]> 2 && schedule[i] <1000) {
+				counter++; 
+			}
+		}
+
+		return counter / (double) (schedule.length/7); 
+	}
+
+	public double getDesirDist(Solution solution) {
+		double [] desirPDriver = new double[solution.getNewSchedule().keySet().size()]; 
+		int i = 0; 
+		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+			int[] schedule = solution.getNewSchedule().get(group).getScheduleArray(); 
+			desirPDriver[i] = getDesirability(schedule) ; 
+			i++; 
+		}
+
+		return getCoefVariance(desirPDriver); 
+	}
+
+	public double getDesirability(int[] schedule) {
+		double sum  = 0; 
+		for(int i =0; i<schedule.length; i++) {
+			sum+= this.instance.getDesirability(schedule[i], i/7); 
+		}
+		return sum / (double) (schedule.length/7); 
+	}
+
+	public double getCoefVariance(double[] array) {
+		double sumSquared = 0; 
+		double sum = 0; 
+		double count = array.length; 
+
+		for(int i = 0; i< array.length; i++) {
+			sumSquared += array[i] * array[i]; 
+			sum += array[i]; 
+		}
+
+		double variance = (sumSquared - (double) (sum*sum / count))/ (count - 1); 
+		double std = Math.sqrt(variance); 
+		double mean = sum/count; 
+		return std/mean; 
+	}
 }

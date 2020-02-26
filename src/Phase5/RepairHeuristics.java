@@ -15,11 +15,22 @@ public class RepairHeuristics {
 	private FeasCheck feasCheck; 
 	private double[] softFeas;
 	private double[] feasPen; 
+	private double[] fairPen; 
+
+	private double[][] fairnessCounts; 
+	private final int fairnessMeasures = new Penalties().getFairPenalties().length; 
 
 	public RepairHeuristics(Instance instance) {
 		this.feasCheck = new FeasCheck(instance); 
 		this.softFeas = new Penalties().getSoftPenalties();
 		this.feasPen = new Penalties().getFeasPenalties(); 
+		this.fairPen = new Penalties().getFairPenalties(); 
+		/*
+		 * 0	:	ReserveDuties Distribution 
+		 * 1:	Working Sundays Distribution 
+		 * 2: 	Desirability Distribution 
+		 */
+		this.fairnessCounts = new double[fairnessMeasures][instance.getContractGroups().size()] ;
 	}
 
 	//---------------------- Regret Repair --------------------------------------------------------------------------------------------------------
@@ -106,6 +117,7 @@ public class RepairHeuristics {
 	 * @return
 	 */
 	public List<Placement> setAllPlacements(Solution solution){
+		this.fairnessCounts = solution.getFeasCounts();
 		List<Placement> placements = new ArrayList<Placement>(); 
 		for(Request request: solution.getRequests()) {
 			placements.addAll(setPlacements(request, solution, solution.getNewSchedule().keySet())); 
@@ -122,7 +134,7 @@ public class RepairHeuristics {
 	 */
 	public List<Placement> setPlacements(Request request, Solution solution, Set<ContractGroup> groups){
 		ArrayList<Placement> updatedPlacements = new ArrayList<Placement>();
-		
+
 		for (ContractGroup group : groups) {
 			if (request.getDutyNumber() == 1 && group.getDutyTypes().contains("ATV")) {
 				request.deletePlacements(group);
@@ -172,6 +184,7 @@ public class RepairHeuristics {
 	 * @return
 	 */
 	public List<Placement> updatePlacements(Request request, Solution solution, ContractGroup group, int changedDay){
+		this.fairnessCounts = solution.getFeasCounts();
 		Schedule schedule = solution.getNewSchedule().get(group);
 		ArrayList<Placement> updatedPlacements = new ArrayList<Placement>(); 
 		Set<Placement> toRemove = new HashSet<Placement>(); 
@@ -370,6 +383,30 @@ public class RepairHeuristics {
 			costOfPlacement += this.softFeas[j]* (softViol[j] - curSoftPenalties[j]); 
 		}
 
+		double[][] copyFairCounts = new double[this.fairnessCounts.length][]; 
+
+		for(int j = 0; j < this.fairnessCounts.length; j++) {
+			copyFairCounts[j] = this.fairnessCounts[j].clone();
+		}
+
+		double[] varFairBefore = new double[this.fairPen.length];
+		double[] varFairAfter = new double[this.fairPen.length]; 
+
+		double[] newFair = this.feasCheck.getAllFairness(check); 
+		for(int j = 0; j<varFairBefore.length; j++) {
+			varFairBefore[j]= this.feasCheck.getCoefVariance(this.fairnessCounts[j]); 
+			//update 
+			copyFairCounts[j][schedule.getC().getNr()-1] = newFair[j]; 
+		}
+
+		for(int j = 0; j<varFairAfter.length; j++) {
+			varFairAfter[j]= this.feasCheck.getCoefVariance(copyFairCounts[j]); 
+		}
+
+		//Fairness Costs 
+		for(int j = 0; j< this.fairPen.length; j++) {
+			costOfPlacement += this.fairPen[j]* (varFairAfter[j] - varFairBefore[j]); 
+		}
 		return costOfPlacement; 
 	}
 

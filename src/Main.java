@@ -32,6 +32,8 @@ public class Main
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
+		int tabuLength = 5;
+		int iterations_phase5 = 25000;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
 		boolean phase123 = false;
@@ -58,7 +60,7 @@ public class Main
 		File reserveDutyFile = new File("Data/ReserveDuties" + depot + ".txt"); //file that contains the reserve duties and their features
 
 		//Get all starting information
-		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound);
+		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound, tabuLength);
 		Schedule.setInstance(instance);
 		System.out.println("Instance " + depot + " initialised");
 		
@@ -177,23 +179,31 @@ public class Main
 			for (ContractGroup group : instance.getContractGroups()) {
 				new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
 			}
-			int iterations_phase5 = 10000; 
 			Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, 1000); 
 			Solution solutionALNS = alns.executeBasic(schedules);
-			System.out.println("Objective values: " + solutionALNS.getObj());
-			System.out.println("Costs: " + solutionALNS.getCosts());
+			double obj = solutionALNS.getObj();
+			double costs = solutionALNS.getCosts();
+			double fairPen = solutionALNS.getFair();
+			System.out.println("----------------------------------------------------------");
+			System.out.println("Objective values: " + obj);
+			System.out.println("Contract + Overtime Costs: " + costs);
+			System.out.println("Penalties Attractiveness: " + (obj - costs - fairPen));
+			System.out.println("Penalties Fairness: " + fairPen);
 			System.out.println("Total Overtime: " + solutionALNS.getOvertime());
 			System.out.println("Total Minus Hours: " + solutionALNS.getMinusHours());
+			System.out.println("----------------------------------------------------------");
+			System.out.println("Violations Attractiveness: ");
+			solutionALNS.printSoftViol();
+			System.out.println("Violations Fairness: ");
+			solutionALNS.printFairPen();
 			for (ContractGroup group : instance.getContractGroups()) {
 				new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
-				System.out.println(solutionALNS.getNewSchedule().get(group));
 			}
 			
 			times[5] = System.nanoTime();
 		}
 		
 		System.out.println("----------------------------------------------------------");
-		System.out.println("Nr. of drivers: " + numberOfDrivers);
 		
 		if(ALNS && phase123) {
 			System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
@@ -220,7 +230,7 @@ public class Main
 	//Method that read the instance files and add the right information to the corresponding sets
 	//Also used as constructor of the class
 	public static Instance readInstance(File dutiesFile, File contractGroupsFile, File reserveDutiesFile, Set<String> dutyTypes, 
-			int dailyRestMin, int restDayMin, double violationBound) throws FileNotFoundException {
+			int dailyRestMin, int restDayMin, double violationBound, int tabuLength) throws FileNotFoundException {
 		//Initialize all sets/maps
 		Set<Duty> workingDays = new HashSet<>(); 
 		Set<Duty> saturday = new HashSet<>();
@@ -300,7 +310,7 @@ public class Main
 		scReserve.close();
 
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, fromDutyNrToDuty, contractGroups, 
-				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32);
+				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32, tabuLength);
 
 	}
 

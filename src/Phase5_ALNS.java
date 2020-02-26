@@ -42,8 +42,8 @@ public class Phase5_ALNS {
 
 	//Constructor of the class
 	public Phase5_ALNS (int iterations, Instance instance, Map<ContractGroup, Schedule> startSchedule, long seed){
-		this.minSizeNeighbourhood = 2;
-		this.maxSizeNeighbourhood = 25;
+		this.minSizeNeighbourhood = 10;
+		this.maxSizeNeighbourhood = 30;
 		this.nIterations = iterations;
 		this.instance = instance;
 		this.random = new Random(seed);
@@ -123,7 +123,7 @@ public class Phase5_ALNS {
 			//			System.out.println("ITERATION " + n + ":");
 
 			// find new solution
-			tempSol = this.executeDestroyAndRepair(tempSol, destroyHeuristicNr, repairHeuristicNr, sizeNeighbourhood);
+			tempSol = this.executeDestroyAndRepair(tempSol, destroyHeuristicNr, repairHeuristicNr, sizeNeighbourhood, n);
 			boolean unique = updateUniqueSol(tempSol); // determine whether it is unique
 
 			// determine if accepted or not
@@ -133,8 +133,9 @@ public class Phase5_ALNS {
 			if (tempSol.getObj() < this.globalBestSol.getObj()) { //if we improve our global solution
 				this.globalBestSol = tempSol.clone();
 				globalOpt = true; //we found a new global optimum
-				accepted = true; //we always accept the solution 
+				accepted = true; //we always accept the solution
 				currentSol = tempSol.clone(); //set the current solution to the temporary solution
+				instance.updateTabu(tempSol.getPlacements(), n);
 				System.out.println("-----------------------------------------------------------------------");
 				System.out.println("New global best solution (iteration " + n + "): " + this.globalBestSol.getObj());
 
@@ -143,6 +144,7 @@ public class Phase5_ALNS {
 			else if (this.random.nextDouble() < Math.exp(-(tempSol.getObj() - currentSol.getObj()) / this.T)) {
 				accepted = true; //accept solution
 				currentSol = tempSol.clone(); //set the current solution to the temporary solution
+				instance.updateTabu(tempSol.getPlacements(), n);
 				//				System.out.println("We accepted the solution: " + currentSol.getObj());
 			}
 
@@ -194,23 +196,30 @@ public class Phase5_ALNS {
 	 * @return							the updated solution
 	 */
 	public Solution executeDestroyAndRepair(Solution currentSol, int destroyHeuristicNr, int repairHeuristicNr, 
-			int sizeNeighbourhood) {
+			int sizeNeighbourhood, int n) {
 		//execute a destroy heuristic depending on the generated number
 		//		currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood, random, instance);
 		//		currentSol = this.destroyHeuristics.executeExtremeSpecificRemoval(currentSol, sizeNeighbourhood, random, instance);
 		if (destroyHeuristicNr == 0) {
-			currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood,  random,instance);
+//			System.out.println("Random Destroy (" + n + ")");
+			currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood,  random,instance, n);
 		}
 		else if (destroyHeuristicNr == 1){
-			currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance);
+//			System.out.println("Random Destroy (" + n + ")");
+			currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance, n);
 		} 
 		else if (destroyHeuristicNr == 2) {
-			currentSol = this.destroyHeuristics.executeSwapWeek(currentSol, random, instance);
+//			System.out.println("Swap Destroy (" + n + ")");
+			currentSol = this.destroyHeuristics.executeSwapWeek(currentSol, random, instance, n);
 		}
-//		else if(destroyHeuristicNr == 3){
+		else if (destroyHeuristicNr == 3) {
+//			System.out.println("Random Day Duty Destroy (" + n + ")");
+			currentSol = this.destroyHeuristics.executeRandomDayDuty(currentSol, random, n);
+		}
+//		else if(destroyHeuristicNr == 4){
 //			currentSol = this.destroyHeuristics.executeExtremeSpecificRemoval(currentSol, sizeNeighbourhood, random, instance);
 //		}
-//		else  if(destroyHeuristicNr == 4){
+//		else  if(destroyHeuristicNr == 5){
 //			currentSol = this.destroyHeuristics.executeExtremeRemoval(currentSol, sizeNeighbourhood, random, instance);
 //		}
 
@@ -220,10 +229,13 @@ public class Phase5_ALNS {
 		//		currentSol = this.repairHeuristics.greedyRepair(currentSol);
 		//		currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
 		if (repairHeuristicNr == 0) {
+//			System.out.println("Greedy");
 			currentSol = this.repairHeuristics.greedyRepair(currentSol);
 		} else if (repairHeuristicNr == 1){
+//			System.out.println("Regret 2");
 			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
 		} else {
+//			System.out.println("Regret 3");
 			currentSol = this.repairHeuristics.regretRepair2(currentSol, 3);
 		}
 

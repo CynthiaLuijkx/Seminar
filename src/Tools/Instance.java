@@ -4,6 +4,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import Phase5.Placement;
+import Phase5.Request;
+
 /**
  * This class stores the instance of the crew scheduling problem.
  * It stores the duties, the reserve duty types, contract groups, violations of some constraints and the set M used in the MIP of Phase 1.
@@ -49,6 +52,15 @@ public class Instance
 	private final Map<String, Integer> avgMinSat;	
 	private final Map<String, Integer> avgMinSun;
 	
+	private Map<Integer, Set<Request>> tabuRequests;
+	private final int tabuLength;
+	
+	private Map<Integer, Double> desirabilityDuties; 
+	private Map<Integer, Double> desirabilityRDuties; 
+	private final int desirableStart = 8*60; 
+	private final int desirableEnd = 21*60; 
+	private final int maxDeviation = 5*60;
+	
 	/**
 	 * Constructs an Instance.
 	 * @param workingDays			a Set containing all the duties on a working day
@@ -65,7 +77,8 @@ public class Instance
 	 */
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
 			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
-			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32) {
+			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, 
+			ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32, int tabuLength) {
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
@@ -102,6 +115,10 @@ public class Instance
 		M.add(new Combination("Sunday", "ATV", 0));
 		
 		this.calculateBounds();
+		
+		this.tabuRequests = new HashMap<Integer, Set<Request>>();
+		this.tabuLength = tabuLength;
+		this.setPreferability();
 	}
 	
 	public Map<String, Integer> getAvgMinW() {	
@@ -303,5 +320,104 @@ public class Instance
 			int averageMin = (int) Math.ceil(totalMin/this.dutiesPerTypeSun.get(dutyType).size());	
 			this.avgMinSun.put(dutyType, averageMin);	
 		}
+	}
+	
+	public Map<Integer, Set<Request>> getTabuSet() {
+		return this.tabuRequests;
+	}
+	
+	public void addTabuRequests(Set<Request> requests, int n) {
+		this.tabuRequests.put(n, requests);
+		if (this.tabuRequests.containsKey(n - this.tabuLength)) {
+			this.tabuRequests.remove(n - this.tabuLength);
+		}
+	}
+	
+	public boolean isTabu(Request newRequest) {
+		for (Integer i : this.tabuRequests.keySet()) {
+			if (this.tabuRequests.get(i).contains(newRequest)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean isTabu(Set<Request> newRequests) {
+		for (Integer i : this.tabuRequests.keySet()) {
+			for (Request req : newRequests) {
+				if (this.tabuRequests.get(i).contains(req)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public void updateTabu(Set<Placement> executedPlacements, int n) {
+		for (Placement curPlacement : executedPlacements) {
+			curPlacement.getRequest().setDay(curPlacement.getTimeslot().getDay());
+			curPlacement.getRequest().setGroup(curPlacement.getTimeslot().getGroup());
+		}
+	}
+	
+	/**
+	 * This method sets the desirability of the duties
+	 * 
+	 * Currently it uses three instance variable to determine the desirability
+	 * desirableStart is the desirable start time, so if the start time is before this the desirability decreases. 
+	 * desriableEnd is the desirable end time, if a duty ends after time, the desirability decreases. 
+	 * The decrease is calculated by taking the difference between the desirable end real time and dividing that by the max deviation. 
+	 */
+	public void setPreferability() {
+		desirabilityDuties = new HashMap<Integer, Double>(); 
+		for(Integer dutynr: this.getFromDutyNrToDuty().keySet()) {
+			double desirability = 1; 
+			Duty duty = this.fromDutyNrToDuty.get(dutynr); 
+			if(duty.getStartTime()< this.desirableStart) {
+				desirability -= (this.desirableStart - duty.getStartTime())/ (double) this.maxDeviation; 
+			}else if(duty.getEndTime()> this.desirableEnd) {
+				desirability -= ((duty.getEndTime() - this.desirableEnd))/ (double) this.maxDeviation; 
+			}
+			desirabilityDuties.put(dutynr, desirability); 
+		}
+		
+		desirabilityRDuties = new HashMap<Integer, Double>(); 
+		for(Integer dutynr: this.getFromRDutyNrToRDuty().keySet()) {
+			double desirability = 1; 
+			ReserveDutyType duty = this.fromRDutyNrToRDuty.get(dutynr); 
+			if(duty.getStartTime()< this.desirableStart) {
+				desirability -= (this.desirableStart - duty.getStartTime())/ (double) this.maxDeviation; 
+			}else if(duty.getEndTime()> this.desirableEnd) {
+				desirability -= ((duty.getEndTime() - this.desirableEnd))/ (double) this.maxDeviation; 
+			}
+			desirabilityRDuties.put(dutynr, desirability); 
+		}
+	}
+	
+	/**
+	 * Returns the desirability of a duty given the duty number
+	 * @param dutyNr
+	 * @return desirability as double between 0 and 1
+	 */
+	public double getDesirability(int dutyNr, int day) {
+		double factor = 1.0; 
+		if(day==0 ) {
+			factor = 0.8; 
+		}else if(day== 6) {
+			factor = 0.9; 
+		}
+		
+		double desirability = 0; 
+		if(dutyNr == 1 || dutyNr == 2) {
+			desirability = 1.0;
+			factor = 1; 
+		}
+		else if(dutyNr <1000) {
+			desirability = this.desirabilityRDuties.get(dutyNr); 
+		}else {
+			desirability = this.desirabilityDuties.get(dutyNr); 
+		}
+		
+		return factor * desirability; 
 	}
 }
