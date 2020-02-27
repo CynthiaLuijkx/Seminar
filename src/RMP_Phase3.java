@@ -66,16 +66,8 @@ public class RMP_Phase3 {
 
 	//Method to solve the RMP
 	public void solve() throws IloException {
-		//this.cplex.exportModel("model.lp");
-		this.cplex.solve();
-		//Some printing
-		//		System.out.println(cplex.getModel());
-		//		System.out.println(cplex.getObjValue());
-		/*ArrayList<ArrayList<Double>> solution = getSolutionDummiesDuties();
-		ArrayList<ArrayList<Double>> solutionReserve = getSolutionDummiesReserve();
-		ArrayList<Double> solutionATV = getSolutionDummiesATV();
-		ArrayList<Double> solution2 = getSolutionDummies2();*/
-
+		this.cplex.exportModel("model.lp");
+		this.cplex.solve();	
 	}
 
 	//Method to clean cplex

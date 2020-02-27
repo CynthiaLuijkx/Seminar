@@ -28,7 +28,6 @@ public class MIP_Phase1
 	//Class input 
 	private final Instance instance; 
 	private final Set<String> dutyTypes;
-	private final Phase1_Penalties penalties;
 	
 	//Decision Variables
 	private HashMap<ContractGroup, IloNumVar[]> restDaysPerGroup;
@@ -46,7 +45,6 @@ public class MIP_Phase1
 	private Set<IloNumVar> consecutiveMinPenalty;
 	private Set<IloNumVar> consecutiveRest;
 	private Set<IloNumVar> earlyToLate;
-	private Set<IloNumVar> partTime;
 	private Set<IloNumVar> fivePerWeek;
 	private Set<IloNumVar> fivePerWeek40;
 	private Set<IloNumVar> ATVonWeekend;
@@ -55,15 +53,18 @@ public class MIP_Phase1
 	private Set<IloNumVar> RestSpread;
 	private Set<IloNumVar> reserveDivision;
 	
+	//Penalties not in the penalty
+	private final double splitPenalty = 1;
+	private final double reserveSpreadPenalty = 1;
+	
 	//Output
 	private final HashMap<ContractGroup, String[]> solution;
 	
-	public MIP_Phase1(Instance instance, Set<String> dutyTypes, Phase1_Penalties penalties) throws IloException {
+	public MIP_Phase1(Instance instance, Set<String> dutyTypes) throws IloException {
 		this.cplex = new IloCplex();
 		
 		this.instance = instance;
 		this.dutyTypes = dutyTypes; 	
-		this.penalties = penalties;
 		
 		this.daysPerGroup = new HashMap<>(); //List of days for this group, 
 		for(ContractGroup group : instance.getContractGroups()) {
@@ -228,7 +229,6 @@ public class MIP_Phase1
 		this.consecutiveMinPenalty = new HashSet<>();
 		this.consecutiveRest = new HashSet<>();
 		this.earlyToLate = new HashSet<>();
-		this.partTime = new HashSet<>();
 		this.fivePerWeek = new HashSet<>();
 		this.fivePerWeek40 = new HashSet<>();
 		this.ATVonWeekend = new HashSet<>();
@@ -967,56 +967,53 @@ public class MIP_Phase1
 		IloLinearNumExpr objective = this.cplex.linearNumExpr();
 		
 		for(IloNumVar ATVPenalty : this.ATVSpreadPenalty) {
-			objective.addTerm(ATVPenalty, -penalties.getATVSpreadPenaltyParam());
+			objective.addTerm(ATVPenalty, instance.getPenalties().getSoftPenalties()[0]);
 		}
 		for(IloNumVar reserveP : this.reservePenalty) {
-			objective.addTerm(reserveP, -penalties.getReservePenaltyParam());
+			objective.addTerm(reserveP, instance.getPenalties().getSoftPenalties()[1]);
 		}
 		for(IloNumVar decVar : this.tooManyConsecutiveDuties) {
-			objective.addTerm(decVar, -penalties.getTooManyConsecutiveDutiesParam());
+			objective.addTerm(decVar, instance.getPenalties().getSoftPenalties()[2]);
 		}
-		for(IloNumVar consecutiveMaxP : this.consecutiveMaxPenalty) {
-			objective.addTerm(consecutiveMaxP, -penalties.getConsecutiveMaxPenaltyParam());
+		for(IloNumVar five : this.fivePerWeek) {
+			objective.addTerm(five,  instance.getPenalties().getSoftPenalties()[3]);
+		}
+		for(IloNumVar five40 : this.fivePerWeek40) {
+			objective.addTerm(five40,  instance.getPenalties().getSoftPenalties()[3]);
+		}
+		for(IloNumVar atvWeekend : this.ATVonWeekend) {
+			objective.addTerm(atvWeekend, instance.getPenalties().getSoftPenalties()[4]);
+		}
+		for(IloNumVar etl : this.earlyToLate) {
+			objective.addTerm(etl, instance.getPenalties().getSoftPenalties()[6]);
+		}
+		for(IloNumVar rest : this.consecutiveRest) {
+			objective.addTerm(rest, instance.getPenalties().getSoftPenalties()[7]);
+		}
+		for(IloNumVar lonelyDuty : this.lonelyDuty) {
+			objective.addTerm(lonelyDuty,  instance.getPenalties().getSoftPenalties()[8]);
 		}
 		
 		for(IloNumVar consecutiveMinP : this.consecutiveMinPenalty) {
-			objective.addTerm(consecutiveMinP, -penalties.getConsecutiveMinPenaltyParam());
+			objective.addTerm(consecutiveMinP, instance.getPenalties().getSoftPenalties()[9]);
 		}
 		
-		for(IloNumVar rest : this.consecutiveRest) {
-			objective.addTerm(rest, -penalties.getConsecutiveRestParam());
-		}
-		
-		for(IloNumVar etl : this.earlyToLate) {
-			objective.addTerm(etl, -penalties.getEarlyToLateParam());
-		}
-		
-		for(IloNumVar pt : this.partTime) {
-			objective.addTerm(pt, -penalties.getPartTimeParam());
-		}
-		for(IloNumVar five : this.fivePerWeek) {
-			objective.addTerm(five,  -penalties.getFivePerWeekParam());
-		}
-		for(IloNumVar five40 : this.fivePerWeek40) {
-			objective.addTerm(five40,  -penalties.getFivePerWeek40Param());
-		}
-		for(IloNumVar atvWeekend : this.ATVonWeekend) {
-			objective.addTerm(atvWeekend, -penalties.getATVonWeekendParam());
-		}
-		for(IloNumVar lonelyDuty : this.lonelyDuty) {
-			objective.addTerm(lonelyDuty,  -penalties.getLonelyDutyParam());
-		}
-		for(IloNumVar splitDuty : this.splitDuties) {
-			objective.addTerm(splitDuty, -penalties.getSplitDutiesParam());
+		for(IloNumVar consecutiveMaxP : this.consecutiveMaxPenalty) {
+			objective.addTerm(consecutiveMaxP, instance.getPenalties().getSoftPenalties()[10]);
 		}
 		for(IloNumVar restSpread : this.RestSpread) {
-			objective.addTerm(restSpread,  -penalties.getRestSpreadParam());
-		}
-		for(IloNumVar reserveDiv : this.reserveDivision) {
-			objective.addTerm(reserveDiv, -penalties.getReserveDivisionParam());
+			objective.addTerm(restSpread,  instance.getPenalties().getSoftPenalties()[11]);
 		}
 		
-		this.cplex.addMaximize(objective);
+		for(IloNumVar splitDuty : this.splitDuties) {
+			objective.addTerm(splitDuty, this.splitPenalty);
+		}
+		
+		for(IloNumVar reserveDiv : this.reserveDivision) {
+			objective.addTerm(reserveDiv, this.reserveSpreadPenalty);
+		}
+		
+		this.cplex.addMinimize(objective);
 	}
 	
 	//Method that returns the number of a day in a week 
