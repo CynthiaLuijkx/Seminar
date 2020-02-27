@@ -123,12 +123,11 @@ public class Main
 		times[1] = System.nanoTime();
 		
 		if (phase123) {
-			Phase1_Penalties penalties = new Phase1_Penalties();
 			Set<Schedule> schedules = new HashSet<>();
 			int iteration = 0;
 			int maxIt = 5;
 			boolean scheduleForEveryGroup = false;
-			MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes, penalties);
+			MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
 			mip.solve();
 			if (mip.isFeasible()) {
 				//int nsol = mip.populate(maxIt); //When using populate

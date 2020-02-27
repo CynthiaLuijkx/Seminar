@@ -26,8 +26,7 @@ public class Phase4_ILP {
 	private final Set<IloNumVar> variables;
 	private final Set<IloNumVar> dutyIncludedPenalty;
 	
-	private final List<Schedule> solution;
-	
+	private final List<Schedule> solution;	
 
 	public Phase4_ILP(Set<Schedule> inputSolution, Instance instance) throws IloException {
 		this.cplex = new IloCplex();

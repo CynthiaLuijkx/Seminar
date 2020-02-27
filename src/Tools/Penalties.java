@@ -2,6 +2,7 @@ package Tools;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Locale;
 import java.util.Scanner;
 
 /**
@@ -23,6 +24,7 @@ public class Penalties {
 		feasPenalties[1] = 1000; //number of ATV days
 		
 		Scanner sc = new Scanner(new File("Data/Penalties.txt"));
+		sc.useLocale(Locale.US);
 		
 		/*
 		 * 0: ATV spread
