@@ -21,12 +21,14 @@ public class Phase3
 	private final int minBreakBetweenShifts;
 	private final int consecFreeWeekly;
 	private final int freeTwoWeeks;
+	private final long seed;
 	
-	public Phase3(Instance instance, int minBreakBetweenShifts, int consecWeek, int twoWeek) {
+	public Phase3(Instance instance, int minBreakBetweenShifts, int consecWeek, int twoWeek, long seed) {
 		this.instance = instance;
 		this.minBreakBetweenShifts = minBreakBetweenShifts;
 		this.consecFreeWeekly = consecWeek;
 		this.freeTwoWeeks = twoWeek;
+		this.seed = seed;
 	}
 	
 	/**
@@ -54,7 +56,7 @@ public class Phase3
 		List<HashMap<Integer, Double>> dualsDuties = model.getDuals1();
 		
 		int iteration = 1;
-		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, minBreakBetweenShifts, consecFreeWeekly, freeTwoWeeks);
+		PricingProblem_Phase3 pricing = new PricingProblem_Phase3(instance, minBreakBetweenShifts, consecFreeWeekly, freeTwoWeeks, seed);
 		
 		boolean negRedCosts = true;
 		boolean iteration1NoSchedule = false;

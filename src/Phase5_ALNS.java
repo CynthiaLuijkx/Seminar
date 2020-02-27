@@ -1,5 +1,6 @@
 import Tools.*;
 
+import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.Random;
 
@@ -35,7 +36,7 @@ public class Phase5_ALNS {
 	private double[][] weightsDestroyAdj; //adjusted weights of the destroy methods
 	private double[] weightsRepair; //weights of the repair methods
 	private double[][] weightsRepairAdj; //adjusted weights of the repair methods
-	private int nDestroy = 3; //number of destroy methods
+	private int nDestroy = 4; //number of destroy methods
 	private int nRepair = 3;  // number of repair methods
 	private Solution globalBestSol;  //best solution found so far
 	private double T; //temperature used for simulated annealing
@@ -71,8 +72,9 @@ public class Phase5_ALNS {
 	 * This method executes the Adaptive Large Neighbourhood Search.
 	 * @param startSchedule				the initial solution
 	 * @return							the best global solution found
+	 * @throws FileNotFoundException 
 	 */
-	public Solution executeBasic(Map<ContractGroup, Schedule> startSchedule) {
+	public Solution executeBasic(Map<ContractGroup, Schedule> startSchedule) throws FileNotFoundException {
 		int n = 1; //start with the first iteration
 		// find initial solution
 		Solution initSol = this.getInitialSol(startSchedule);
@@ -176,7 +178,7 @@ public class Phase5_ALNS {
 	 * @param startSol			the initial solution
 	 * @return					the initial solution
 	 */
-	public Solution getInitialSol(Map<ContractGroup, Schedule> startSol) {
+	public Solution getInitialSol(Map<ContractGroup, Schedule> startSol) throws FileNotFoundException {
 		Set<Request> emptyRequestSet = new HashSet<Request>();
 		List<Schedule> check = new ArrayList<>();
 		for(ContractGroup group: instance.getContractGroups()) {
@@ -216,12 +218,12 @@ public class Phase5_ALNS {
 //			System.out.println("Random Day Duty Destroy (" + n + ")");
 			currentSol = this.destroyHeuristics.executeRandomDayDuty(currentSol, random, n);
 		}
-//		else if(destroyHeuristicNr == 4){
-//			currentSol = this.destroyHeuristics.executeExtremeSpecificRemoval(currentSol, sizeNeighbourhood, random, instance);
-//		}
-//		else  if(destroyHeuristicNr == 5){
-//			currentSol = this.destroyHeuristics.executeExtremeRemoval(currentSol, sizeNeighbourhood, random, instance);
-//		}
+		else if(destroyHeuristicNr == 4){
+			currentSol = this.destroyHeuristics.executeExtremeSpecificRemoval(currentSol, sizeNeighbourhood, random, instance, n);
+		}
+		else  if(destroyHeuristicNr == 5){
+			currentSol = this.destroyHeuristics.executeExtremeRemoval(currentSol, sizeNeighbourhood, random, instance, n);
+		}
 
 		this.repairHeuristics.setAllPlacements(currentSol).toString();
 

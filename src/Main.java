@@ -28,16 +28,32 @@ public class Main
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
+		int paramCase = 1;
+		int multiplierSoft = 1;
+		int multiplierFair = 1;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
 		int tabuLength = 5;
-		int iterations_phase5 = 25000;
+		int iterations_phase5 = 100;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
 		boolean phase123 = false;
 		boolean ALNS = true;
+		long[] seeds = new long[10];
+		seeds[0] = 150659;
+		seeds[1] = 332803;
+		seeds[2] = 418219;
+		seeds[3] = 415993;
+		seeds[4] = 68371;
+		seeds[5] = 186917;
+		seeds[6] = 41;
+		seeds[7] = 56081;
+		seeds[8] = 609599;
+		seeds[9] = 218527;
+		long seedColGen = 1000;
+		long seedInteger = 1000;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		long[] times = new long[6];
@@ -60,7 +76,8 @@ public class Main
 		File reserveDutyFile = new File("Data/ReserveDuties" + depot + ".txt"); //file that contains the reserve duties and their features
 
 		//Get all starting information
-		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound, tabuLength);
+		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound, tabuLength, 
+				multiplierSoft, multiplierFair);
 		Schedule.setInstance(instance);
 		System.out.println("Instance " + depot + " initialised");
 		
@@ -127,7 +144,7 @@ public class Main
 					times[2] = System.nanoTime();
 	
 					long phase3Start = System.nanoTime();
-					Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek);
+					Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek, seedColGen);
 					HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
 					long phase3End = System.nanoTime();
 					System.out.println("Phase 3 runtime: " + (phase3End - phase3Start) / 1000000000.0);
@@ -155,11 +172,11 @@ public class Main
 					System.out.println("No feasible schedules found on all " + maxIt + " basic schedules");
 				}
 				else {
-					Phase4 phase4 = new Phase4(schedules, instance);
+					Phase4 phase4 = new Phase4(schedules, instance, seedInteger);
 					List<Schedule> newSchedules = phase4.runILP();
 					
 					//Turn this off if you don't want to do the swaps
-					Phase4_AddMissing addMissing = new Phase4_AddMissing(newSchedules, instance);
+					Phase4_AddMissing addMissing = new Phase4_AddMissing(newSchedules, instance, seedInteger);
 					newSchedules = addMissing.getNewSchedules();
 					
 					for(Schedule schedule : newSchedules) {
@@ -173,33 +190,84 @@ public class Main
 			}
 		}
 		
+		double[][] results = new double[seeds.length][instance.getContractGroups().size() + 7];
 		if (ALNS) {
 			Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
 			
 			for (ContractGroup group : instance.getContractGroups()) {
 				new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
 			}
-			Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, 1000); 
-			Solution solutionALNS = alns.executeBasic(schedules);
-			double obj = solutionALNS.getObj();
-			double costs = solutionALNS.getCosts();
-			double fairPen = solutionALNS.getFair();
-			System.out.println("----------------------------------------------------------");
-			System.out.println("Objective values: " + obj);
-			System.out.println("Contract + Overtime Costs: " + costs);
-			System.out.println("Penalties Attractiveness: " + (obj - costs - fairPen));
-			System.out.println("Penalties Fairness: " + fairPen);
-			System.out.println("Total Overtime: " + solutionALNS.getOvertime());
-			System.out.println("Total Minus Hours: " + solutionALNS.getMinusHours());
-			System.out.println("----------------------------------------------------------");
-			System.out.println("Violations Attractiveness: ");
-			solutionALNS.printSoftViol();
-			System.out.println("Violations Fairness: ");
-			solutionALNS.printFairPen();
-			for (ContractGroup group : instance.getContractGroups()) {
-				new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
+			FileWriter writer = new FileWriter("ResultsALNS_" + depot + "_C" + paramCase + "_" + multiplierSoft + "_" + multiplierFair + ".txt");
+			for (int seedNr = 0; seedNr < seeds.length; seedNr++) {
+				long startALNS = System.nanoTime();
+				Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, seedNr); 
+				Solution solutionALNS = alns.executeBasic(schedules);
+				long endALNS = System.nanoTime();
+				double obj = solutionALNS.getObj();
+				double costs = solutionALNS.getCosts();
+				double fairScore = solutionALNS.getFairScore();
+				double softScore = solutionALNS.getSoftScore();
+				double overTime = solutionALNS.getOvertime();
+				double minus = solutionALNS.getMinusHours();
+				System.out.println("----------------------------------------------------------");
+				System.out.println("Objective values: " + obj);
+				System.out.println("Contract + Overtime Costs: " + costs);
+				System.out.println("Penalties Attractiveness: " + softScore);
+				System.out.println("Penalties Fairness: " + fairScore);
+				System.out.println("Total Overtime: " + overTime);
+				System.out.println("Total Minus Hours: " + minus);
+				System.out.println("----------------------------------------------------------");
+				System.out.println("Violations Attractiveness: ");
+				solutionALNS.printSoftViol();
+				System.out.println("Violations Fairness: ");
+				solutionALNS.printFairPen();
+				results[seedNr][0] = obj;
+				results[seedNr][1] = costs;
+				results[seedNr][2] = softScore;
+				results[seedNr][3] = fairScore;
+				results[seedNr][4] = overTime;
+				results[seedNr][5] = minus;
+				results[seedNr][6] = (endALNS-startALNS)/1000000000.0;
+				
+				for (ContractGroup group : instance.getContractGroups()) {
+					results[seedNr][6 + group.getNr()] = solutionALNS.getNewSchedule().get(group).getSchedule().length/7;
+				}
+				
+				for (int i = 0; i < results[0].length - instance.getContractGroups().size(); i++) {
+					writer.write(Double.toString(results[seedNr][i]) + ",");
+				}
+				double[][] fairViolations = solutionALNS.getFeasCheck().getAllFairness(solutionALNS);
+				for (int i = 1; i <= instance.getContractGroups().size(); i++) {
+					if (i > 1) {
+						writer.write(System.getProperty("line.separator"));
+						for (int j = 0; j < results[0].length - instance.getContractGroups().size(); j++) {
+							writer.write(", ");
+						}
+					}
+					ContractGroup c = null;
+					for (ContractGroup group : instance.getContractGroups()) {
+						if (group.getNr() == i) {
+							c = group;
+							break;
+						}
+					}
+					writer.write(Double.toString(results[seedNr][6 + i]) + ", ");
+					int[] softViolations = solutionALNS.getFeasCheck().allViolations(solutionALNS.getNewSchedule().get(c).getSchedule(), c);
+					for (int violNr = 0; violNr < softViolations.length; violNr++) {
+						writer.write(Integer.toString(softViolations[violNr]) + ", ");
+					}
+					
+					for (int violNr = 0; violNr < fairViolations.length; violNr++) {
+						writer.write(Double.toString(fairViolations[violNr][c.getNr()-1]) + ", ");
+					}
+				}
+				writer.write(System.getProperty("line.separator"));
+				
+//				for (ContractGroup group : instance.getContractGroups()) {
+//					new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
+//				}
 			}
-			
+			writer.close();
 			times[5] = System.nanoTime();
 		}
 		
@@ -225,12 +293,24 @@ public class Main
 			System.out.println("Phase 2: " + (times[3] - times[2])/1000000000.0);
 			System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
 		}
+		
+		System.out.println("----------------------------------------------------------");
+		System.out.print("ObjVal"); System.out.print("\t"); System.out.print("Contract+Overtime"); System.out.print("\t"); System.out.print("Attractiveness");
+		System.out.print("\t"); System.out.print("Fairness"); System.out.print("\t"); System.out.print("Overtime"); System.out.print("\t"); System.out.println("Minus");
+		System.out.print("\t"); System.out.print("ContractGroupSizes(OrderOfContractNumber)"); System.out.print("\t"); System.out.println("RunningTime(sec.)");
+		for (int seedNr = 0; seedNr < seeds.length; seedNr++) {
+			for (int i = 0; i < 6 + instance.getContractGroups().size(); i++) {
+				System.out.print(results[seedNr][i]);
+				System.out.print("\t");
+			}
+			System.out.println();
+		}
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
 	//Also used as constructor of the class
 	public static Instance readInstance(File dutiesFile, File contractGroupsFile, File reserveDutiesFile, Set<String> dutyTypes, 
-			int dailyRestMin, int restDayMin, double violationBound, int tabuLength) throws FileNotFoundException {
+			int dailyRestMin, int restDayMin, double violationBound, int tabuLength, int multiplierSoft, int multiplierFair) throws FileNotFoundException {
 		//Initialize all sets/maps
 		Set<Duty> workingDays = new HashSet<>(); 
 		Set<Duty> saturday = new HashSet<>();
@@ -310,7 +390,7 @@ public class Main
 		scReserve.close();
 
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, fromDutyNrToDuty, contractGroups, 
-				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32, tabuLength);
+				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32, tabuLength, multiplierSoft, multiplierFair);
 
 	}
 

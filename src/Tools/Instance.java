@@ -1,4 +1,5 @@
 package Tools;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -57,9 +58,14 @@ public class Instance
 	
 	private Map<Integer, Double> desirabilityDuties; 
 	private Map<Integer, Double> desirabilityRDuties; 
-	private final int desirableStart = 8*60; 
-	private final int desirableEnd = 21*60; 
-	private final int maxDeviation = 5*60;
+	private final int desirableStart = 6*60; 
+	private final int desirableEnd = 24*60; 
+	private final int maxDeviation = 2*60;
+	
+	private final int multiplierSoft;
+	private final int multiplierFair;
+	
+	private final Penalties penalties;
 	
 	/**
 	 * Constructs an Instance.
@@ -78,7 +84,8 @@ public class Instance
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
 			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
 			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, 
-			ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32, int tabuLength) {
+			ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32, int tabuLength, 
+			int multiplierSoft, int multiplierFair) throws FileNotFoundException {
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
@@ -119,6 +126,10 @@ public class Instance
 		this.tabuRequests = new HashMap<Integer, Set<Request>>();
 		this.tabuLength = tabuLength;
 		this.setPreferability();
+		this.multiplierSoft = multiplierSoft;
+		this.multiplierFair = multiplierFair;
+		
+		this.penalties = new Penalties();
 	}
 	
 	public Map<String, Integer> getAvgMinW() {	
@@ -158,16 +169,18 @@ public class Instance
 	public HashMap<String, Set<Duty>> getDutiesPerTypeSun() {
 		return dutiesPerTypeSun;
 	}
+	
 	public HashMap<Integer, Duty> getFromDutyNrToDuty(){
 		return fromDutyNrToDuty;
 	}
+	
 	public HashMap<Integer, ReserveDutyType> getFromRDutyNrToRDuty(){
 		return fromRDutyNrToRDuty;
 	}
+	
 	public Set<ContractGroup> getContractGroups() {
 		return contractGroups;
 	}
-	
 	
 	public Set<ReserveDutyType> getReserveDutyTypes() {
 		return reserveDutyTypes;
@@ -265,7 +278,6 @@ public class Instance
 		this.violations3Days = violations3Days;
 	}
 
-	
 	public int getMinBreak() {
 		return minBreak;
 	}
@@ -294,6 +306,9 @@ public class Instance
 		}
 	}
 	
+	/**
+	 * This method calculated the average duty length for each duty type.
+	 */
 	public void calculateAverages() {	
 		for(String dutyType : this.dutiesPerTypeW.keySet()) {	
 			int totalMin = 0;	
@@ -326,6 +341,11 @@ public class Instance
 		return this.tabuRequests;
 	}
 	
+	/**
+	 * This method adds a set of requests to the tabu list and removes the tabu requests that should be removed.
+	 * @param requests			the set of requests
+	 * @param n					the iteration number
+	 */
 	public void addTabuRequests(Set<Request> requests, int n) {
 		this.tabuRequests.put(n, requests);
 		if (this.tabuRequests.containsKey(n - this.tabuLength)) {
@@ -333,6 +353,11 @@ public class Instance
 		}
 	}
 	
+	/**
+	 * This method checks if a request is tabu.
+	 * @param newRequest		the request
+	 * @return					a boolean denoting whether a request is tabu or not.
+	 */
 	public boolean isTabu(Request newRequest) {
 		for (Integer i : this.tabuRequests.keySet()) {
 			if (this.tabuRequests.get(i).contains(newRequest)) {
@@ -342,6 +367,11 @@ public class Instance
 		return false;
 	}
 	
+	/**
+	 * This method checks whether there exists a tabu in a set of requests.
+	 * @param newRequests		the set of requests
+	 * @return					a boolean denoting whether 
+	 */
 	public boolean isTabu(Set<Request> newRequests) {
 		for (Integer i : this.tabuRequests.keySet()) {
 			for (Request req : newRequests) {
@@ -353,6 +383,11 @@ public class Instance
 		return false;
 	}
 	
+	/**
+	 * This method updates the tabu request when a solution is accepted.
+	 * @param executedPlacements
+	 * @param n
+	 */
 	public void updateTabu(Set<Placement> executedPlacements, int n) {
 		for (Placement curPlacement : executedPlacements) {
 			curPlacement.getRequest().setDay(curPlacement.getTimeslot().getDay());
@@ -419,5 +454,17 @@ public class Instance
 		}
 		
 		return factor * desirability; 
+	}
+	
+	public int getMultiplierSoft() {
+		return this.multiplierSoft;
+	}
+	
+	public int getMultiplierFair() {
+		return this.multiplierFair;
+	}
+	
+	public Penalties getPenalties() {
+		return this.penalties;
 	}
 }

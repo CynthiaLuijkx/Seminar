@@ -152,7 +152,7 @@ public class DestroyHeuristics {
 	 * @param instance				the problem instance
 	 * @return						the new solution
 	 */
-	public Solution executeExtremeRemoval(Solution solution, int nRemove, Random random, Instance instance) {
+	public Solution executeExtremeRemoval(Solution solution, int nRemove, Random random, Instance instance, int n) {
 		Set<TimeSlot> slots = new HashSet<TimeSlot>();
 		Map<ContractGroup, List<Integer>> removalDuties = new HashMap<ContractGroup, List<Integer>>(); //list of the weeks which have the largest overtime to remove
 		Map<ContractGroup,double[]> weeklyOvertimePGroup = new HashMap<ContractGroup,double[]>(); //the weekly overtime per contract group
@@ -221,6 +221,8 @@ public class DestroyHeuristics {
 				}
 			}
 		}
+		Set<Request> tabu = new HashSet<>();
+		instance.addTabuRequests(tabu, n);
 		return solution;
 	}
 
@@ -234,7 +236,7 @@ public class DestroyHeuristics {
 	 * @param instance				the problem instance
 	 * @return						the new solution
 	 */
-	public Solution executeExtremeSpecificRemoval(Solution solution, int nRemove, Random random, Instance instance) {
+	public Solution executeExtremeSpecificRemoval(Solution solution, int nRemove, Random random, Instance instance, int n) {
 		Set<TimeSlot> slots = new HashSet<TimeSlot>();
 		Map<ContractGroup, List<Integer>> removalDuties = new HashMap<ContractGroup, List<Integer>>(); //list of the weeks which have the largest overtime to remove
 		Map<ContractGroup,double[]> weeklyOvertimePGroup = new HashMap<ContractGroup,double[]>(); //the weekly overtime per contract group
@@ -408,6 +410,8 @@ public class DestroyHeuristics {
 				}
 			}
 		}
+		Set<Request> tabu = new HashSet<>();
+		instance.addTabuRequests(tabu, n);
 		return solution; 
 	}
 

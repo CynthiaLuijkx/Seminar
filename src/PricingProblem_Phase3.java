@@ -37,13 +37,13 @@ public class PricingProblem_Phase3
 
 	private Random random;
 
-	public PricingProblem_Phase3(Instance instance, int minBreakBetweenShifts, int consecWeek, int twoWeek) {
+	public PricingProblem_Phase3(Instance instance, int minBreakBetweenShifts, int consecWeek, int twoWeek, long seed) {
 		this.instance = instance;
 		this.minBreakBetweenShifts = minBreakBetweenShifts;
 		this.consecFreeWeekly = consecWeek;
 		this.freeTwoWeeks = twoWeek;
 		initGraphs();
-		this.random = new Random(1000); //set a random seed 
+		this.random = new Random(seed); //set a random seed 
 	}
 
 	/**

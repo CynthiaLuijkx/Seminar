@@ -1,4 +1,5 @@
 package Phase5;
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,6 +23,7 @@ public class Solution {
 	private FeasCheck feasCheck; 
 	private final double[] softPenalties;
 	private final double[] feasPenalties;
+	private final double[] fairPenalties;
 	private double[][] fairCounts;
 	private Set<Placement> executedPlacements;
 
@@ -30,8 +32,9 @@ public class Solution {
 		this.newSchedule = schedule;
 		this.instance = instance;
 		this.feasCheck= new FeasCheck(instance);
-		this.softPenalties = new Penalties().getSoftPenalties(); 
-		this.feasPenalties = new Penalties().getFeasPenalties();
+		this.softPenalties = instance.getPenalties().getSoftPenalties(); 
+		this.feasPenalties = instance.getPenalties().getFeasPenalties();
+		this.fairPenalties = instance.getPenalties().getFairPenalties();
 		this.fairCounts = this.feasCheck.getAllFairness(this);
 		this.executedPlacements = new HashSet<>();
 	}
@@ -71,6 +74,10 @@ public class Solution {
 
 			this.requests.add(request); //add the request to the list of requests
 		}
+	}
+	
+	public FeasCheck getFeasCheck() {
+		return this.feasCheck;
 	}
 
 	public Set<Request> getRequests() {
@@ -148,10 +155,42 @@ public class Solution {
 	
 	public double getFair() {
 		double fairPen = 0;
-		for(int i = 0; i<new Penalties().getFairPenalties().length; i++) {
-			fairPen += this.feasCheck.getCoefVariance(this.fairCounts[i])* new Penalties().getFairPenalties()[i]; 
+		for(int i = 0; i< this.fairPenalties.length; i++) {
+			fairPen += this.feasCheck.getCoefVariance(this.fairCounts[i])* this.fairPenalties[i] * instance.getMultiplierFair(); 
 		}
 		return fairPen;
+	}
+	
+	public double getFairScore() {
+		double fairScore = 0;
+		for(int i = 0; i< this.fairPenalties.length; i++) {
+			fairScore += this.feasCheck.getCoefVariance(this.fairCounts[i])* this.fairPenalties[i]; 
+		}
+		return fairScore;
+	}
+	
+	public double getSoft() {
+		double softPen = 0;
+		for(ContractGroup group: this.getNewSchedule().keySet()) {
+			int[] violations = this.feasCheck.allViolations(this.getNewSchedule().get(group).getScheduleArray(), group);
+
+			for(int i =0; i < this.softPenalties.length; i++) {
+				softPen += violations[i]*this.softPenalties[i] * instance.getMultiplierSoft();
+			}
+		}
+		return softPen;
+	}
+	
+	public double getSoftScore() {
+		double softScore = 0;
+		for(ContractGroup group: this.getNewSchedule().keySet()) {
+			int[] violations = this.feasCheck.allViolations(this.getNewSchedule().get(group).getScheduleArray(), group);
+
+			for(int i =0; i < this.softPenalties.length; i++) {
+				softScore += violations[i]*this.softPenalties[i];
+			}
+		}
+		return softScore;
 	}
 
 	/**
@@ -166,7 +205,7 @@ public class Solution {
 			int[] violations = this.feasCheck.allViolations(this.getNewSchedule().get(group).getScheduleArray(), group);
 
 			for(int i =0; i < this.softPenalties.length; i++) {
-				objective += violations[i]*this.softPenalties[i];
+				objective += violations[i]*this.softPenalties[i] * instance.getMultiplierSoft();
 			}
 		}
 
@@ -181,7 +220,7 @@ public class Solution {
 		}
 
 		//Not solved request 
-		objective += this.requests.size()* Penalties.penaltyRequest; 
+		objective += this.requests.size()* instance.getPenalties().penaltyRequest; 
 
 		//Fixed costs number of employees 
 		for(ContractGroup group: this.newSchedule.keySet()) {
@@ -189,8 +228,8 @@ public class Solution {
 		}
 
 		// Fairness 
-		for(int i = 0; i<new Penalties().getFairPenalties().length; i++) {
-			objective+= this.feasCheck.getCoefVariance(this.fairCounts[i])* new Penalties().getFairPenalties()[i]; 
+		for(int i = 0; i< this.fairPenalties.length; i++) {
+			objective+= this.feasCheck.getCoefVariance(this.fairCounts[i])* this.fairPenalties[i] * instance.getMultiplierFair(); 
 		}
 		return objective;
 	}

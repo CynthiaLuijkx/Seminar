@@ -280,7 +280,7 @@ public class FeasCheck {
 			return true;
 		}
 	}
-	
+
 	public boolean checkSundays(int[] schedule) {
 		int count = 0;
 		for (int i = 0; i < schedule.length; i+=7) {
@@ -288,7 +288,7 @@ public class FeasCheck {
 				count++;
 			}
 		}
-		
+
 		if (count <= 0.75 * schedule.length/7) {
 			return true;
 		} else {
@@ -324,7 +324,7 @@ public class FeasCheck {
 	 * @return
 	 */
 	public int[] allViolations(int[] schedule, ContractGroup c) {
-		int[] violations = new int[11]; //INCREASE IF YOU HAVE ALL VIOLATIONS;
+		int[] violations = new int[12]; //INCREASE IF YOU HAVE ALL VIOLATIONS;
 		/*
 		 * 0: ATV spread
 		 * 1: no more than 2 reserve duties
@@ -336,7 +336,8 @@ public class FeasCheck {
 		 * 7: want ATV and rest after one another (check how often a rest/atv stands alone)
 		 * 8: loose duties are not preferred
 		 * 9: check at least 2 duties of the same type in a row
-		 * 10 check that at most 3 duties of the same type are in a row
+		 * 10: check that at most 3 duties of the same type are in a row
+		 * 11: no more than 3 rest and ATV in a week
 		 */
 
 		for (int i = 0; i < schedule.length; i++) {
@@ -351,6 +352,7 @@ public class FeasCheck {
 		int[] temp = this.checkSameDuties(schedule);
 		violations[9] = temp[0]; 
 		violations[10] = temp[1];
+		violations[11] = this.check3RestATV(schedule);
 		violations[2] = this.maxConsecutive(schedule); 
 		for(int i = 0; i < schedule.length; i+=7) {
 			violations[1] += this.reserveDuties(schedule, i, c);
@@ -378,7 +380,7 @@ public class FeasCheck {
 	 * @return
 	 */
 	public int[] allViolations(int[] schedule, ContractGroup c, int i) {
-		int[] violations = new int[11]; //INCREASE IF YOU HAVE ALL VIOLATIONS;
+		int[] violations = new int[12]; //INCREASE IF YOU HAVE ALL VIOLATIONS;
 		/*
 		 * 0: ATV spread
 		 * 1: no more than 2 reserve duties
@@ -390,7 +392,8 @@ public class FeasCheck {
 		 * 7: want ATV and rest after one another (check how often a rest/atv stands alone)
 		 * 8: loose duties are not preferred
 		 * 9: check at least 2 duties of the same type in a row
-		 * 10 check that at most 3 duties of the same type are in a row
+		 * 10: check that at most 3 duties of the same type are in a row
+		 * 11: no more than 3 rest and ATV in a week
 		 */
 
 		violations[0] = this.ATVspread(schedule, i-7, i+7,c);
@@ -404,6 +407,7 @@ public class FeasCheck {
 		violations[9] = this.check2SameDuties(schedule,i);
 		violations[10] = this.check3SameDuties(schedule,i);
 
+		violations[11] = this.check3RestATV(schedule, i);
 		return violations;
 	}
 
@@ -438,7 +442,7 @@ public class FeasCheck {
 		}
 		return violations;
 	}
-	
+
 	/**
 	 * This method checks the number of violations of 5 consecutive duties for the whole schedule of a contractgroup
 	 * @param schedule 	Whole schedule of a contract group
@@ -455,7 +459,7 @@ public class FeasCheck {
 			}
 			j++;
 		}
-		
+
 		for(int i = 0; i<schedule.length; i++) {
 			int k = (i+j) % schedule.length; 
 			if(schedule[k]==1 || schedule[k] == 2) {
@@ -467,7 +471,7 @@ public class FeasCheck {
 				nViolations++; 
 			}
 		}
-		
+
 		return nViolations; 
 	}
 
@@ -599,7 +603,7 @@ public class FeasCheck {
 		}
 		return totOvertime;
 	}
-	
+
 	/**
 	 * This method determines the quarterly minus hours of a schedule for contract group c.
 	 * @param solution
@@ -608,7 +612,7 @@ public class FeasCheck {
 	 */
 	public double QuarterlyMinus(int[] solution, ContractGroup c) {
 		double totMinus = 0;
-		
+
 		double[] weeklyOvertime = this.setWeeklyOvertime(solution, c);
 		for (int empl = 0; empl < solution.length/7; empl++) {
 			double minus = 0;
@@ -617,7 +621,7 @@ public class FeasCheck {
 			}
 			totMinus += Math.max(0, -minus);
 		}
-		
+
 		return totMinus;
 	}
 
@@ -1016,35 +1020,70 @@ public class FeasCheck {
 		return 0; 
 	}
 	
-	public double[] getAllFairness(int[] schedule) {
-		double[] fairCount = new double[new Penalties().getFairPenalties().length]; 
+	public int check3RestATV(int[] schedule) {
+		int count = 0;
 		
+		for (int i = 0; i < schedule.length/7; i++) {
+			int tempCount = 0;
+			for (int j = 0; j < 7; j++) {
+				if (schedule[7*i+j] == 1 || schedule[7*i+j] == 2) {
+					tempCount++;
+				}
+			}
+			if (tempCount > 3) {
+				count++;
+			}
+		}
+		
+		return count;
+	}
+	
+	public int check3RestATV(int[] schedule, int i) {
+		int weekNr = i/7;
+		int count = 0;
+		for (int j = 0; j < 7; j++) {
+			if (schedule[7*weekNr + j] == 1 || schedule[7*weekNr +j] == 2) {
+				count++;
+			}
+		}
+		if (count > 3) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	public double[] getAllFairness(int[] schedule, ContractGroup c) {
+		double[] fairCount = new double[instance.getPenalties().getFairPenalties().length]; 
+
 		/*
 		 * 0	:	ReserveDuties Distribution 
 		 * 1:	Working Sundays Distribution 
 		 * 2: 	Desirability Distribution 
 		 */
-		
+
 		fairCount[0] = this.getNReserveDuties(schedule); 
 		fairCount[1] = this.getSundayProp(schedule); 
 		fairCount[2] = this.getDesirability(schedule); 
-		
+		fairCount[3] = this.getPropDuty(schedule,"G"); 
+		fairCount[4] = this.getAttractiveness(schedule, c);
+
 		return fairCount; 
-		
+
 	}
-	
+
 	public double[][] getAllFairness(Solution solution){
-		double[][] result = new double[new Penalties().getFairPenalties().length][solution.getNewSchedule().keySet().size()]; 
-		
+		double[][] result = new double[instance.getPenalties().getFairPenalties().length][solution.getNewSchedule().keySet().size()]; 
+
 		for(ContractGroup group :solution.getNewSchedule().keySet()) {
-			double[] temp = getAllFairness(solution.getNewSchedule().get(group).getScheduleArray()); 
+			double[] temp = getAllFairness(solution.getNewSchedule().get(group).getScheduleArray(), group); 
 			for(int i = 0 ; i<temp.length; i++) {
 				result[i][group.getNr()-1]  = temp[i]; 
 			}
 		}
 		return result;
 	}
-	
+
 	public double getSunDist(Solution solution) {
 		double[] nSunDriver = new double[solution.getNewSchedule().keySet().size()]; 
 		int i = 0; 
@@ -1056,16 +1095,16 @@ public class FeasCheck {
 
 		return getCoefVariance(nSunDriver); 
 	}
-	
+
 	public double getSundayProp(int[] schedule) {
 		int count = 0; 
-		
+
 		for(int i = 0 ; i<schedule.length; i+= 7 ) {
 			if(schedule[i] != 2) {
 				count++; 
 			}
 		}
-		
+
 		return count / (double) (schedule.length/7); 
 	}
 
@@ -1128,5 +1167,28 @@ public class FeasCheck {
 		double std = Math.sqrt(variance); 
 		double mean = sum/count; 
 		return std/mean; 
+	}
+
+	public double getAttractiveness(int[] schedule, ContractGroup c){
+
+		double result = 0; 
+		int[] violations = this.allViolations(schedule, c); 
+		double[] penalties = instance.getPenalties().getSoftPenalties();
+		for(int i = 0 ; i< violations.length; i++) {
+			result+= violations[i] * penalties[i]; 
+		}
+
+		return result/ (double) schedule.length; 
+	}
+	
+	public double getPropDuty(int[] schedule, String dutyType) {
+		int count = 0; 
+		
+		for(int i = 0; i<schedule.length; i++) {
+			if(this.instance.getDutyTypeFromDutyNR(schedule[i]).equals(dutyType)) {
+				count++; 
+			}
+		}
+		return count / (double) schedule.length; 
 	}
 }
