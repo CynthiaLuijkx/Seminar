@@ -1,5 +1,11 @@
 package Phase5;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 import Tools.ContractGroup;
 import Tools.Duty;
@@ -15,6 +21,8 @@ import Tools.Schedule;
 public class DestroyHeuristics {
 	private FeasCheck feasCheck;
 	private Instance instance;
+	
+	private final double addWeek = 0.05;
 
 	/**
 	 * Constructor for the destroy heuristics.
@@ -24,7 +32,7 @@ public class DestroyHeuristics {
 		this.instance = instance;
 		this.feasCheck = new FeasCheck(instance);
 	}
-	
+
 	public boolean checkRelativeGroupSize(Solution solution, Schedule schedule) {
 		double numberOfDrivers = 0;
 		double numberOfDrivers1 = 0;
@@ -66,9 +74,10 @@ public class DestroyHeuristics {
 	 * @param instance				the problem instance
 	 * @return						the new solution
 	 */
-	public Solution executeRandom(Solution solution, int nRemove, Random random, Instance instance) {
+	public Solution executeRandom(Solution solution, int nRemove, Random random, Instance instancem, int n) {
 		Set<TimeSlot> slots = new HashSet<>();
 		int counter = 0;
+		Set<Request> tabu = new HashSet<>();
 		while(counter != nRemove) { //continue till we have removed the size of the neighborhood amount of duties
 			int contGroup = random.nextInt(solution.getNewSchedule().keySet().size()); //get a contract group
 			//System.out.println(contGroup);
@@ -78,25 +87,58 @@ public class DestroyHeuristics {
 					//if the duty is a reserve duty, make a request consisting of a reserve duty and the corresponding day
 					if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(group).getScheduleArray()[dutyDay])){
 						Request request = new Request(instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(group).getScheduleArray()[dutyDay]), group, dutyDay);	
-						solution.removeRequest(request, solution, slots, dutyDay);
-						counter++;
+						if (!instance.isTabu(request)) {
+							solution.removeRequest(request, solution, slots, dutyDay);
+							counter++;
+							tabu.add(request);
+						}
 					}
 					//if the duty is a normal duty, make a request consisting of a normal duty and the corresponding day
 					else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(group).getScheduleArray()[dutyDay])) {
 						Request request = new Request(instance.getFromRDutyNrToRDuty().get(solution.getNewSchedule().get(group).getScheduleArray()[dutyDay]), group, dutyDay);	
-						solution.removeRequest(request, solution, slots, dutyDay);
-						counter++;	 
+						if (!instance.isTabu(request)) {
+							solution.removeRequest(request, solution, slots, dutyDay);
+							counter++;
+							tabu.add(request);
+						}
 					}
 					//if the duty is an ATV duty, make a request consisting of an ATV duty and the corresponding day
 					else if(solution.getNewSchedule().get(group).getScheduleArray()[dutyDay] == 1) {
 						Request request = new Request(1, group, dutyDay);
-						solution.removeRequest(request, solution, slots, dutyDay);
-						counter++;
+						if (!instance.isTabu(request)) {
+							solution.removeRequest(request, solution, slots, dutyDay);
+							counter++;
+							tabu.add(request);
+						} 
 					}
 				} 
 			}
 		}
 		//return the new solution with the ramdom removals
+		instance.addTabuRequests(tabu, n);
+		
+		if (random.nextDouble() < this.addWeek) {
+			int groupNr = random.nextInt(instance.getContractGroups().size());
+			ContractGroup group = null;
+			for (ContractGroup curGroup : instance.getContractGroups()) {
+				if (curGroup.getNr() - 1 == groupNr) {
+					group = curGroup;
+					break;
+				}
+			}
+			
+			int[] newSchedule = new int[solution.getNewSchedule().get(group).getSchedule().length + 7];
+			for (int i = 0; i < solution.getNewSchedule().get(group).getSchedule().length; i++) {
+				newSchedule[i] = solution.getNewSchedule().get(group).getSchedule()[i];
+			}
+			for (int i = solution.getNewSchedule().get(group).getSchedule().length; i < newSchedule.length; i++) {
+				newSchedule[i] = 2;
+			}
+			Schedule newschedule = new Schedule(group, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group) );
+			if (this.checkRelativeGroupSize(solution, newschedule)) {
+				solution.getNewSchedule().get(group).setScheduleArray(newSchedule);
+			}
+ 		}
 		return solution; 
 	}
 
@@ -377,11 +419,12 @@ public class DestroyHeuristics {
 	 * @param instance				the problem instance
 	 * @return						the new solution
 	 */
-	public Solution executeRemoveWeek(Solution solution, Random random, Instance instance) {
+	public Solution executeRemoveWeek(Solution solution, Random random, Instance instance, int n) {
 		int counter = 0; //can use counter if we want to remove multiple weeks
 		int number = random.nextInt(instance.getContractGroups().size());
 		ContractGroup group = new ContractGroup(0,0, 0, 0, 0, null);
 		Set<TimeSlot> emptyTimeSlots = new HashSet<TimeSlot>();
+		Set<Request> tabu = new HashSet<>();
 		for(ContractGroup g: instance.getContractGroups()) {
 			if(g.getNr()-1 == number) {
 				group = g;
@@ -390,9 +433,6 @@ public class DestroyHeuristics {
 		int count = 0;
 		outer: while(count != 100) {
 			int index = random.nextInt(solution.getNewSchedule().get(group).getScheduleArray().length/7-1);
-			if(index == solution.getNewSchedule().get(group).getScheduleArray().length/7) {
-
-			}
 			//			System.out.println("index:  " +index);
 			int numberOfRestDays = 0;
 			for(int j = 7*index; j <= index*7+6; j++) {
@@ -412,35 +452,58 @@ public class DestroyHeuristics {
 					}
 				}
 				Schedule newschedule = new Schedule(group, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group) );
+				Set<Request> toRemove = new HashSet<>();
+				boolean tabuFeasible = true;
 				if(this.checkFeasibility(newschedule, (index*7)) && this.checkRelativeGroupSize(solution, newschedule)) {
 					for(int k = 7*index; k <= index*7+6; k++) {
 						if(solution.getNewSchedule().get(group).getScheduleArray()[k] == 1) {
 							Request request = new Request(1, group, k);
-							solution.removeRequest(request, solution, emptyTimeSlots, k);
-
+							if (!instance.isTabu(request)) {
+								toRemove.add(request);
+							} else {
+								tabuFeasible = false;
+								break;
+							}
 						}
 						else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(group).getScheduleArray()[k])) {	
 							ReserveDutyType reserveDuty = instance.getFromRDutyNrToRDuty().get(solution.getNewSchedule().get(group).getScheduleArray()[k]);
 							Request request = new Request(reserveDuty, group, k);
-							solution.removeRequest(request, solution, emptyTimeSlots, k);
-
+							if (!instance.isTabu(request)) {
+								toRemove.add(request);
+							} else {
+								tabuFeasible = false;
+								break;
+							}
 						}
 						else if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(group).getScheduleArray()[k])) {
 							Duty duty = instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(group).getScheduleArray()[k]);
 							Request request =  new Request(duty, group, k);
-							solution.removeRequest(request, solution, emptyTimeSlots, k);
-
+							if (!instance.isTabu(request)) {
+								toRemove.add(request);
+							} else {
+								tabuFeasible = false;
+								break;
+							}
 						}
 					}
-					solution.getNewSchedule().get(group).setScheduleArray(newSchedule);
-				}
 
-				break outer;
+					if (tabuFeasible) {
+						for (Request req : toRemove) {
+							solution.removeRequest(req, solution, emptyTimeSlots, req.getDay());
+							tabu.add(req);
+						}
+						solution.getNewSchedule().get(group).setScheduleArray(newSchedule);
+						break outer;
+					} else {
+						count++;
+					}
+				}
 			}
 			else {
 				count++;
 			}
 		}
+		instance.addTabuRequests(tabu, n);
 		return solution;
 	}
 
@@ -485,7 +548,7 @@ public class DestroyHeuristics {
 	 * @param instance
 	 * @return
 	 */
-	public Solution executeSwapWeek(Solution solution, Random random, Instance instance) {
+	public Solution executeSwapWeek(Solution solution, Random random, Instance instance, int n) {
 		int number = random.nextInt(instance.getContractGroups().size());
 		int number2 = random.nextInt(instance.getContractGroups().size());
 		while(number == number2) {
@@ -494,14 +557,15 @@ public class DestroyHeuristics {
 		ContractGroup group1 = new ContractGroup(0,0, 0, 0, 0, null);
 		ContractGroup group2 = new ContractGroup(0,0, 0, 0, 0, null);
 		Set<TimeSlot> emptyTimeSlots = new HashSet<TimeSlot>();
+		Set<Request> tabu = new HashSet<>();
 		for(ContractGroup g: instance.getContractGroups()) {
-				if(g.getNr()-1 == number) {
-					group1 = g;
-				} else if (g.getNr() - 1 == number2) {
-					group2 = g;
+			if(g.getNr()-1 == number) {
+				group1 = g;
+			} else if (g.getNr() - 1 == number2) {
+				group2 = g;
 			}
 		}
-		
+
 		int count = 0;
 		outer: while(count != 100) {
 			int index = random.nextInt(solution.getNewSchedule().get(group1).getScheduleArray().length/7-1);
@@ -527,28 +591,51 @@ public class DestroyHeuristics {
 				}
 				Schedule newschedule = new Schedule(group1, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group1) );
 				if(this.checkFeasibility(newschedule, (index*7)) && this.checkRelativeGroupSize(solution, newschedule)) {
-
+					boolean tabuFeasible = true;
+					Set<Request> toRemove = new HashSet<>();
 					for(int k = 7*index; k <= index*7+6; k++) {
 						if(solution.getNewSchedule().get(group1).getScheduleArray()[k] == 1) {
 							Request request = new Request(1, group1, k);
-							solution.removeRequest(request, solution, emptyTimeSlots, k);
-
+							if (!instance.isTabu(request)) {
+								toRemove.add(request);
+							} else {
+								tabuFeasible = false;
+								break;
+							}
 						}
 						else if(instance.getFromRDutyNrToRDuty().containsKey(solution.getNewSchedule().get(group1).getScheduleArray()[k])) {	
 							ReserveDutyType reserveDuty = instance.getFromRDutyNrToRDuty().get(solution.getNewSchedule().get(group1).getScheduleArray()[k]);
 							Request request = new Request(reserveDuty, group1, k);
-							solution.removeRequest(request, solution, emptyTimeSlots, k);
-
+							if (!instance.isTabu(request)) {
+								toRemove.add(request);
+							} else {
+								tabuFeasible = false;
+								break;
+							}
 						}
 						else if(instance.getFromDutyNrToDuty().containsKey(solution.getNewSchedule().get(group1).getScheduleArray()[k])) {
 							Duty duty = instance.getFromDutyNrToDuty().get(solution.getNewSchedule().get(group1).getScheduleArray()[k]);
 							Request request =  new Request(duty, group1, k);
-							solution.removeRequest(request, solution, emptyTimeSlots, k);
+							if (!instance.isTabu(request)) {
+								toRemove.add(request);
+							} else {
+								tabuFeasible = false;
+								break;
+							}
 						}
 					}
-					solution.getNewSchedule().get(group1).setScheduleArray(newSchedule);
+
+					if (tabuFeasible) {
+						for (Request req : toRemove) {
+							solution.removeRequest(req, solution, emptyTimeSlots, req.getDay());
+							tabu.add(req);
+						}
+						solution.getNewSchedule().get(group1).setScheduleArray(newSchedule);
+						break outer;
+					} else {
+						count++;
+					}
 				}
-				break outer;
 			}
 			else {
 				count++;
@@ -565,16 +652,67 @@ public class DestroyHeuristics {
 			}
 			//System.out.println(solution.getNewSchedule().get(group1).getScheduleArray().length + " " + newSchedule.length);
 			Schedule schedule = new Schedule(group2, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group2));
-//			System.out.println(newSchedule.length/7 + " " + schedule.getWeeklyOvertime().length);
+			//			System.out.println(newSchedule.length/7 + " " + schedule.getWeeklyOvertime().length);
 
 			if(this.checkRelativeGroupSize(solution, schedule)) {
 				solution.getNewSchedule().get(group2).setScheduleArray(newSchedule);
 				solution.setWeeklyOvertime(newSchedule, group2);
-//				System.out.println("2: "+ solution.getNewSchedule().get(group2).getWeeklyOvertime().length);
-//				System.out.println("YES");
+				//				System.out.println("2: "+ solution.getNewSchedule().get(group2).getWeeklyOvertime().length);
+				//				System.out.println("YES");
 			}
 		}
-
+		instance.addTabuRequests(tabu, n);
 		return solution;
+	}
+
+	//---------------------- Random Day Duty Removal ----------------------------------------------------------------------------------------------
+	/**
+	 * This method randomly chooses a weekday and removes all duties on that day of a particular duty type in all contract groups.
+	 * @param solution
+	 * @param random
+	 * @param n
+	 * @return
+	 */
+	public Solution executeRandomDayDuty(Solution solution, Random random, int n) {
+		Set<TimeSlot> slots = new HashSet<>();
+		int day = random.nextInt(7); 
+		String dutyType = randomElement(instance.getDutiesPerType().keySet(), random);
+		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+			int[] scheduleArray = solution.getNewSchedule().get(group).getScheduleArray(); 
+			for(int i = day; i< solution.getNewSchedule().get(group).getScheduleArray().length; i+=7) {
+				if(instance.getDutyTypeFromDutyNR(scheduleArray[i]).equals(dutyType)) {
+					if(instance.getFromDutyNrToDuty().containsKey(scheduleArray[i])){
+						Request request = new Request(instance.getFromDutyNrToDuty().get(scheduleArray[i]), group, i);	
+						solution.removeRequest(request, solution, slots,i);
+					}
+					//if the duty is a normal duty, make a request consisting of a normal duty and the corresponding day
+					else if(instance.getFromRDutyNrToRDuty().containsKey(scheduleArray[i])) {
+						Request request = new Request(instance.getFromRDutyNrToRDuty().get(scheduleArray[i]), group, i);	
+						solution.removeRequest(request, solution, slots, i);
+					}
+					//if the duty is an ATV duty, make a request consisting of an ATV duty and the corresponding day
+					else if(scheduleArray[i] == 1) {
+						Request request = new Request(1, group, i);
+						solution.removeRequest(request, solution, slots, i);
+					}
+				}
+			}
+		}
+		Set<Request> tabu = new HashSet<>();
+		instance.addTabuRequests(tabu, n);
+		return solution; 
+	}
+	
+	public static <E> E randomElement(Set<E> set, Random random) {
+		int size = set.size();
+		int item = new Random().nextInt(size); // In real life, the Random object should be rather more shared than this
+		int i = 0;
+		for(E obj : set)
+		{
+			if (i == item)
+				return obj;
+			i++;
+		}
+		return null;
 	}
 }

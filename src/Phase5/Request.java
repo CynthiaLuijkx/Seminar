@@ -14,12 +14,20 @@ public class Request {
 	private ReserveDutyType reserveDuty; //a request can have a reserve duty
 	private int dutyNumber; //a request can be an ATV duty
 	private ContractGroup group; //a request contains the contract group the duty is removed from
-	private final int day; //a request has the day on which the duty is removed
+	private int day; //a request has the day on which the duty is removed
 	private List<Placement> listOfPlacements = new ArrayList<Placement>(); //contains all the placements on which the request can be put
 	private final int weekday; //the weekday the duty should be executed on
 	
 	public int getDay() {
 		return day;
+	}
+	
+	public void setDay(int newDay) {
+		this.day = newDay;
+	}
+	
+	public void setGroup(ContractGroup newGroup) {
+		this.group = newGroup;
 	}
 	
 	public Request(Duty duty, ContractGroup group, int day) {
@@ -44,6 +52,7 @@ public class Request {
 		this.day = day;
 		this.weekday = day%7;
 	}
+	
 	//Determine the startime of the duty
 	public int getStartTime() {
 		int start = 0;
@@ -141,6 +150,52 @@ public class Request {
 		this.listOfPlacements.clear();
 	}
 	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + day;
+		result = prime * result + ((duty == null) ? 0 : duty.hashCode());
+		result = prime * result + dutyNumber;
+		result = prime * result + ((group == null) ? 0 : group.hashCode());
+		result = prime * result + ((reserveDuty == null) ? 0 : reserveDuty.hashCode());
+		result = prime * result + weekday;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Request other = (Request) obj;
+		if (day != other.day)
+			return false;
+		if (duty == null) {
+			if (other.duty != null)
+				return false;
+		} else if (!duty.equals(other.duty))
+			return false;
+		if (dutyNumber != other.dutyNumber)
+			return false;
+		if (group == null) {
+			if (other.group != null)
+				return false;
+		} else if (!group.equals(other.group))
+			return false;
+		if (reserveDuty == null) {
+			if (other.reserveDuty != null)
+				return false;
+		} else if (!reserveDuty.equals(other.reserveDuty))
+			return false;
+		if (weekday != other.weekday)
+			return false;
+		return true;
+	}
+
 	@Override
 	public String toString() {
 		return "Request [dutyNr=" + this.dutyNumber + ", group=" + group + "]";

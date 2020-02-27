@@ -29,6 +29,10 @@ public class TimeSlot {
 		}else {
 			return false; 
 		}
-		
+	}
+
+	@Override
+	public String toString() {
+		return "TimeSlot [group=" + group + ", day=" + day + "]";
 	}
 }

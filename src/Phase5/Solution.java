@@ -1,4 +1,5 @@
 package Phase5;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -20,7 +21,9 @@ public class Solution {
 	private final Instance instance;
 	private FeasCheck feasCheck; 
 	private final double[] softPenalties;
-	private final double[] feasPenalties; 
+	private final double[] feasPenalties;
+	private double[][] fairCounts;
+	private Set<Placement> executedPlacements;
 
 	public Solution(Set<Request> requests, Map<ContractGroup,Schedule> schedule, Instance instance) {
 		this.requests = requests;
@@ -28,7 +31,9 @@ public class Solution {
 		this.instance = instance;
 		this.feasCheck= new FeasCheck(instance);
 		this.softPenalties = new Penalties().getSoftPenalties(); 
-		this.feasPenalties = new Penalties().getFeasPenalties(); 
+		this.feasPenalties = new Penalties().getFeasPenalties();
+		this.fairCounts = this.feasCheck.getAllFairness(this);
+		this.executedPlacements = new HashSet<>();
 	}
 
 	/**
@@ -89,6 +94,7 @@ public class Solution {
 	 * @param placement
 	 */
 	public void addRequest(Placement placement) {
+		this.executedPlacements.add(placement);
 		Schedule currentSchedule = this.getNewSchedule().get(placement.getTimeslot().getGroup());  //get the previous schedule
 		//System.out.println("duty number: "+ placement.getRequest().getDutyNumber());
 		if(placement.getRequest().getDutyNumber() == 1) {
@@ -113,6 +119,7 @@ public class Solution {
 			currentSchedule.setWeeklyOvertime(); //determine the weekly overtime 
 			this.requests.remove(placement.getRequest());  //remove the request from the set of requests
 		}
+		this.fairCounts = this.feasCheck.getAllFairness(this);
 	}
 
 	@Override
@@ -137,6 +144,14 @@ public class Solution {
 		}
 
 		return costs;
+	}
+	
+	public double getFair() {
+		double fairPen = 0;
+		for(int i = 0; i<new Penalties().getFairPenalties().length; i++) {
+			fairPen += this.feasCheck.getCoefVariance(this.fairCounts[i])* new Penalties().getFairPenalties()[i]; 
+		}
+		return fairPen;
 	}
 
 	/**
@@ -173,12 +188,20 @@ public class Solution {
 			objective += this.newSchedule.get(group).getScheduleArray().length/7 * 13 *group.getAvgDaysPerWeek() * group.getAvgHoursPerDay() * 60; 
 		}
 
+		// Fairness 
+		for(int i = 0; i<new Penalties().getFairPenalties().length; i++) {
+			objective+= this.feasCheck.getCoefVariance(this.fairCounts[i])* new Penalties().getFairPenalties()[i]; 
+		}
 		return objective;
 	}
-	
+
+	public double[][] getFeasCounts() {
+		return this.fairCounts; 
+	}
+
 	public double getOvertime() {
 		double totOvertime = 0;
-		
+
 		double[] allEmployeesOvertime = new double[instance.getContractGroups().size()];
 		for(ContractGroup group:this.getNewSchedule().keySet()) {
 			allEmployeesOvertime[group.getNr()-1] = this.feasCheck.QuarterlyOvertime(this.getNewSchedule().get(group).getScheduleArray(), group);
@@ -187,17 +210,17 @@ public class Solution {
 		for(int i =0; i < allEmployeesOvertime.length; i++) {
 			totOvertime += allEmployeesOvertime[i];
 		}
-		
+
 		return totOvertime;
 	}
-	
+
 	/**
 	 * This method calculates the total number of minus hours.
 	 * @return
 	 */
 	public double getMinusHours() {
 		double totMinus = 0;
-		
+
 		double[] allEmployeesMinus = new double[instance.getContractGroups().size()];
 		for (ContractGroup group : this.getNewSchedule().keySet()) {
 			allEmployeesMinus[group.getNr()-1] = this.feasCheck.QuarterlyMinus(this.getNewSchedule().get(group).getScheduleArray(), group);
@@ -205,7 +228,7 @@ public class Solution {
 		for (int i = 0; i < allEmployeesMinus.length; i++) {
 			totMinus += allEmployeesMinus[i];
 		}
-		
+
 		return totMinus;
 	}
 
@@ -288,5 +311,22 @@ public class Solution {
 			result = prime*result + schedule.getScheduleArray().hashCode();  
 		}
 		return result;
+	}
+
+	public Set<Placement> getPlacements() {
+		return executedPlacements;
+	}
+	
+	public void printSoftViol() {
+		for(ContractGroup group: this.getNewSchedule().keySet()) {
+			int[] violations = this.feasCheck.allViolations(this.getNewSchedule().get(group).getScheduleArray(), group);
+			System.out.println(group.getNr() + ": " + Arrays.toString(violations)); 
+		}
+	}
+	
+	public void printFairPen() {
+		for(int i = 0; i<this.fairCounts.length; i++) {
+			System.out.println("Fairness " + i +" :" + Arrays.toString(this.fairCounts[i])); 
+		}
 	}
 }
