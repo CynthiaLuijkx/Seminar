@@ -3,6 +3,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import Tools.*;
@@ -15,13 +16,16 @@ public class Phase4_AddMissing {
 	private final ArrayList<List<Duty>> originalMissing;
 	private final List<Schedule> newSchedules;
 	
+	private Random random;
+	
 	public List<Schedule> getNewSchedules() {
 		return newSchedules;
 	}
 
-	public Phase4_AddMissing(List<Schedule> schedules, Instance instance) {
+	public Phase4_AddMissing(List<Schedule> schedules, Instance instance, long seed) {
 		this.ilpSolution = schedules ;
 		this.instance = instance;
+		this.random = new Random(seed);
 		this.duplicatesAvailable = new ArrayList<>();
 		for(int i = 0; i < 7; i++) {
 			Map<Duty, Set<Duplicate>> map = new HashMap<>();
@@ -151,15 +155,15 @@ public class Phase4_AddMissing {
 			int totalMissing = missingDuties(schedulesCopy);
 			int currentMissing = totalMissing;
 			while (currentMissing > 0 && tries < 10000) {
-				int i = (int) (Math.random() * 7); // Pick a random weekday
+				int i = random.nextInt(7); // Pick a random weekday
 				if (originalMissing.get(i).size() > 0) {
 					//Pick a random missing duty 
-					int insertNr = (int) (Math.random() * originalMissing.get(i).size());
+					int insertNr = random.nextInt(originalMissing.get(i).size()); 
 					Duty toInsert = originalMissing.get(i).get(insertNr);
 					// If it hasn't been inserted yet
 					if (!insertedDuties.get(i).contains(toInsert)) {
 						// Get a random duplicate
-						int deleteNr = (int) (Math.random() * duplicatesCopy.get(i).size());
+						int deleteNr = random.nextInt(duplicatesCopy.get(i).size()); 
 						Duplicate toDelete = duplicatesCopy.get(i).get(deleteNr);
 						// If this duplicate hasn't been taken yet
 						// AND the duty is still included at least once
@@ -595,8 +599,3 @@ public class Phase4_AddMissing {
 		}
 	}
 }
-	
-	
-
-
-

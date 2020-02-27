@@ -13,24 +13,21 @@ import Tools.Schedule;
  */
 public class RepairHeuristics {
 	private FeasCheck feasCheck; 
-	private double[] softFeas;
-	private double[] feasPen; 
-	private double[] fairPen; 
+	private Instance instance;
 
-	private double[][] fairnessCounts; 
-	private final int fairnessMeasures = new Penalties().getFairPenalties().length; 
+	private double[][] fairnessCounts;
 
 	public RepairHeuristics(Instance instance) {
+		this.instance = instance;
 		this.feasCheck = new FeasCheck(instance); 
-		this.softFeas = new Penalties().getSoftPenalties();
-		this.feasPen = new Penalties().getFeasPenalties(); 
-		this.fairPen = new Penalties().getFairPenalties(); 
 		/*
-		 * 0	:	ReserveDuties Distribution 
+		 * 0:	ReserveDuties Distribution 
 		 * 1:	Working Sundays Distribution 
-		 * 2: 	Desirability Distribution 
+		 * 2: 	Desirability Distribution
+		 * 3:	Split Distribution
+		 * 4: 	Attractiveness Distribution
 		 */
-		this.fairnessCounts = new double[fairnessMeasures][instance.getContractGroups().size()] ;
+		this.fairnessCounts = new double[instance.getPenalties().getFairPenalties().length][instance.getContractGroups().size()] ;
 	}
 
 	//---------------------- Regret Repair --------------------------------------------------------------------------------------------------------
@@ -349,7 +346,7 @@ public class RepairHeuristics {
 		if (request.getDutyNumber() == 1) {
 			int curMissingATV = this.feasCheck.checkATVDays(schedule.getScheduleArray(), schedule.getC());
 			if (curMissingATV > 0) {
-				costOfPlacement = -this.feasPen[1];
+				costOfPlacement = -this.instance.getPenalties().getFeasPenalties()[1];
 			}
 		}
 
@@ -376,11 +373,11 @@ public class RepairHeuristics {
 			}
 		}
 
-		costOfPlacement += this.feasPen[0] * (newTotOvertime - curTotOvertime); 
+		costOfPlacement += this.instance.getPenalties().getFeasPenalties()[0] * (newTotOvertime - curTotOvertime); 
 
 		int[] softViol = this.feasCheck.allViolations(check, group, i); 
-		for(int j = 0; j< this.softFeas.length; j++) {
-			costOfPlacement += this.softFeas[j]* (softViol[j] - curSoftPenalties[j]); 
+		for(int j = 0; j< this.instance.getPenalties().getSoftPenalties().length; j++) {
+			costOfPlacement += this.instance.getPenalties().getSoftPenalties()[j]* (softViol[j] - curSoftPenalties[j]) * instance.getMultiplierSoft(); 
 		}
 
 		double[][] copyFairCounts = new double[this.fairnessCounts.length][]; 
@@ -389,10 +386,10 @@ public class RepairHeuristics {
 			copyFairCounts[j] = this.fairnessCounts[j].clone();
 		}
 
-		double[] varFairBefore = new double[this.fairPen.length];
-		double[] varFairAfter = new double[this.fairPen.length]; 
+		double[] varFairBefore = new double[this.instance.getPenalties().getFairPenalties().length];
+		double[] varFairAfter = new double[this.instance.getPenalties().getFairPenalties().length]; 
 
-		double[] newFair = this.feasCheck.getAllFairness(check); 
+		double[] newFair = this.feasCheck.getAllFairness(check, group); 
 		for(int j = 0; j<varFairBefore.length; j++) {
 			varFairBefore[j]= this.feasCheck.getCoefVariance(this.fairnessCounts[j]); 
 			//update 
@@ -404,8 +401,8 @@ public class RepairHeuristics {
 		}
 
 		//Fairness Costs 
-		for(int j = 0; j< this.fairPen.length; j++) {
-			costOfPlacement += this.fairPen[j]* (varFairAfter[j] - varFairBefore[j]); 
+		for(int j = 0; j< this.instance.getPenalties().getFairPenalties().length; j++) {
+			costOfPlacement += this.instance.getPenalties().getFairPenalties()[j]* (varFairAfter[j] - varFairBefore[j]) * instance.getMultiplierFair(); 
 		}
 		return costOfPlacement; 
 	}

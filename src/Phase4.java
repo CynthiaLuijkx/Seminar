@@ -10,10 +10,12 @@ import ilog.concert.IloException;
 public class Phase4 {
 	private final Set<Schedule> inputSolution; 
 	private final Instance instance;
+	private final long seed;
 	
-	public Phase4(Set<Schedule> inputSolution, Instance instance) {
+	public Phase4(Set<Schedule> inputSolution, Instance instance, long seed) {
 		this.inputSolution = inputSolution;
 		this.instance = instance;
+		this.seed = seed;
 	}
 	
 	public List<Schedule> runILP() throws IloException {
@@ -95,7 +97,7 @@ public class Phase4 {
 		long end = System.nanoTime();
 		System.out.println("Relax&Fix runTime: " + (end-start)/1000000000.0);
 		System.out.println("Objective: " + objValue);
-		Phase4_AddMissing addMissing = new Phase4_AddMissing(schedules, this.instance);		
+		Phase4_AddMissing addMissing = new Phase4_AddMissing(schedules, this.instance, this.seed);		
 	}
 	
 	public void runAllCombinations(String depot) {
@@ -121,7 +123,7 @@ public class Phase4 {
 		}
 		long end = System.nanoTime();
 		System.out.println("All Combinations runTime: " + (end-start)/1000000000.0);
-		Phase4_AddMissing addMissing = new Phase4_AddMissing(schedules, this.instance);	
+		Phase4_AddMissing addMissing = new Phase4_AddMissing(schedules, this.instance, this.seed);	
 	}
 	
 	public Set<ScheduleCombination> getAllCombinations(String depot){

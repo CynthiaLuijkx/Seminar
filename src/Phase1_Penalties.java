@@ -1,5 +1,4 @@
 public class Phase1_Penalties {
-
 	private final int ATVSpreadPenaltyParam;
 	private final int reservePenaltyParam;
 	private final int tooManyConsecutiveDutiesParam;
