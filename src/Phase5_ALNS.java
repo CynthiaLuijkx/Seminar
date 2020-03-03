@@ -122,7 +122,7 @@ public class Phase5_ALNS {
 			int sizeNeighbourhood = this.random.nextInt(this.maxSizeNeighbourhood - this.minSizeNeighbourhood) + this.minSizeNeighbourhood;
 
 			//			System.out.println("-----------------------------------------------------------------------");
-			System.out.println("ITERATION " + n + ":" + destroyHeuristicNr + " - " + repairHeuristicNr);
+//			System.out.println("ITERATION " + n + ":" + destroyHeuristicNr + " - " + repairHeuristicNr);
 
 			// find new solution
 			tempSol = this.executeDestroyAndRepair(tempSol, destroyHeuristicNr, repairHeuristicNr, sizeNeighbourhood, n);

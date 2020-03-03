@@ -33,36 +33,39 @@ public class DestroyHeuristics {
 		this.feasCheck = new FeasCheck(instance);
 	}
 
+	/**
+	 * Check whether the relative groupsizes are still satisfied
+	 * @param solution
+	 * @param schedule
+	 * @return
+	 */
 	public boolean checkRelativeGroupSize(Solution solution, Schedule schedule) {
-		double numberOfDrivers = 0;
-		double numberOfDrivers1 = 0;
-		double numberOfDrivers2 = 0;
-		boolean check = false;
+		Map<Integer, Integer> numberOfDriversPCG = new HashMap<Integer, Integer>(); 
+		
 		for(ContractGroup group: solution.getNewSchedule().keySet()) {
-			if(schedule.getC().equals(group)) {
-				numberOfDrivers1 += schedule.getScheduleArray().length/7;
+			int temp = solution.getNewSchedule().get(group).getSchedule().length/7; 
+			
+			if(numberOfDriversPCG.containsKey(group.getOriginalNr())) {
+				numberOfDriversPCG.put(group.getOriginalNr(), numberOfDriversPCG.get(group.getOriginalNr() + temp)); 
+			}else {
+				numberOfDriversPCG.put(group.getOriginalNr(), temp); 
 			}
-			else {
-				numberOfDrivers2 += solution.getNewSchedule().get(group).getScheduleArray().length/7;
-			}
-
 		}
-		numberOfDrivers = numberOfDrivers1 + numberOfDrivers2;
-
-		for(ContractGroup group: solution.getNewSchedule().keySet()) {
-			if(schedule.getC().equals(group)) {
-				if( numberOfDrivers1/numberOfDrivers <= (group.getRelativeGroupSize()*1.05) && (group.getRelativeGroupSize()*0.95) <= numberOfDrivers1/numberOfDrivers) {
-					check = true;
-				}
-			}
-			else {
-				if( numberOfDrivers2/numberOfDrivers <= (group.getRelativeGroupSize() * 1.05) && (group.getRelativeGroupSize() * 0.95) <= numberOfDrivers2/numberOfDrivers) {
-					check = true;
-				}
-			}
-
+		
+		double totalNDrivers = 0; 
+		
+		for(Integer groupNr: numberOfDriversPCG.keySet()) {
+			totalNDrivers += numberOfDriversPCG.get(groupNr); 
 		}
-		return check;
+		
+		for(Integer groupNr: numberOfDriversPCG.keySet() ) {
+			double ratio = numberOfDriversPCG.get(groupNr)/totalNDrivers; 
+			ContractGroup group = this.instance.getOGGroupsFromNr().get(groupNr); 
+			if(!(ratio<=(group.getRelativeGroupSize()*1.05) &&(group.getRelativeGroupSize()*0.95) <= ratio )){
+				return false; 
+			}
+		}
+		return true; 
 	}
 
 	//---------------------- Random Removal -------------------------------------------------------------------------------------------------------
