@@ -14,8 +14,7 @@ public class Placement implements Comparable<Placement>{
 	public Placement(Request request, TimeSlot slot, double cost) {
 		this.request = request;
 		this.timeslot = slot;
-		this.cost = cost; 
-		
+		this.cost = cost;
 	}
 	
 	public double getCost() {
@@ -41,11 +40,13 @@ public class Placement implements Comparable<Placement>{
 
 	@Override
 	public int compareTo(Placement o) {
-		if(this.getCost() < o.getCost()) {
+		if (this.getCost() - o.getCost() < 0.000000001) {
+			return 0;
+		} else if(this.getCost() < o.getCost()) {
 			return -1; 
-		}else if (this.getCost() > o.getCost()) {
+		} else if (this.getCost() > o.getCost()) {
 			return 1; 
-		}else {
+		} else {
 			return 0; 
 		}
 	}
