@@ -43,8 +43,8 @@ public class Phase5_ALNS {
 
 	//Constructor of the class
 	public Phase5_ALNS (int iterations, Instance instance, Map<ContractGroup, Schedule> startSchedule, long seed){
-		this.minSizeNeighbourhood = 10;
-		this.maxSizeNeighbourhood = 30;
+		this.minSizeNeighbourhood = 5;
+		this.maxSizeNeighbourhood = 20;
 		this.nIterations = iterations;
 		this.instance = instance;
 		this.random = new Random(seed);

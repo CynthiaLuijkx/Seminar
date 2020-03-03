@@ -28,15 +28,15 @@ public class Main
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 1;
-		int multiplierSoft = 1;
-		int multiplierFair = 1;
+		int paramCase = 115;
+		int multiplierSoft = 100;
+		int multiplierFair = 100;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
 		int tabuLength = 5;
-		int iterations_phase5 = 100;
+		int iterations_phase5 = 10000;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
 		boolean phase123 = false;
@@ -262,9 +262,9 @@ public class Main
 				}
 				writer.write(System.getProperty("line.separator"));
 				
-//				for (ContractGroup group : instance.getContractGroups()) {
-//					new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
-//				}
+				for (ContractGroup group : instance.getContractGroups()) {
+					new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
+				}
 			}
 			writer.close();
 			times[5] = System.nanoTime();

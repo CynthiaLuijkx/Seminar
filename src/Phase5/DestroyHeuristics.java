@@ -22,7 +22,7 @@ public class DestroyHeuristics {
 	private FeasCheck feasCheck;
 	private Instance instance;
 	
-	private final double addWeek = 0.05;
+	private final double addWeek = 0;
 
 	/**
 	 * Constructor for the destroy heuristics.
