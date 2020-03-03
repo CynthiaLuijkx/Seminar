@@ -30,7 +30,7 @@ public class Phase5_ALNS {
 
 	private double[] weightUpdates = {33/(double)55, 9/(double)55, 13/(double)55}; //determine how to update the weights
 	private final double rho = 0.1; //the proportion of the weights that is determined by the recent performance
-	private final double c = 0.99975; //cooling rate of the simulated annealing aspect
+	private final double c = 0.9; //cooling rate of the simulated annealing aspect
 
 	private double[] weightsDestroy; //weights of the destroy methods
 	private double[][] weightsDestroyAdj; //adjusted weights of the destroy methods
@@ -43,7 +43,7 @@ public class Phase5_ALNS {
 
 	//Constructor of the class
 	public Phase5_ALNS (int iterations, Instance instance, Map<ContractGroup, Schedule> startSchedule, long seed){
-		this.minSizeNeighbourhood = 10;
+		this.minSizeNeighbourhood = 5;
 		this.maxSizeNeighbourhood = 30;
 		this.nIterations = iterations;
 		this.instance = instance;
@@ -122,7 +122,7 @@ public class Phase5_ALNS {
 			int sizeNeighbourhood = this.random.nextInt(this.maxSizeNeighbourhood - this.minSizeNeighbourhood) + this.minSizeNeighbourhood;
 
 			//			System.out.println("-----------------------------------------------------------------------");
-			//			System.out.println("ITERATION " + n + ":");
+//			System.out.println("ITERATION " + n + ":" + destroyHeuristicNr + " - " + repairHeuristicNr);
 
 			// find new solution
 			tempSol = this.executeDestroyAndRepair(tempSol, destroyHeuristicNr, repairHeuristicNr, sizeNeighbourhood, n);
@@ -179,7 +179,7 @@ public class Phase5_ALNS {
 	 * @return					the initial solution
 	 */
 	public Solution getInitialSol(Map<ContractGroup, Schedule> startSol) throws FileNotFoundException {
-		Set<Request> emptyRequestSet = new HashSet<Request>();
+		LinkedHashSet<Request> emptyRequestSet = new LinkedHashSet<Request>();
 		List<Schedule> check = new ArrayList<>();
 		for(ContractGroup group: instance.getContractGroups()) {
 			check.add(startSol.get(group));
@@ -218,10 +218,10 @@ public class Phase5_ALNS {
 //			System.out.println("Random Day Duty Destroy (" + n + ")");
 			currentSol = this.destroyHeuristics.executeRandomDayDuty(currentSol, random, n);
 		}
-		else if(destroyHeuristicNr == 4){
+		else if(destroyHeuristicNr == 4) {
 			currentSol = this.destroyHeuristics.executeExtremeSpecificRemoval(currentSol, sizeNeighbourhood, random, instance, n);
 		}
-		else  if(destroyHeuristicNr == 5){
+		else if(destroyHeuristicNr == 5) {
 			currentSol = this.destroyHeuristics.executeExtremeRemoval(currentSol, sizeNeighbourhood, random, instance, n);
 		}
 
@@ -309,8 +309,8 @@ public class Phase5_ALNS {
 	 * @param schedules					the list with schedules
 	 * @return							a set of requests for the missing duties
 	 */
-	public Set<Request> missingDuties(List<Schedule> schedules) {
-		Set<Request> requests = new HashSet<Request>();
+	public LinkedHashSet<Request> missingDuties(List<Schedule> schedules) {
+		LinkedHashSet<Request> requests = new LinkedHashSet<Request>();
 		int counter = 0;
 		for (int s = 0; s < 7; s++) {
 			if(s == 0) {

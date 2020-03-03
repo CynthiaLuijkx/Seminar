@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,7 +28,7 @@ public class Solution {
 	private double[][] fairCounts;
 	private Set<Placement> executedPlacements;
 
-	public Solution(Set<Request> requests, Map<ContractGroup,Schedule> schedule, Instance instance) {
+	public Solution(LinkedHashSet<Request> requests, Map<ContractGroup,Schedule> schedule, Instance instance) {
 		this.requests = requests;
 		this.newSchedule = schedule;
 		this.instance = instance;
@@ -330,7 +331,7 @@ public class Solution {
 			copy.put(group, this.newSchedule.get(group).clone()); 
 		}
 
-		return new Solution(new HashSet<Request>(this.requests),copy, this.instance);
+		return new Solution(new LinkedHashSet<Request>(this.requests),copy, this.instance);
 	}
 
 	/**

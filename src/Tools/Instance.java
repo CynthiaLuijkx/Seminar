@@ -27,6 +27,7 @@ public class Instance
 	private final HashMap<Integer, Duty> fromDutyNrToDuty;
 	
 	private final Set<ContractGroup> contractGroups;
+	private final Set <ContractGroup> originalGroups;
 	private final Set<ReserveDutyType> reserveDutyTypes;
 	private final HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty;
 	
@@ -96,6 +97,7 @@ public class Instance
 		this.fromDutyNrToDuty = fromDutyNrToDuty;
 		this.fromRDutyNrToRDuty = fromRDutyNrToRDuty;
 		this.contractGroups = contractGroups;
+		this.originalGroups = contractGroups;
 		this.reserveDutyTypes = reserveDutyTypes;
 		this.violations11 = violations11;
 		this.violations32 = violations32;
@@ -466,5 +468,14 @@ public class Instance
 	
 	public Penalties getPenalties() {
 		return this.penalties;
+	}
+	
+	public Map<Integer, ContractGroup> getOGGroupsFromNr(){
+		Map<Integer, ContractGroup> map = new HashMap<Integer, ContractGroup>(); 
+		
+		for(ContractGroup group: this.originalGroups) {
+			map.put(group.getNr(), group); 
+		}
+		return map; 
 	}
 }
