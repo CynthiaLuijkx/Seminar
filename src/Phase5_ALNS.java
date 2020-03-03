@@ -30,7 +30,7 @@ public class Phase5_ALNS {
 
 	private double[] weightUpdates = {33/(double)55, 9/(double)55, 13/(double)55}; //determine how to update the weights
 	private final double rho = 0.1; //the proportion of the weights that is determined by the recent performance
-	private final double c = 0.99975; //cooling rate of the simulated annealing aspect
+	private final double c = 0.9; //cooling rate of the simulated annealing aspect
 
 	private double[] weightsDestroy; //weights of the destroy methods
 	private double[][] weightsDestroyAdj; //adjusted weights of the destroy methods
@@ -44,7 +44,7 @@ public class Phase5_ALNS {
 	//Constructor of the class
 	public Phase5_ALNS (int iterations, Instance instance, Map<ContractGroup, Schedule> startSchedule, long seed){
 		this.minSizeNeighbourhood = 5;
-		this.maxSizeNeighbourhood = 20;
+		this.maxSizeNeighbourhood = 30;
 		this.nIterations = iterations;
 		this.instance = instance;
 		this.random = new Random(seed);

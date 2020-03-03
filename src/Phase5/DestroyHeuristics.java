@@ -709,7 +709,7 @@ public class DestroyHeuristics {
 	
 	public static <E> E randomElement(Set<E> set, Random random) {
 		int size = set.size();
-		int item = new Random().nextInt(size); // In real life, the Random object should be rather more shared than this
+		int item = random.nextInt(size); // In real life, the Random object should be rather more shared than this
 		int i = 0;
 		for(E obj : set)
 		{
