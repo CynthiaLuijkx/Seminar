@@ -14,7 +14,7 @@ public class ContractGroup
 	private final int ATVPerYear;
 	private final double relativeGroupSize;
 	private final Set<String> dutyTypes;
-	
+	private int originalGroupNr;
 	private int ATVc;								// Number of ATV days required for the planning horizon
 	private int Tc;
 	
@@ -34,6 +34,11 @@ public class ContractGroup
 		this.ATVPerYear = ATVPerYear;
 		this.relativeGroupSize = relativeGroupSize;
 		this.dutyTypes = dutyTypes;
+		this.originalGroupNr = nr;
+	}
+	
+	public int getOriginalNr() {
+		return originalGroupNr;
 	}
 
 	public int getNr() {

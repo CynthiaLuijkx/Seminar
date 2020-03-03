@@ -40,7 +40,7 @@ public class Placement implements Comparable<Placement>{
 
 	@Override
 	public int compareTo(Placement o) {
-		if (this.getCost() - o.getCost() < 0.000000001) {
+		if (Math.abs(this.getCost() - o.getCost()) < 0.000000001) {
 			return 0;
 		} else if(this.getCost() < o.getCost()) {
 			return -1; 

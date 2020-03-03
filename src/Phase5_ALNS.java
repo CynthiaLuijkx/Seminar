@@ -122,7 +122,7 @@ public class Phase5_ALNS {
 			int sizeNeighbourhood = this.random.nextInt(this.maxSizeNeighbourhood - this.minSizeNeighbourhood) + this.minSizeNeighbourhood;
 
 			//			System.out.println("-----------------------------------------------------------------------");
-			//			System.out.println("ITERATION " + n + ":");
+			System.out.println("ITERATION " + n + ":" + destroyHeuristicNr + " - " + repairHeuristicNr);
 
 			// find new solution
 			tempSol = this.executeDestroyAndRepair(tempSol, destroyHeuristicNr, repairHeuristicNr, sizeNeighbourhood, n);
@@ -179,7 +179,7 @@ public class Phase5_ALNS {
 	 * @return					the initial solution
 	 */
 	public Solution getInitialSol(Map<ContractGroup, Schedule> startSol) throws FileNotFoundException {
-		Set<Request> emptyRequestSet = new HashSet<Request>();
+		LinkedHashSet<Request> emptyRequestSet = new LinkedHashSet<Request>();
 		List<Schedule> check = new ArrayList<>();
 		for(ContractGroup group: instance.getContractGroups()) {
 			check.add(startSol.get(group));
@@ -309,8 +309,8 @@ public class Phase5_ALNS {
 	 * @param schedules					the list with schedules
 	 * @return							a set of requests for the missing duties
 	 */
-	public Set<Request> missingDuties(List<Schedule> schedules) {
-		Set<Request> requests = new HashSet<Request>();
+	public LinkedHashSet<Request> missingDuties(List<Schedule> schedules) {
+		LinkedHashSet<Request> requests = new LinkedHashSet<Request>();
 		int counter = 0;
 		for (int s = 0; s < 7; s++) {
 			if(s == 0) {
