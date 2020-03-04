@@ -44,7 +44,7 @@ public class Phase5_ALNS {
 	//Constructor of the class
 	public Phase5_ALNS (int iterations, Instance instance, Map<ContractGroup, Schedule> startSchedule, long seed){
 		this.minSizeNeighbourhood = 5;
-		this.maxSizeNeighbourhood = 30;
+		this.maxSizeNeighbourhood = 20;
 		this.nIterations = iterations;
 		this.instance = instance;
 		this.random = new Random(seed);
@@ -232,13 +232,13 @@ public class Phase5_ALNS {
 		//		currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
 		if (repairHeuristicNr == 0) {
 //			System.out.println("Greedy");
-			currentSol = this.repairHeuristics.greedyRepair(currentSol);
+			currentSol = this.repairHeuristics.greedyRepair(currentSol, random);
 		} else if (repairHeuristicNr == 1){
 //			System.out.println("Regret 2");
-			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
+			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2, random);
 		} else {
 //			System.out.println("Regret 3");
-			currentSol = this.repairHeuristics.regretRepair2(currentSol, 3);
+			currentSol = this.repairHeuristics.regretRepair2(currentSol, 3, random);
 		}
 
 		return currentSol;

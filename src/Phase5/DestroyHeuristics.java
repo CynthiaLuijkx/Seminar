@@ -2,6 +2,7 @@ package Phase5;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -683,7 +684,7 @@ public class DestroyHeuristics {
 	public Solution executeRandomDayDuty(Solution solution, Random random, int n) {
 		Set<TimeSlot> slots = new HashSet<>();
 		int day = random.nextInt(7); 
-		String dutyType = randomElement(instance.getDutiesPerType().keySet(), random);
+		String dutyType = randomElement(instance.getDutyTypesLinked(), random);
 		for(ContractGroup group: solution.getNewSchedule().keySet()) {
 			int[] scheduleArray = solution.getNewSchedule().get(group).getScheduleArray(); 
 			for(int i = day; i< solution.getNewSchedule().get(group).getScheduleArray().length; i+=7) {
@@ -710,7 +711,7 @@ public class DestroyHeuristics {
 		return solution; 
 	}
 	
-	public static <E> E randomElement(Set<E> set, Random random) {
+	public static <E> E randomElement(LinkedHashSet<E> set, Random random) {
 		int size = set.size();
 		int item = random.nextInt(size); // In real life, the Random object should be rather more shared than this
 		int i = 0;

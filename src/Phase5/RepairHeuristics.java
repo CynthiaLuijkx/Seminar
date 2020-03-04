@@ -216,7 +216,7 @@ public class RepairHeuristics {
 	 * @param q
 	 * @return
 	 */
-	public Solution regretRepair2(Solution solution, int q) {
+	public Solution regretRepair2(Solution solution, int q, Random random) {
 
 		while(solution.getRequests().size()!=0) {
 
@@ -239,7 +239,7 @@ public class RepairHeuristics {
 					if(regret > maxRegret) {
 						maxRegret = regret; 
 						mostRegretRequest = request; 
-					}
+					} 
 				}
 
 			}
@@ -271,20 +271,20 @@ public class RepairHeuristics {
 	 * @param q
 	 * @return
 	 */
-	public Solution greedyRepair(Solution solution){
+	public Solution greedyRepair(Solution solution, Random random){
 
 		while(solution.getRequests().size()!=0) { //until all requests are placed
 
 			Request bestRequest = null; 
-			double minCosts = Double.MAX_VALUE; 
+			double minCosts = Double.MAX_VALUE;
 			for(Request request: solution.getRequests()) {
 				List<Placement> placements = request.getPlacements(); 
 				Collections.sort(placements);
 				if(placements.size()!=0) {
 					if(placements.get(0).getCost() < minCosts) {
 						minCosts = placements.get(0).getCost(); 
-						bestRequest = request; 
-					}
+						bestRequest = request;
+					} 
 				}
 			}
 

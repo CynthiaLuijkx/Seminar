@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class Main
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 112;
+		int paramCase = 1111;
 		int multiplierSoft = 100;
 		int multiplierFair = 100;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
@@ -199,7 +200,7 @@ public class Main
 			FileWriter writer = new FileWriter("ResultsALNS_" + depot + "_C" + paramCase + "_" + multiplierSoft + "_" + multiplierFair + ".txt");
 			for (int seedNr = 0; seedNr < seeds.length; seedNr++) {
 				long startALNS = System.nanoTime();
-				Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, seedNr); 
+				Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, seeds[seedNr]); 
 				Solution solutionALNS = alns.executeBasic(schedules);
 				long endALNS = System.nanoTime();
 				double obj = solutionALNS.getObj();
@@ -324,12 +325,15 @@ public class Main
 		HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty = new HashMap<>();
 		Set<Violation> violations11 = new HashSet<>();
 		Set<Violation> violations32 = new HashSet<>();
+		
+		LinkedHashSet<String> dutyTypesLinked = new LinkedHashSet<>();
 
 		Scanner scDuties = new Scanner(dutiesFile); //Read the file dutiesFile
 		while (scDuties.hasNext()) { //till all information from the file is read
 			Duty newDuty = new Duty(scDuties.nextInt(), scDuties.next(), scDuties.nextInt(), scDuties.nextInt(), scDuties.nextInt(), 
 					scDuties.nextInt(), scDuties.next(), scDuties.nextInt()); //Create a new duty with the corresponding information
 			fromDutyNrToDuty.put(newDuty.getNr(),newDuty);
+			dutyTypesLinked.add(newDuty.getType());
 			if (newDuty.getDayType().equals("Workingday")) { //add all possible duty types that can be executed on a working day 
 				workingDays.add(newDuty);
 				if (!dutiesPerTypeW.containsKey(newDuty.getType())) {
@@ -389,7 +393,7 @@ public class Main
 		scReserve.close();
 
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, fromDutyNrToDuty, contractGroups, 
-				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32, tabuLength, multiplierSoft, multiplierFair);
+				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32, tabuLength, multiplierSoft, multiplierFair, dutyTypesLinked);
 
 	}
 
