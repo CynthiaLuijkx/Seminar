@@ -232,13 +232,13 @@ public class Phase5_ALNS {
 		//		currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
 		if (repairHeuristicNr == 0) {
 //			System.out.println("Greedy");
-			currentSol = this.repairHeuristics.greedyRepair(currentSol);
+			currentSol = this.repairHeuristics.greedyRepair(currentSol, random);
 		} else if (repairHeuristicNr == 1){
 //			System.out.println("Regret 2");
-			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
+			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2, random);
 		} else {
 //			System.out.println("Regret 3");
-			currentSol = this.repairHeuristics.regretRepair2(currentSol, 3);
+			currentSol = this.repairHeuristics.regretRepair2(currentSol, 3, random);
 		}
 
 		return currentSol;

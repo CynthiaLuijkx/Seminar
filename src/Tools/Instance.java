@@ -2,6 +2,7 @@ package Tools;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +22,7 @@ public class Instance
 	private final Set<Duty> sunday;
 	
 	private final HashMap<String, Set<Duty>> dutiesPerType;
+	private final LinkedHashSet<String> dutyTypesLinked;
 	private final HashMap<String, Set<Duty>> dutiesPerTypeW;
 	private final HashMap<String, Set<Duty>> dutiesPerTypeSat;
 	private final HashMap<String, Set<Duty>> dutiesPerTypeSun;
@@ -86,11 +88,12 @@ public class Instance
 			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
 			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, 
 			ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32, int tabuLength, 
-			int multiplierSoft, int multiplierFair) throws FileNotFoundException {
+			int multiplierSoft, int multiplierFair, LinkedHashSet<String> dutyTypesLinked) throws FileNotFoundException {
 		this.workingDays = workingDays;
 		this.saturday = saturday;
 		this.sunday = sunday;
 		this.dutiesPerType = dutiesPerType;
+		this.dutyTypesLinked = dutyTypesLinked;
 		this.dutiesPerTypeW = dutiesPerTypeW;
 		this.dutiesPerTypeSat = dutiesPerTypeSat;
 		this.dutiesPerTypeSun = dutiesPerTypeSun;
@@ -132,6 +135,10 @@ public class Instance
 		this.multiplierFair = multiplierFair;
 		
 		this.penalties = new Penalties();
+	}
+	
+	public LinkedHashSet<String> getDutyTypesLinked() {
+		return dutyTypesLinked;
 	}
 	
 	public Map<String, Integer> getAvgMinW() {	

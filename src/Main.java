@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,14 +29,14 @@ public class Main
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 112;
+		int paramCase = 612;
 		int multiplierSoft = 100;
 		int multiplierFair = 100;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
-		int tabuLength = 0;
+		int tabuLength = 5;
 		int iterations_phase5 = 10000;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
@@ -324,12 +325,15 @@ public class Main
 		HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty = new HashMap<>();
 		Set<Violation> violations11 = new HashSet<>();
 		Set<Violation> violations32 = new HashSet<>();
+		
+		LinkedHashSet<String> dutyTypesLinked = new LinkedHashSet<>();
 
 		Scanner scDuties = new Scanner(dutiesFile); //Read the file dutiesFile
 		while (scDuties.hasNext()) { //till all information from the file is read
 			Duty newDuty = new Duty(scDuties.nextInt(), scDuties.next(), scDuties.nextInt(), scDuties.nextInt(), scDuties.nextInt(), 
 					scDuties.nextInt(), scDuties.next(), scDuties.nextInt()); //Create a new duty with the corresponding information
 			fromDutyNrToDuty.put(newDuty.getNr(),newDuty);
+			dutyTypesLinked.add(newDuty.getType());
 			if (newDuty.getDayType().equals("Workingday")) { //add all possible duty types that can be executed on a working day 
 				workingDays.add(newDuty);
 				if (!dutiesPerTypeW.containsKey(newDuty.getType())) {
@@ -389,7 +393,7 @@ public class Main
 		scReserve.close();
 
 		return new Instance(workingDays, saturday, sunday, dutiesPerType, dutiesPerTypeW, dutiesPerTypeSat, dutiesPerTypeSun, fromDutyNrToDuty, contractGroups, 
-				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32, tabuLength, multiplierSoft, multiplierFair);
+				reserveDutyTypes, fromRDutyNrToRDuty, violations11, violations32, tabuLength, multiplierSoft, multiplierFair, dutyTypesLinked);
 
 	}
 
