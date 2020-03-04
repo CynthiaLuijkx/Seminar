@@ -315,6 +315,18 @@ public class Instance
 		}
 	}
 	
+	public String getSimpleDutyTypeFromDutyNR(int dutyNr) {
+		if(dutyNr==1) {
+			return "ATV"; 
+		}else if(dutyNr == 2) {
+			return "Rest"; 
+		}else if(dutyNr < 1000) {
+			return this.getFromRDutyNrToRDuty().get(dutyNr).getType().substring(1); 
+		}else {
+			return this.getFromDutyNrToDuty().get(dutyNr).getType(); 
+		}
+	}
+	
 	/**
 	 * This method calculated the average duty length for each duty type.
 	 */

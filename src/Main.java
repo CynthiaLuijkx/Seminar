@@ -29,7 +29,7 @@ public class Main
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 1111;
+		int paramCase = 111;
 		int multiplierSoft = 100;
 		int multiplierFair = 100;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
@@ -234,7 +234,7 @@ public class Main
 				}
 				
 				for (int i = 0; i < results[0].length - instance.getContractGroups().size(); i++) {
-					writer.write(Double.toString(results[seedNr][i]) + ",");
+					writer.write(Double.toString(results[seedNr][i]) + ", ");
 				}
 				double[][] fairViolations = solutionALNS.getFeasCheck().getAllFairness(solutionALNS);
 				for (int i = 1; i <= instance.getContractGroups().size(); i++) {
