@@ -29,14 +29,14 @@ public class Main
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 612;
+		int paramCase = 1111;
 		int multiplierSoft = 100;
 		int multiplierFair = 100;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
-		int tabuLength = 5;
+		int tabuLength = 0;
 		int iterations_phase5 = 10000;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
@@ -200,7 +200,7 @@ public class Main
 			FileWriter writer = new FileWriter("ResultsALNS_" + depot + "_C" + paramCase + "_" + multiplierSoft + "_" + multiplierFair + ".txt");
 			for (int seedNr = 0; seedNr < seeds.length; seedNr++) {
 				long startALNS = System.nanoTime();
-				Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, seedNr); 
+				Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, seeds[seedNr]); 
 				Solution solutionALNS = alns.executeBasic(schedules);
 				long endALNS = System.nanoTime();
 				double obj = solutionALNS.getObj();
