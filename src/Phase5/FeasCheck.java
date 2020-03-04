@@ -1057,9 +1057,13 @@ public class FeasCheck {
 		double[] fairCount = new double[instance.getPenalties().getFairPenalties().length]; 
 
 		/*
-		 * 0	:	ReserveDuties Distribution 
+		 * 0:	ReserveDuties Distribution 
 		 * 1:	Working Sundays Distribution 
 		 * 2: 	Desirability Distribution 
+		 * 3: 	Distribution split duties 
+		 * 4: 	Distribution attractiveness
+		 * 5:	Distribution Early duties
+		 * 6:	Distribution Late duties
 		 */
 
 		fairCount[0] = this.getNReserveDuties(schedule); 
@@ -1067,6 +1071,8 @@ public class FeasCheck {
 		fairCount[2] = this.getDesirability(schedule); 
 		fairCount[3] = this.getPropDuty(schedule,"G"); 
 		fairCount[4] = this.getAttractiveness(schedule, c);
+		fairCount[5] = this.getPropDuty(schedule, "V");
+		fairCount[6] = this.getPropDuty(schedule, "L");
 
 		return fairCount; 
 
@@ -1185,7 +1191,7 @@ public class FeasCheck {
 		int count = 0; 
 		
 		for(int i = 0; i<schedule.length; i++) {
-			if(this.instance.getDutyTypeFromDutyNR(schedule[i]).equals(dutyType)) {
+			if(this.instance.getSimpleDutyTypeFromDutyNR(schedule[i]).equals(dutyType)) {
 				count++; 
 			}
 		}

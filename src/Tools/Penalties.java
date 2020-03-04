@@ -18,7 +18,7 @@ public class Penalties {
 	public Penalties() throws FileNotFoundException {
 		feasPenalties = new double[2];
 		softPenalties = new double[12];
-		fairPenalties = new double[5]; 
+		fairPenalties = new double[7]; 
 		
 		feasPenalties[0] = 1.35;//Quarterly overtime
 		feasPenalties[1] = 1000; //number of ATV days
@@ -59,6 +59,8 @@ public class Penalties {
 		 * 2: 	Desirability Distribution 
 		 * 3: 	Distribution split duties 
 		 * 4: 	Distribution attractiveness
+		 * 5:	Distribution Early duties
+		 * 6:	Distribution Late duties
 		 */
 		
 		fairPenalties[0] = sc.nextDouble();
@@ -66,6 +68,8 @@ public class Penalties {
 		fairPenalties[2] = sc.nextDouble();
 		fairPenalties[3] = sc.nextDouble();
 		fairPenalties[4] = sc.nextDouble();
+		fairPenalties[5] = sc.nextDouble();
+		fairPenalties[6] = sc.nextDouble();
 	}
 
 	
