@@ -181,20 +181,10 @@ public class Phase5_ALNS {
 			System.out.println("number of drivers of group " +group.getNr()+ " is: " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length/7);
 		}
 		System.out.println("Nr. of request bank: " + this.globalBestSol.getRequests().size());
-		
+
 		this.destroyHeuristics.removeATV(this.globalBestSol);
-		
-		for (ContractGroup group : instance.getContractGroups()) {
-			new ScheduleVis(this.globalBestSol.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"before" , instance, "Dirksland");
-		}
-		
 		this.repairHeuristics.setAllPlacements(this.globalBestSol); 
-		
 		this.repairHeuristics.greedyRepair(this.globalBestSol, random);
-		
-		for (ContractGroup group : instance.getContractGroups()) {
-			new ScheduleVis(this.globalBestSol.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, "Dirksland");
-		}
 		
 		return this.globalBestSol; //return our global solution
 	}
