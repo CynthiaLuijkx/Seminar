@@ -320,7 +320,7 @@ public class Main
 		HashMap<String, Set<Duty>> dutiesPerTypeSat = new HashMap<>();
 		HashMap<String, Set<Duty>> dutiesPerTypeSun = new HashMap<>();
 		HashMap<Integer, Duty> fromDutyNrToDuty = new HashMap<>();
-		Set<ContractGroup> contractGroups = new HashSet<>();
+		LinkedHashSet<ContractGroup> contractGroups = new LinkedHashSet<>();
 		Set<ReserveDutyType> reserveDutyTypes = new HashSet<>();
 		HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty = new HashMap<>();
 		Set<Violation> violations11 = new HashSet<>();

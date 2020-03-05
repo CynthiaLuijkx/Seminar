@@ -460,7 +460,7 @@ public class DestroyHeuristics {
 					}
 				}
 				Schedule newschedule = new Schedule(group, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group) );
-				Set<Request> toRemove = new HashSet<>();
+				LinkedHashSet<Request> toRemove = new LinkedHashSet<>();
 				boolean tabuFeasible = true;
 				if(this.checkFeasibility(newschedule, (index*7)) && this.checkRelativeGroupSize(solution, newschedule)) {
 					for(int k = 7*index; k <= index*7+6; k++) {
@@ -600,7 +600,7 @@ public class DestroyHeuristics {
 				Schedule newschedule = new Schedule(group1, newSchedule, (int) this.feasCheck.QuarterlyOvertime(newSchedule, group1) );
 				if(this.checkFeasibility(newschedule, (index*7)) && this.checkRelativeGroupSize(solution, newschedule)) {
 					boolean tabuFeasible = true;
-					Set<Request> toRemove = new HashSet<>();
+					LinkedHashSet<Request> toRemove = new LinkedHashSet<>();
 					for(int k = 7*index; k <= index*7+6; k++) {
 						if(solution.getNewSchedule().get(group1).getScheduleArray()[k] == 1) {
 							Request request = new Request(1, group1, k);
@@ -685,7 +685,7 @@ public class DestroyHeuristics {
 		Set<TimeSlot> slots = new HashSet<>();
 		int day = random.nextInt(7); 
 		String dutyType = randomElement(instance.getDutyTypesLinked(), random);
-		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+		for(ContractGroup group: instance.getContractGroups()) {
 			int[] scheduleArray = solution.getNewSchedule().get(group).getScheduleArray(); 
 			for(int i = day; i< solution.getNewSchedule().get(group).getScheduleArray().length; i+=7) {
 				if(instance.getDutyTypeFromDutyNR(scheduleArray[i]).equals(dutyType)) {
