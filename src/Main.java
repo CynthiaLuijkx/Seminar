@@ -198,7 +198,7 @@ public class Main
 				new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
 			}
 			FileWriter writer = new FileWriter("ResultsALNS_" + depot + "_C" + paramCase + "_" + multiplierSoft + "_" + multiplierFair + ".txt");
-			for (int seedNr = 0; seedNr < seeds.length; seedNr++) {
+			for (int seedNr = 2; seedNr < seeds.length; seedNr++) {
 				long startALNS = System.nanoTime();
 				Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, seeds[seedNr]); 
 				Solution solutionALNS = alns.executeBasic(schedules);
@@ -320,7 +320,7 @@ public class Main
 		HashMap<String, Set<Duty>> dutiesPerTypeSat = new HashMap<>();
 		HashMap<String, Set<Duty>> dutiesPerTypeSun = new HashMap<>();
 		HashMap<Integer, Duty> fromDutyNrToDuty = new HashMap<>();
-		Set<ContractGroup> contractGroups = new HashSet<>();
+		LinkedHashSet<ContractGroup> contractGroups = new LinkedHashSet<>();
 		Set<ReserveDutyType> reserveDutyTypes = new HashSet<>();
 		HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty = new HashMap<>();
 		Set<Violation> violations11 = new HashSet<>();

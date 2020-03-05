@@ -93,7 +93,11 @@ public class Phase5_ALNS {
 		//System.out.println(initSol);
 		//till the number of iterations is reached
 		while (n <= this.nIterations) {	
-
+			
+			if (n == 755) {
+				System.out.println(currentSol.getObj());
+			}
+			
 			// find the destroy and repair heuristic depending on the weights
 			double UDestroy = this.random.nextDouble();
 			int destroyHeuristicNr = 0;

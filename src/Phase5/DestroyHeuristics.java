@@ -685,7 +685,7 @@ public class DestroyHeuristics {
 		Set<TimeSlot> slots = new HashSet<>();
 		int day = random.nextInt(7); 
 		String dutyType = randomElement(instance.getDutyTypesLinked(), random);
-		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+		for(ContractGroup group: instance.getContractGroups()) {
 			int[] scheduleArray = solution.getNewSchedule().get(group).getScheduleArray(); 
 			for(int i = day; i< solution.getNewSchedule().get(group).getScheduleArray().length; i+=7) {
 				if(instance.getDutyTypeFromDutyNR(scheduleArray[i]).equals(dutyType)) {

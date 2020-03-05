@@ -28,7 +28,7 @@ public class Instance
 	private final HashMap<String, Set<Duty>> dutiesPerTypeSun;
 	private final HashMap<Integer, Duty> fromDutyNrToDuty;
 	
-	private final Set<ContractGroup> contractGroups;
+	private final LinkedHashSet<ContractGroup> contractGroups;
 	private final Set <ContractGroup> originalGroups;
 	private final Set<ReserveDutyType> reserveDutyTypes;
 	private final HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty;
@@ -86,7 +86,7 @@ public class Instance
 	 */
 	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
 			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
-			HashMap<Integer, Duty> fromDutyNrToDuty, Set<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, 
+			HashMap<Integer, Duty> fromDutyNrToDuty, LinkedHashSet<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, 
 			ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32, int tabuLength, 
 			int multiplierSoft, int multiplierFair, LinkedHashSet<String> dutyTypesLinked) throws FileNotFoundException {
 		this.workingDays = workingDays;
@@ -187,7 +187,7 @@ public class Instance
 		return fromRDutyNrToRDuty;
 	}
 	
-	public Set<ContractGroup> getContractGroups() {
+	public LinkedHashSet<ContractGroup> getContractGroups() {
 		return contractGroups;
 	}
 	
