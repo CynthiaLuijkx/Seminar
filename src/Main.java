@@ -198,7 +198,7 @@ public class Main
 				new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
 			}
 			FileWriter writer = new FileWriter("ResultsALNS_" + depot + "_C" + paramCase + "_" + multiplierSoft + "_" + multiplierFair + ".txt");
-			for (int seedNr = 2; seedNr < seeds.length; seedNr++) {
+			for (int seedNr = 0; seedNr < seeds.length; seedNr++) {
 				long startALNS = System.nanoTime();
 				Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, seeds[seedNr]); 
 				Solution solutionALNS = alns.executeBasic(schedules);

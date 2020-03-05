@@ -94,8 +94,15 @@ public class Phase5_ALNS {
 		//till the number of iterations is reached
 		while (n <= this.nIterations) {	
 			
-			if (n == 755) {
+			if (n == 749) {
 				System.out.println(currentSol.getObj());
+			}
+			
+			if (currentSol.getRequests().size() != 0) {
+				System.out.println("Iteration: " + n);
+				for (Request req : currentSol.getRequests()) {
+					System.out.println(req);
+				}
 			}
 			
 			// find the destroy and repair heuristic depending on the weights

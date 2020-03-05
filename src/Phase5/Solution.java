@@ -18,7 +18,7 @@ import Tools.Schedule;
  */
 public class Solution {
 
-	private Set<Request> requests;
+	private LinkedHashSet<Request> requests;
 	private Map<ContractGroup, Schedule> newSchedule = new HashMap<ContractGroup,Schedule>();
 	private final Instance instance;
 	private FeasCheck feasCheck; 
@@ -81,11 +81,11 @@ public class Solution {
 		return this.feasCheck;
 	}
 
-	public Set<Request> getRequests() {
+	public LinkedHashSet<Request> getRequests() {
 		return requests;
 	}
 
-	public void setRequests(Set<Request> requests) {
+	public void setRequests(LinkedHashSet<Request> requests) {
 		this.requests = requests;
 	}
 
