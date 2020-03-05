@@ -217,7 +217,7 @@ public class RepairHeuristics {
 	 * @return
 	 */
 	public Solution regretRepair2(Solution solution, int q, Random random) {
-
+		q=q-1;
 		while(solution.getRequests().size()!=0) {
 
 			Request mostRegretRequest = null; 

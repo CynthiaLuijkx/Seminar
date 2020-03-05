@@ -176,6 +176,12 @@ public class Phase5_ALNS {
 			this.T = this.T * this.c;
 			n++;
 		}
+		for(ContractGroup group: instance.getContractGroups()) {
+			System.out.println("number of drivers of group " +group.getNr()+ " is: " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length/7);
+		}
+		this.destroyHeuristics.removeATV(this.globalBestSol);
+		this.repairHeuristics.setAllPlacements(this.globalBestSol);
+		this.repairHeuristics.greedyRepair(this.globalBestSol, random);
 		System.out.println("end size"+ this.globalBestSol.getRequests().size());
 		for(ContractGroup group: instance.getContractGroups()) {
 			System.out.println("number of drivers of group " +group.getNr()+ " is: " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length/7);
