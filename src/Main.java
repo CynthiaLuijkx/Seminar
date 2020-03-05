@@ -138,7 +138,7 @@ public class Main
 					instance.setBasicSchedules(mip.getSolution());
 					
 					for(ContractGroup c : instance.getContractGroups()) {
-						new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr(), depot);
+						//new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr(), depot);
 					}
 					
 					times[2] = System.nanoTime();
@@ -180,7 +180,7 @@ public class Main
 					newSchedules = addMissing.getNewSchedules();
 					
 					for(Schedule schedule : newSchedules) {
-						new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance, depot);
+						//new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance, depot);
 						printSchedule(schedule, depot, numberOfDrivers, schedule.getC().getNr());
 					}
 					times[4] = System.nanoTime();
@@ -195,10 +195,10 @@ public class Main
 			Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
 			
 			for (ContractGroup group : instance.getContractGroups()) {
-				new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
+				//new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
 			}
 			FileWriter writer = new FileWriter("ResultsALNS_" + depot + "_C" + paramCase + "_" + multiplierSoft + "_" + multiplierFair + ".txt");
-			for (int seedNr = 0; seedNr < seeds.length; seedNr++) {
+			for (int seedNr = 0; seedNr <seeds.length; seedNr++) {
 				long startALNS = System.nanoTime();
 				Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, seeds[seedNr]); 
 				Solution solutionALNS = alns.executeBasic(schedules);
@@ -263,9 +263,9 @@ public class Main
 				}
 				writer.write(System.getProperty("line.separator"));
 				
-				for (ContractGroup group : instance.getContractGroups()) {
-					new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
-				}
+//				for (ContractGroup group : instance.getContractGroups()) {
+//					new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
+//				}
 			}
 			writer.close();
 			times[5] = System.nanoTime();

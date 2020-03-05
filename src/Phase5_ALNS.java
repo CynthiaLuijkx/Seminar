@@ -181,6 +181,11 @@ public class Phase5_ALNS {
 			System.out.println("number of drivers of group " +group.getNr()+ " is: " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length/7);
 		}
 		System.out.println("Nr. of request bank: " + this.globalBestSol.getRequests().size());
+
+		this.destroyHeuristics.removeATV(this.globalBestSol);
+		this.repairHeuristics.setAllPlacements(this.globalBestSol); 
+		this.repairHeuristics.greedyRepair(this.globalBestSol, random);
+		
 		return this.globalBestSol; //return our global solution
 	}
 
@@ -236,7 +241,7 @@ public class Phase5_ALNS {
 			currentSol = this.destroyHeuristics.executeExtremeRemoval(currentSol, sizeNeighbourhood, random, instance, n);
 		}
 
-		this.repairHeuristics.setAllPlacements(currentSol).toString();
+		this.repairHeuristics.setAllPlacements(currentSol);
 
 		//execute a repair heuristic depending on the generated number
 		//		currentSol = this.repairHeuristics.greedyRepair(currentSol);
