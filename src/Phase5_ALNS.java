@@ -189,10 +189,6 @@ public class Phase5_ALNS {
 		}
 		System.out.println("end size"+ this.globalBestSol.getRequests().size());
 		System.out.println("Nr. of request bank: " + this.globalBestSol.getRequests().size());
-
-		this.destroyHeuristics.removeATV(this.globalBestSol);
-		this.repairHeuristics.setAllPlacements(this.globalBestSol); 
-		this.repairHeuristics.greedyRepair(this.globalBestSol, random);
 		
 		return this.globalBestSol; //return our global solution
 	}
