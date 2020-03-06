@@ -198,6 +198,6 @@ public class Request {
 
 	@Override
 	public String toString() {
-		return "Request [dutyNr=" + this.dutyNumber + ", group=" + group + "]";
+		return "Request [dutyNr=" + this.dutyNumber + ", day=" + this.day + ", group=" + group + "]";
 	}		
 }

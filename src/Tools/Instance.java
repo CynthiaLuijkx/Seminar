@@ -17,9 +17,9 @@ import Phase5.Request;
  */
 public class Instance 
 {
-	private final Set<Duty> workingDays;
-	private final Set<Duty> saturday;
-	private final Set<Duty> sunday;
+	private final LinkedHashSet<Duty> workingDays;
+	private final LinkedHashSet<Duty> saturday;
+	private final LinkedHashSet<Duty> sunday;
 	
 	private final HashMap<String, Set<Duty>> dutiesPerType;
 	private final LinkedHashSet<String> dutyTypesLinked;
@@ -29,8 +29,8 @@ public class Instance
 	private final HashMap<Integer, Duty> fromDutyNrToDuty;
 	
 	private final LinkedHashSet<ContractGroup> contractGroups;
-	private final Set <ContractGroup> originalGroups;
-	private final Set<ReserveDutyType> reserveDutyTypes;
+	private final LinkedHashSet<ContractGroup> originalGroups;
+	private final LinkedHashSet<ReserveDutyType> reserveDutyTypes;
 	private final HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty;
 	
 	private final int minBreak = 11*60; 
@@ -43,7 +43,7 @@ public class Instance
 	
 	private Set<Combination> M;					// A Set with combinations of day type, duty type and the number of times this shift should be added
 	
-	private  int nrReserveDuties;
+	private int nrReserveDuties;
 	
 	private int UB = 0; 
 	private int LB = 0;
@@ -84,9 +84,9 @@ public class Instance
 	 * @param violations11			a Set containing all violations of the daily rest of 11 hours
 	 * @param violations32			a Set containing all violations of the rest day of 32 hours
 	 */
-	public Instance(Set<Duty> workingDays, Set<Duty> saturday, Set<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
+	public Instance(LinkedHashSet<Duty> workingDays, LinkedHashSet<Duty> saturday, LinkedHashSet<Duty> sunday, HashMap<String, Set<Duty>> dutiesPerType, 
 			HashMap<String, Set<Duty>> dutiesPerTypeW,  HashMap<String, Set<Duty>> dutiesPerTypeSat,  HashMap<String, Set<Duty>> dutiesPerTypeSun,
-			HashMap<Integer, Duty> fromDutyNrToDuty, LinkedHashSet<ContractGroup> contractGroups, Set<ReserveDutyType> reserveDutyTypes, HashMap<Integer, 
+			HashMap<Integer, Duty> fromDutyNrToDuty, LinkedHashSet<ContractGroup> contractGroups, LinkedHashSet<ReserveDutyType> reserveDutyTypes, HashMap<Integer, 
 			ReserveDutyType> fromRDutyNrToRDuty, Set<Violation> violations11, Set<Violation> violations32, int tabuLength, 
 			int multiplierSoft, int multiplierFair, LinkedHashSet<String> dutyTypesLinked) throws FileNotFoundException {
 		this.workingDays = workingDays;
@@ -151,15 +151,15 @@ public class Instance
 		return avgMinSun;	
 	}
 
-	public Set<Duty> getWorkingDays() {
+	public LinkedHashSet<Duty> getWorkingDays() {
 		return workingDays;
 	}
 
-	public Set<Duty> getSaturday() {
+	public LinkedHashSet<Duty> getSaturday() {
 		return saturday;
 	}
 
-	public Set<Duty> getSunday() {
+	public LinkedHashSet<Duty> getSunday() {
 		return sunday;
 	}
 
@@ -191,7 +191,7 @@ public class Instance
 		return contractGroups;
 	}
 	
-	public Set<ReserveDutyType> getReserveDutyTypes() {
+	public LinkedHashSet<ReserveDutyType> getReserveDutyTypes() {
 		return reserveDutyTypes;
 	}
 	
@@ -277,7 +277,7 @@ public class Instance
 		for (ContractGroup c : this.contractGroups) {
 			
 			c.setTc((int) Math.ceil(nDrivers * c.getRelativeGroupSize()) * 7);
-			c.setATVc((int) Math.floor(c.getATVPerYear() / 365.0 * c.getTc()));
+			c.setATVc((int) Math.floor(c.getATVPerYear() * (c.getTc()/7)/52.0));
 		}
 	}
 	
@@ -492,7 +492,7 @@ public class Instance
 	public Map<Integer, ContractGroup> getOGGroupsFromNr(){
 		Map<Integer, ContractGroup> map = new HashMap<Integer, ContractGroup>(); 
 		
-		for(ContractGroup group: this.originalGroups) {
+		for(ContractGroup group : this.originalGroups) {
 			map.put(group.getNr(), group); 
 		}
 		return map; 

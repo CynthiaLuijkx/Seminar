@@ -29,15 +29,15 @@ public class Main
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 421;
-		int multiplierSoft = 0;
-		int multiplierFair = 0;
+		int paramCase = 4211;
+		int multiplierSoft = 500;
+		int multiplierFair = 1000;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
 		int tabuLength = 5;
-		int iterations_phase5 = 10000;
+		int iterations_phase5 = 1000;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
 		boolean phase123 = false;
@@ -71,6 +71,7 @@ public class Main
 			throw new IllegalArgumentException("This is not a valid depot name, please enter: 'Dirksland' or 'Heinenoord' to construct rosters for "
 					+ "one of these depots.");
 		}
+		
 		//Input the files
 		File dutiesFile = new File("Data/" + depot + ".txt"); //file that contains duties and their features
 		File contractGroupsFile = new File("Data/ContractGroups" + depot + ".txt"); //file that contains all contract groups and their features
@@ -315,16 +316,16 @@ public class Main
 	public static Instance readInstance(File dutiesFile, File contractGroupsFile, File reserveDutiesFile, Set<String> dutyTypes, 
 			int dailyRestMin, int restDayMin, double violationBound, int tabuLength, int multiplierSoft, int multiplierFair) throws FileNotFoundException {
 		//Initialize all sets/maps
-		Set<Duty> workingDays = new HashSet<>(); 
-		Set<Duty> saturday = new HashSet<>();
-		Set<Duty> sunday = new HashSet<>();
+		LinkedHashSet<Duty> workingDays = new LinkedHashSet<>(); 
+		LinkedHashSet<Duty> saturday = new LinkedHashSet<>();
+		LinkedHashSet<Duty> sunday = new LinkedHashSet<>();
 		HashMap<String, Set<Duty>> dutiesPerType = new HashMap<>();
 		HashMap<String, Set<Duty>> dutiesPerTypeW = new HashMap<>();
 		HashMap<String, Set<Duty>> dutiesPerTypeSat = new HashMap<>();
 		HashMap<String, Set<Duty>> dutiesPerTypeSun = new HashMap<>();
 		HashMap<Integer, Duty> fromDutyNrToDuty = new HashMap<>();
 		LinkedHashSet<ContractGroup> contractGroups = new LinkedHashSet<>();
-		Set<ReserveDutyType> reserveDutyTypes = new HashSet<>();
+		LinkedHashSet<ReserveDutyType> reserveDutyTypes = new LinkedHashSet<>();
 		HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty = new HashMap<>();
 		Set<Violation> violations11 = new HashSet<>();
 		Set<Violation> violations32 = new HashSet<>();

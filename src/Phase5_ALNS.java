@@ -91,13 +91,11 @@ public class Phase5_ALNS {
 		for(ContractGroup group: instance.getContractGroups()) {
 			System.out.println(group.getNr() + " " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length);
 		}
+
 		//System.out.println(initSol);
 		//till the number of iterations is reached
 		while (n <= this.nIterations) {	
-			
-						
-			
-			
+
 			// find the destroy and repair heuristic depending on the weights
 			double UDestroy = this.random.nextDouble();
 			int destroyHeuristicNr = 0;
@@ -108,7 +106,6 @@ public class Phase5_ALNS {
 				}
 				UDestroy -= this.weightsDestroy[i];
 			}
-
 
 			int repairHeuristicNr = 0;
 			double URepair = this.random.nextDouble();
@@ -126,7 +123,7 @@ public class Phase5_ALNS {
 			int sizeNeighbourhood = this.random.nextInt(this.maxSizeNeighbourhood - this.minSizeNeighbourhood) + this.minSizeNeighbourhood;
 
 			//			System.out.println("-----------------------------------------------------------------------");
-//			System.out.println("ITERATION " + n + ":" + destroyHeuristicNr + " - " + repairHeuristicNr);
+			//			System.out.println("ITERATION " + n + ":" + destroyHeuristicNr + " - " + repairHeuristicNr);
 
 			// find new solution
 			tempSol = this.executeDestroyAndRepair(tempSol, destroyHeuristicNr, repairHeuristicNr, sizeNeighbourhood, n);
@@ -144,16 +141,13 @@ public class Phase5_ALNS {
 				instance.updateTabu(tempSol.getPlacements(), n);
 				System.out.println("-----------------------------------------------------------------------");
 				System.out.println("New global best solution (iteration " + n + "): " + this.globalBestSol.getObj());
-
 			}
 			//if we accept the solution by simulated annealing
 			else if (this.random.nextDouble() < Math.exp(-(tempSol.getObj() - currentSol.getObj()) / this.T)) {
 				accepted = true; //accept solution
 				currentSol = tempSol.clone(); //set the current solution to the temporary solution
 				instance.updateTabu(tempSol.getPlacements(), n);
-				//				System.out.println("We accepted the solution: " + currentSol.getObj());
 			}
-
 
 			// update weight adjustments
 			this.updateWeightAdj(globalOpt, accepted, unique, destroyHeuristicNr, repairHeuristicNr);
@@ -169,16 +163,18 @@ public class Phase5_ALNS {
 			this.T = this.T * this.c;
 			n++;
 		}
+
 		for(ContractGroup group: instance.getContractGroups()) {
 			if(group.getATVPerYear() > 0) {
 				System.out.println(this.globalBestSol.getNewSchedule().get(group).toString());
 			}
 		}
+
 		for (ContractGroup group : instance.getContractGroups()) {
 			Solution solution = this.globalBestSol.clone();
 			new ScheduleVis(solution.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr() +" before atv " , instance, "Dirksland");
 		}
-		
+
 		this.destroyHeuristics.removeATV(this.globalBestSol);
 		this.repairHeuristics.setAllPlacements(this.globalBestSol);
 		this.repairHeuristics.greedyRepair(this.globalBestSol, random);
@@ -190,10 +186,6 @@ public class Phase5_ALNS {
 		System.out.println("end size"+ this.globalBestSol.getRequests().size());
 		System.out.println("Nr. of request bank: " + this.globalBestSol.getRequests().size());
 
-		this.destroyHeuristics.removeATV(this.globalBestSol);
-		this.repairHeuristics.setAllPlacements(this.globalBestSol); 
-		this.repairHeuristics.greedyRepair(this.globalBestSol, random);
-		
 		return this.globalBestSol; //return our global solution
 	}
 
@@ -222,31 +214,25 @@ public class Phase5_ALNS {
 	 * @return							the updated solution
 	 */
 	public Solution executeDestroyAndRepair(Solution currentSol, int destroyHeuristicNr, int repairHeuristicNr, 
-			int sizeNeighbourhood, int n) {
+			int sizeNeighbourhood, int n) {		
 		//execute a destroy heuristic depending on the generated number
 		//		currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood, random, instance);
 		//		currentSol = this.destroyHeuristics.executeExtremeSpecificRemoval(currentSol, sizeNeighbourhood, random, instance);
 		if (destroyHeuristicNr == 0) {
-//			System.out.println("Random Destroy (" + n + ")");
+			//			System.out.println("Random Destroy (" + n + ")");
 			currentSol = this.destroyHeuristics.executeRandom(currentSol, sizeNeighbourhood,  random,instance, n);
 		}
 		else if (destroyHeuristicNr == 1){
-//			System.out.println("Random Destroy (" + n + ")");
+			//			System.out.println("Random Destroy (" + n + ")");
 			currentSol = this.destroyHeuristics.executeRemoveWeek(currentSol, random, instance, n);
 		} 
 		else if (destroyHeuristicNr == 2) {
-//			System.out.println("Swap Destroy (" + n + ")");
+			//			System.out.println("Swap Destroy (" + n + ")");
 			currentSol = this.destroyHeuristics.executeSwapWeek(currentSol, random, instance, n);
 		}
 		else if (destroyHeuristicNr == 3) {
-//			System.out.println("Random Day Duty Destroy (" + n + ")");
+			//			System.out.println("Random Day Duty Destroy (" + n + ")");
 			currentSol = this.destroyHeuristics.executeRandomDayDuty(currentSol, random, n);
-		}
-		else if(destroyHeuristicNr == 4) {
-			currentSol = this.destroyHeuristics.executeExtremeSpecificRemoval(currentSol, sizeNeighbourhood, random, instance, n);
-		}
-		else if(destroyHeuristicNr == 5) {
-			currentSol = this.destroyHeuristics.executeExtremeRemoval(currentSol, sizeNeighbourhood, random, instance, n);
 		}
 
 		this.repairHeuristics.setAllPlacements(currentSol);
@@ -255,13 +241,13 @@ public class Phase5_ALNS {
 		//		currentSol = this.repairHeuristics.greedyRepair(currentSol);
 		//		currentSol = this.repairHeuristics.regretRepair2(currentSol, 2);
 		if (repairHeuristicNr == 0) {
-//			System.out.println("Greedy");
+			//			System.out.println("Greedy");
 			currentSol = this.repairHeuristics.greedyRepair(currentSol, random);
 		} else if (repairHeuristicNr == 1){
-//			System.out.println("Regret 2");
+			//			System.out.println("Regret 2");
 			currentSol = this.repairHeuristics.regretRepair2(currentSol, 2, random);
 		} else {
-//			System.out.println("Regret 3");
+			//			System.out.println("Regret 3");
 			currentSol = this.repairHeuristics.regretRepair2(currentSol, 3, random);
 		}
 
