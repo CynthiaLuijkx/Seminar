@@ -56,7 +56,7 @@ public class Request {
 	//Determine the startime of the duty
 	public int getStartTime() {
 		int start = 0;
-		if(this.getDutyNumber() == 1 || this.getDutyNumber() == 2) {
+		if(this.getDutyNumber() == 1 || this.getDutyNumber() ==2) {
 			start = 24*60;
 		}
 		else if(this.getDutyNumber() < 1000) {

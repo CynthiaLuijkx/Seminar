@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.Random;
 
 import Phase5.DestroyHeuristics;
+import Phase5.Placement;
 import Phase5.RepairHeuristics;
 import Phase5.Request;
 import Phase5.Solution;
@@ -30,7 +31,7 @@ public class Phase5_ALNS {
 
 	private double[] weightUpdates = {33/(double)55, 9/(double)55, 13/(double)55}; //determine how to update the weights
 	private final double rho = 0.1; //the proportion of the weights that is determined by the recent performance
-	private final double c = 0.9; //cooling rate of the simulated annealing aspect
+	private final double c = 0.95; //cooling rate of the simulated annealing aspect
 
 	private double[] weightsDestroy; //weights of the destroy methods
 	private double[][] weightsDestroyAdj; //adjusted weights of the destroy methods
@@ -94,16 +95,8 @@ public class Phase5_ALNS {
 		//till the number of iterations is reached
 		while (n <= this.nIterations) {	
 			
-			if (n == 749) {
-				System.out.println(currentSol.getObj());
-			}
+						
 			
-			if (currentSol.getRequests().size() != 0) {
-				System.out.println("Iteration: " + n);
-				for (Request req : currentSol.getRequests()) {
-					System.out.println(req);
-				}
-			}
 			
 			// find the destroy and repair heuristic depending on the weights
 			double UDestroy = this.random.nextDouble();
@@ -176,10 +169,25 @@ public class Phase5_ALNS {
 			this.T = this.T * this.c;
 			n++;
 		}
-		System.out.println("end size"+ this.globalBestSol.getRequests().size());
 		for(ContractGroup group: instance.getContractGroups()) {
-			System.out.println("number of drivers of group " +group.getNr()+ " is: " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length/7);
+			if(group.getATVPerYear() > 0) {
+				System.out.println(this.globalBestSol.getNewSchedule().get(group).toString());
+			}
 		}
+		for (ContractGroup group : instance.getContractGroups()) {
+			Solution solution = this.globalBestSol.clone();
+			new ScheduleVis(solution.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr() +" before atv " , instance, "Dirksland");
+		}
+		
+		this.destroyHeuristics.removeATV(this.globalBestSol);
+		this.repairHeuristics.setAllPlacements(this.globalBestSol);
+		this.repairHeuristics.greedyRepair(this.globalBestSol, random);
+		for(ContractGroup group: instance.getContractGroups()) {
+			if(group.getATVPerYear() > 0) {
+				System.out.println(this.globalBestSol.getNewSchedule().get(group).toString());
+			}
+		}
+		System.out.println("end size"+ this.globalBestSol.getRequests().size());
 		System.out.println("Nr. of request bank: " + this.globalBestSol.getRequests().size());
 
 		this.destroyHeuristics.removeATV(this.globalBestSol);
