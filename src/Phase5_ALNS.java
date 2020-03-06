@@ -91,12 +91,27 @@ public class Phase5_ALNS {
 		for(ContractGroup group: instance.getContractGroups()) {
 			System.out.println(group.getNr() + " " + this.globalBestSol.getNewSchedule().get(group).getScheduleArray().length);
 		}
+		
+		for (ContractGroup group : instance.getContractGroups()) {
+			if (group.getATVPerYear() > 0) {
+				int count = 0;
+				for (int i = 0; i < currentSol.getNewSchedule().get(group).getSchedule().length; i++) {
+					if (currentSol.getNewSchedule().get(group).getSchedule()[i] == 1) {
+						count++;
+					}
+				}
+				System.out.println("Contract group: " + group.getNr());
+				System.out.println("ATV: " + count);
+				System.out.println("Planning Horizon: " + currentSol.getNewSchedule().get(group).getSchedule().length);
+			}
+		}
 		//System.out.println(initSol);
 		//till the number of iterations is reached
-		while (n <= this.nIterations) {	
+		while (n <= this.nIterations) {		
 			
-						
-			
+			if (n == 31) {
+				System.out.println("STOP");
+			}
 			
 			// find the destroy and repair heuristic depending on the weights
 			double UDestroy = this.random.nextDouble();
@@ -108,7 +123,6 @@ public class Phase5_ALNS {
 				}
 				UDestroy -= this.weightsDestroy[i];
 			}
-
 
 			int repairHeuristicNr = 0;
 			double URepair = this.random.nextDouble();
@@ -144,16 +158,13 @@ public class Phase5_ALNS {
 				instance.updateTabu(tempSol.getPlacements(), n);
 				System.out.println("-----------------------------------------------------------------------");
 				System.out.println("New global best solution (iteration " + n + "): " + this.globalBestSol.getObj());
-
 			}
 			//if we accept the solution by simulated annealing
 			else if (this.random.nextDouble() < Math.exp(-(tempSol.getObj() - currentSol.getObj()) / this.T)) {
 				accepted = true; //accept solution
 				currentSol = tempSol.clone(); //set the current solution to the temporary solution
 				instance.updateTabu(tempSol.getPlacements(), n);
-				//				System.out.println("We accepted the solution: " + currentSol.getObj());
 			}
-
 
 			// update weight adjustments
 			this.updateWeightAdj(globalOpt, accepted, unique, destroyHeuristicNr, repairHeuristicNr);
@@ -169,11 +180,13 @@ public class Phase5_ALNS {
 			this.T = this.T * this.c;
 			n++;
 		}
+		
 		for(ContractGroup group: instance.getContractGroups()) {
 			if(group.getATVPerYear() > 0) {
 				System.out.println(this.globalBestSol.getNewSchedule().get(group).toString());
 			}
 		}
+		
 		for (ContractGroup group : instance.getContractGroups()) {
 			Solution solution = this.globalBestSol.clone();
 			new ScheduleVis(solution.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr() +" before atv " , instance, "Dirksland");
@@ -189,10 +202,6 @@ public class Phase5_ALNS {
 		}
 		System.out.println("end size"+ this.globalBestSol.getRequests().size());
 		System.out.println("Nr. of request bank: " + this.globalBestSol.getRequests().size());
-
-		this.destroyHeuristics.removeATV(this.globalBestSol);
-		this.repairHeuristics.setAllPlacements(this.globalBestSol); 
-		this.repairHeuristics.greedyRepair(this.globalBestSol, random);
 		
 		return this.globalBestSol; //return our global solution
 	}

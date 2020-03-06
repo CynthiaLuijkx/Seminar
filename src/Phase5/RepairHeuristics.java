@@ -135,7 +135,7 @@ public class RepairHeuristics {
 		for (ContractGroup group : groups) {
 			int countRest = 0; 
 			int countFeas = 0; 
-			if (request.getDutyNumber() == 1 && group.getDutyTypes().contains("ATV")) {
+			if (request.getDutyNumber() == 1 && group.getNr() == request.getGroup().getNr()) {
 				request.deletePlacements(group);
 				Schedule schedule = solution.getNewSchedule().get(group); 
 				for(int i = 0; i < schedule.getScheduleArray().length; i++) {

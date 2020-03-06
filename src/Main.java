@@ -28,8 +28,8 @@ public class Main
 
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 421;
+		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
+		int paramCase = 4210;
 		int multiplierSoft = 0;
 		int multiplierFair = 0;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
@@ -37,7 +37,7 @@ public class Main
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
 		int tabuLength = 5;
-		int iterations_phase5 = 10000;
+		int iterations_phase5 = 1000;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
 		boolean phase123 = false;
@@ -71,6 +71,7 @@ public class Main
 			throw new IllegalArgumentException("This is not a valid depot name, please enter: 'Dirksland' or 'Heinenoord' to construct rosters for "
 					+ "one of these depots.");
 		}
+		
 		//Input the files
 		File dutiesFile = new File("Data/" + depot + ".txt"); //file that contains duties and their features
 		File contractGroupsFile = new File("Data/ContractGroups" + depot + ".txt"); //file that contains all contract groups and their features
@@ -93,7 +94,7 @@ public class Main
 		System.out.println("Instance " + depot + " initialised");
 
 		//Set based on bounds
-		int numberOfDrivers = instance.getLB()+12;
+		int numberOfDrivers = instance.getLB()+16;
 		instance.setNrDrivers(numberOfDrivers);
 		
 		//Set manually
