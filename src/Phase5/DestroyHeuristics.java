@@ -45,7 +45,9 @@ public class DestroyHeuristics {
 		
 		for(ContractGroup group: solution.getNewSchedule().keySet()) {
 			int temp = solution.getNewSchedule().get(group).getSchedule().length/7; 
-			
+			if(group.equals(schedule.getC())){
+				temp = schedule.getScheduleArray().length/7; 
+			}
 			if(numberOfDriversPCG.containsKey(group.getOriginalNr())) {
 				numberOfDriversPCG.put(group.getOriginalNr(), numberOfDriversPCG.get(group.getOriginalNr() + temp)); 
 			}else {
@@ -153,22 +155,6 @@ public class DestroyHeuristics {
  		}
 		return solution; 
 	}
-	
-	public Solution removeATV(Solution solution) {
-		Set<TimeSlot> slots = new HashSet<>();
-		for(ContractGroup group: solution.getNewSchedule().keySet()) {
-				if(group.getATVPerYear()>0) {
-					for(int i =0; i < solution.getNewSchedule().get(group).getScheduleArray().length; i++) {
-						if(solution.getNewSchedule().get(group).getScheduleArray()[i] == 1) {
-							Request request = new Request(1, group, i);
-							solution.removeRequest(request, solution, slots, i);
-						}
-					}
-				}
-		}
-		return solution; 
-	}
-	
 
 	//---------------------- Extreme Removal ------------------------------------------------------------------------------------------------------
 	/**
@@ -747,6 +733,7 @@ public class DestroyHeuristics {
 		}
 		return null;
 	}
+	
 	public Solution removeATV(Solution solution) {
 		Set<TimeSlot> slots = new HashSet<>();
 		for(ContractGroup group: solution.getNewSchedule().keySet()) {

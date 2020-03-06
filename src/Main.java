@@ -30,8 +30,8 @@ public class Main
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int paramCase = 421;
-		int multiplierSoft = 100;
-		int multiplierFair = 100;
+		int multiplierSoft = 0;
+		int multiplierFair = 0;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
@@ -228,6 +228,9 @@ public class Main
 				results[seedNr][4] = overTime;
 				results[seedNr][5] = minus;
 				results[seedNr][6] = (endALNS-startALNS)/1000000000.0;
+				for (ContractGroup group : instance.getContractGroups()) {
+					printSchedule(solutionALNS.getNewSchedule().get(group), depot, group.getNr(), seedNr, multiplierSoft, multiplierFair);
+				}
 				
 				for (ContractGroup group : instance.getContractGroups()) {
 					results[seedNr][6 + group.getNr()] = solutionALNS.getNewSchedule().get(group).getSchedule().length/7;
@@ -547,6 +550,23 @@ public class Main
 	
 	public static void printSchedule(Schedule schedule, String depot, int nDrivers, int contractGroupNr) throws IOException {
 		FileWriter writer = new FileWriter("Schedule_" + depot + "_" + nDrivers + "_" + contractGroupNr + ".txt");
+		
+		writer.write(String.valueOf(contractGroupNr));
+		writer.write(System.getProperty("line.separator"));
+		writer.write(String.valueOf(schedule.getOvertime()));
+		writer.write(System.getProperty("line.separator"));
+		writer.write(String.valueOf(schedule.getSchedule().length));
+		for (int i = 0; i < schedule.getSchedule().length; i++) {
+			writer.write(System.getProperty("line.separator"));
+			writer.write(String.valueOf(schedule.getSchedule()[i]));
+		}
+		
+		writer.close();
+	}
+	
+	public static void printSchedule(Schedule schedule, String depot, int contractGroupNr, 
+			int seedNr, int multSoft, int multFair) throws IOException {
+		FileWriter writer = new FileWriter("Schedule_" + depot + "_" + contractGroupNr + "_" + seedNr + "_" + multSoft + "_" + multFair + ".txt");
 		
 		writer.write(String.valueOf(contractGroupNr));
 		writer.write(System.getProperty("line.separator"));
