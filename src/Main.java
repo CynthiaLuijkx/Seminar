@@ -30,284 +30,296 @@ public class Main
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
 		int paramCase = 421;
-		int multiplierSoft = 0;
-		int multiplierFair = 0;
-		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
-		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
-		int restDayMinCG = 32*60;
-		int restTwoWeek = 72 * 60;
-		int tabuLength = 5;
-		int iterations_phase5 = 10000;
-		double violationBound = 0.3;
-		double violationBound3Days = 0.3;
-		boolean phase123 = false;
-		boolean ALNS = true;
-		long[] seeds = new long[10];
-		seeds[0] = 150659;
-		seeds[1] = 332803;
-		seeds[2] = 418219;
-		seeds[3] = 415993;
-		seeds[4] = 68371;
-		seeds[5] = 186917;
-		seeds[6] = 41;
-		seeds[7] = 56081;
-		seeds[8] = 609599;
-		seeds[9] = 218527;
-		long seedColGen = 1000;
-		long seedInteger = 1000;
+		int[] multipliers = new int[6];
+		multipliers[0] = 100;
+		multipliers[1] = 250;
+		multipliers[2] = 500;
+		multipliers[3] = 1000;
+		multipliers[4] = 1500;
+		multipliers[5] = 2000;
+		for(int a = 0; a < multipliers.length; a++) {
+			for(int b = 0; b < multipliers.length; b++) {
+				int multiplierSoft = multipliers[a];
+				int multiplierFair = multipliers[b];
+				int dailyRestMin = 11 * 60; //amount of daily rest in minutes
+				int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
+				int restDayMinCG = 32*60;
+				int restTwoWeek = 72 * 60;
+				int tabuLength = 5;
+				int iterations_phase5 = 10000;
+				double violationBound = 0.3;
+				double violationBound3Days = 0.3;
+				boolean phase123 = false;
+				boolean ALNS = true;
+				long[] seeds = new long[10];
+				seeds[0] = 150659;
+				seeds[1] = 332803;
+				seeds[2] = 418219;
+				seeds[3] = 415993;
+				seeds[4] = 68371;
+				seeds[5] = 186917;
+				seeds[6] = 41;
+				seeds[7] = 56081;
+				seeds[8] = 609599;
+				seeds[9] = 218527;
+				long seedColGen = 1000;
+				long seedInteger = 1000;
 
-		// ---------------------------- Initialise instance -------------------------------------------------------
-		long[] times = new long[6];
-		times[0] = System.nanoTime();
-		Set<String> dutyTypes = new HashSet<>(); //types of duties
-		//add the duty types
-		dutyTypes.add("V");	dutyTypes.add("G");	dutyTypes.add("D");	dutyTypes.add("L");	dutyTypes.add("P"); dutyTypes.add("ATV"); 
-		dutyTypes.add("RV"); dutyTypes.add("RG"); dutyTypes.add("RD"); dutyTypes.add("RL");
-		if (depot.equals("Dirksland") || depot.equals("DirkslandEasier")) {
-			dutyTypes.add("M");	dutyTypes.add("GM"); 
-		} else if (depot.equals("Heinenoord")) {
-			dutyTypes.add("W");
-		} else {
-			throw new IllegalArgumentException("This is not a valid depot name, please enter: 'Dirksland' or 'Heinenoord' to construct rosters for "
-					+ "one of these depots.");
-		}
-		//Input the files
-		File dutiesFile = new File("Data/" + depot + ".txt"); //file that contains duties and their features
-		File contractGroupsFile = new File("Data/ContractGroups" + depot + ".txt"); //file that contains all contract groups and their features
-		File reserveDutyFile = new File("Data/ReserveDuties" + depot + ".txt"); //file that contains the reserve duties and their features
+				// ---------------------------- Initialise instance -------------------------------------------------------
+				long[] times = new long[6];
+				times[0] = System.nanoTime();
+				Set<String> dutyTypes = new HashSet<>(); //types of duties
+				//add the duty types
+				dutyTypes.add("V");	dutyTypes.add("G");	dutyTypes.add("D");	dutyTypes.add("L");	dutyTypes.add("P"); dutyTypes.add("ATV"); 
+				dutyTypes.add("RV"); dutyTypes.add("RG"); dutyTypes.add("RD"); dutyTypes.add("RL");
+				if (depot.equals("Dirksland") || depot.equals("DirkslandEasier")) {
+					dutyTypes.add("M");	dutyTypes.add("GM"); 
+				} else if (depot.equals("Heinenoord")) {
+					dutyTypes.add("W");
+				} else {
+					throw new IllegalArgumentException("This is not a valid depot name, please enter: 'Dirksland' or 'Heinenoord' to construct rosters for "
+							+ "one of these depots.");
+				}
+				//Input the files
+				File dutiesFile = new File("Data/" + depot + ".txt"); //file that contains duties and their features
+				File contractGroupsFile = new File("Data/ContractGroups" + depot + ".txt"); //file that contains all contract groups and their features
+				File reserveDutyFile = new File("Data/ReserveDuties" + depot + ".txt"); //file that contains the reserve duties and their features
 
-		//Get all starting information
-		Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound, tabuLength, 
-				multiplierSoft, multiplierFair);
-		Schedule.setInstance(instance);
-		System.out.println("Instance " + depot + " initialised");
-		
-		DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound, violationBound3Days); 
-		System.out.println("Violations Determined"); 
+				//Get all starting information
+				Instance instance = readInstance(dutiesFile, contractGroupsFile, reserveDutyFile, dutyTypes, dailyRestMin, restDayMin, violationBound, tabuLength, 
+						multiplierSoft, multiplierFair);
+				Schedule.setInstance(instance);
+				System.out.println("Instance " + depot + " initialised");
+				
+				DetermineViolations temp = new DetermineViolations(instance, dutyTypes, violationBound, violationBound3Days); 
+				System.out.println("Violations Determined"); 
 
-		System.out.println(temp.get11Violations().size()); 
-		System.out.println(temp.get32Violations().size()); 
-		System.out.println(temp.getViolations3Days().size());
+				System.out.println(temp.get11Violations().size()); 
+				System.out.println(temp.get32Violations().size()); 
+				System.out.println(temp.getViolations3Days().size());
 
-		instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
-		System.out.println("Instance " + depot + " initialised");
+				instance.setViol(temp.get11Violations(), temp.get32Violations(), temp.getViolations3Days());
+				System.out.println("Instance " + depot + " initialised");
 
-		//Set based on bounds
-		int numberOfDrivers = instance.getLB()+12;
-		instance.setNrDrivers(numberOfDrivers);
-		
-		//Set manually
-		/*
-		int contractgroup1 = 37;
-		int contractgroup2 = 25;
-		int contractgroup3 = 0; //Heinenoord only
-		int contractgroup4 = 0; //Heinenoord only
-		for(ContractGroup group : instance.getContractGroups()) {
-			if(group.getNr() == 1) {
-				group.setTc(7*contractgroup1);
-				group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
-			}
-			if(group.getNr() == 2) {
-				group.setTc(7*contractgroup2);
-				group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
-			}
-			if(group.getNr() == 3) {
-				group.setTc(7*contractgroup3);
-				group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
-			}
-			if(group.getNr() == 4) {
-				group.setTc(7*contractgroup4);
-				group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
-			}
-		}*/
-		
-		times[1] = System.nanoTime();
-		
-		if (phase123) {
-			Set<Schedule> schedules = new HashSet<>();
-			int iteration = 0;
-			int maxIt = 5;
-			boolean scheduleForEveryGroup = false;
-			MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
-			mip.solve();
-			if (mip.isFeasible()) {
-				//int nsol = mip.populate(maxIt); //When using populate
-				int nsol = 1; //When not using populate 
-				while (scheduleForEveryGroup == false && iteration < nsol) {
-					mip.makeSolution(iteration); 
-					instance.setBasicSchedules(mip.getSolution());
-					
-					for(ContractGroup c : instance.getContractGroups()) {
-						//new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr(), depot);
+				//Set based on bounds
+				int numberOfDrivers = instance.getLB()+12;
+				instance.setNrDrivers(numberOfDrivers);
+				
+				//Set manually
+				/*
+				int contractgroup1 = 37;
+				int contractgroup2 = 25;
+				int contractgroup3 = 0; //Heinenoord only
+				int contractgroup4 = 0; //Heinenoord only
+				for(ContractGroup group : instance.getContractGroups()) {
+					if(group.getNr() == 1) {
+						group.setTc(7*contractgroup1);
+						group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
 					}
+					if(group.getNr() == 2) {
+						group.setTc(7*contractgroup2);
+						group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
+					}
+					if(group.getNr() == 3) {
+						group.setTc(7*contractgroup3);
+						group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
+					}
+					if(group.getNr() == 4) {
+						group.setTc(7*contractgroup4);
+						group.setATVc((int) Math.floor(group.getATVPerYear() / 365.0 * group.getTc()));
+					}
+				}*/
+				
+				times[1] = System.nanoTime();
+				
+				if (phase123) {
+					Set<Schedule> schedules = new HashSet<>();
+					int iteration = 0;
+					int maxIt = 5;
+					boolean scheduleForEveryGroup = false;
+					MIP_Phase1 mip = new MIP_Phase1(instance, dutyTypes);
+					mip.solve();
+					if (mip.isFeasible()) {
+						//int nsol = mip.populate(maxIt); //When using populate
+						int nsol = 1; //When not using populate 
+						while (scheduleForEveryGroup == false && iteration < nsol) {
+							mip.makeSolution(iteration); 
+							instance.setBasicSchedules(mip.getSolution());
+							
+							for(ContractGroup c : instance.getContractGroups()) {
+								//new ScheduleVis(instance.getBasicSchedules().get(c), ""+c.getNr(), depot);
+							}
+							
+							times[2] = System.nanoTime();
+			
+							long phase3Start = System.nanoTime();
+							Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek, seedColGen);
+							HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
+							long phase3End = System.nanoTime();
+							System.out.println("Phase 3 runtime: " + (phase3End - phase3Start) / 1000000000.0);
+			
+							int treshold = 0; // bigger than or equal
+							schedules = getSchedulesAboveTreshold(solution, treshold);
+							scheduleForEveryGroup = true;
+							for (ContractGroup c : instance.getContractGroups()) {
+								int included = 0;
+								for (Schedule schedule : schedules) {
+									if(schedule.getC() == c) {
+										included++;
+									}
+								}
+								if(included < 1) {
+									scheduleForEveryGroup = false;
+								}
+							}
+							iteration++;
+							
+							times[3] = System.nanoTime();
+						}
+						
+						if(iteration == maxIt || schedules.size() == 0) {
+							System.out.println("No feasible schedules found on all " + maxIt + " basic schedules");
+						}
+						else {
+							Phase4 phase4 = new Phase4(schedules, instance, seedInteger);
+							List<Schedule> newSchedules = phase4.runILP();
+							
+							//Turn this off if you don't want to do the swaps
+							Phase4_AddMissing addMissing = new Phase4_AddMissing(newSchedules, instance, seedInteger);
+							newSchedules = addMissing.getNewSchedules();
+							
+							for(Schedule schedule : newSchedules) {
+								//new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance, depot);
+								printSchedule(schedule, depot, numberOfDrivers, schedule.getC().getNr());
+							}
+							times[4] = System.nanoTime();
+						}
+					} else {
+						System.out.println("Basic schedule cannot be made.");
+					}
+				}
+				
+				double[][] results = new double[seeds.length][instance.getContractGroups().size() + 7];
+				if (ALNS) {
+					Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
 					
-					times[2] = System.nanoTime();
-	
-					long phase3Start = System.nanoTime();
-					Phase3 colGen = new Phase3(instance, dailyRestMin, restDayMinCG, restTwoWeek, seedColGen);
-					HashMap<Schedule, Double> solution = colGen.executeColumnGeneration();
-					long phase3End = System.nanoTime();
-					System.out.println("Phase 3 runtime: " + (phase3End - phase3Start) / 1000000000.0);
-	
-					int treshold = 0; // bigger than or equal
-					schedules = getSchedulesAboveTreshold(solution, treshold);
-					scheduleForEveryGroup = true;
-					for (ContractGroup c : instance.getContractGroups()) {
-						int included = 0;
-						for (Schedule schedule : schedules) {
-							if(schedule.getC() == c) {
-								included++;
+					for (ContractGroup group : instance.getContractGroups()) {
+						//new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
+					}
+					FileWriter writer = new FileWriter("ResultsALNS_" + depot + "_C" + paramCase + "_" + multiplierSoft + "_" + multiplierFair + ".txt");
+					for (int seedNr = 0; seedNr <seeds.length; seedNr++) {
+						long startALNS = System.nanoTime();
+						Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, seeds[seedNr]); 
+						Solution solutionALNS = alns.executeBasic(schedules);
+						long endALNS = System.nanoTime();
+						double obj = solutionALNS.getObj();
+						double costs = solutionALNS.getCosts();
+						double fairScore = solutionALNS.getFairScore();
+						double softScore = solutionALNS.getSoftScore();
+						double overTime = solutionALNS.getOvertime();
+						double minus = solutionALNS.getMinusHours();
+						System.out.println("----------------------------------------------------------");
+						System.out.println("Objective values: " + obj);
+						System.out.println("Contract + Overtime Costs: " + costs);
+						System.out.println("Penalties Attractiveness: " + softScore);
+						System.out.println("Penalties Fairness: " + fairScore);
+						System.out.println("Total Overtime: " + overTime);
+						System.out.println("Total Minus Hours: " + minus);
+						System.out.println("----------------------------------------------------------");
+						System.out.println("Violations Attractiveness: ");
+						solutionALNS.printSoftViol();
+						System.out.println("Violations Fairness: ");
+						solutionALNS.printFairPen();
+						results[seedNr][0] = obj;
+						results[seedNr][1] = costs;
+						results[seedNr][2] = softScore;
+						results[seedNr][3] = fairScore;
+						results[seedNr][4] = overTime;
+						results[seedNr][5] = minus;
+						results[seedNr][6] = (endALNS-startALNS)/1000000000.0;
+						for (ContractGroup group : instance.getContractGroups()) {
+							printSchedule(solutionALNS.getNewSchedule().get(group), depot, group.getNr(), seedNr, multiplierSoft, multiplierFair);
+						}
+						
+						for (ContractGroup group : instance.getContractGroups()) {
+							results[seedNr][6 + group.getNr()] = solutionALNS.getNewSchedule().get(group).getSchedule().length/7;
+						}
+						
+						for (int i = 0; i < results[0].length - instance.getContractGroups().size(); i++) {
+							writer.write(Double.toString(results[seedNr][i]) + ", ");
+						}
+						double[][] fairViolations = solutionALNS.getFeasCheck().getAllFairness(solutionALNS);
+						for (int i = 1; i <= instance.getContractGroups().size(); i++) {
+							if (i > 1) {
+								writer.write(System.getProperty("line.separator"));
+								for (int j = 0; j < results[0].length - instance.getContractGroups().size(); j++) {
+									writer.write(", ");
+								}
+							}
+							ContractGroup c = null;
+							for (ContractGroup group : instance.getContractGroups()) {
+								if (group.getNr() == i) {
+									c = group;
+									break;
+								}
+							}
+							writer.write(Double.toString(results[seedNr][6 + i]) + ", ");
+							int[] softViolations = solutionALNS.getFeasCheck().allViolations(solutionALNS.getNewSchedule().get(c).getSchedule(), c);
+							for (int violNr = 0; violNr < softViolations.length; violNr++) {
+								writer.write(Integer.toString(softViolations[violNr]) + ", ");
+							}
+							
+							for (int violNr = 0; violNr < fairViolations.length; violNr++) {
+								writer.write(Double.toString(fairViolations[violNr][c.getNr()-1]) + ", ");
 							}
 						}
-						if(included < 1) {
-							scheduleForEveryGroup = false;
-						}
+						writer.write(System.getProperty("line.separator"));
+						
+//						for (ContractGroup group : instance.getContractGroups()) {
+//							new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
+//						}
 					}
-					iteration++;
-					
-					times[3] = System.nanoTime();
+					writer.close();
+					times[5] = System.nanoTime();
 				}
 				
-				if(iteration == maxIt || schedules.size() == 0) {
-					System.out.println("No feasible schedules found on all " + maxIt + " basic schedules");
+				System.out.println("----------------------------------------------------------");
+				
+				if(ALNS && phase123) {
+					System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
+					System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
+					System.out.println("Phase 1: " + (times[2] - times[1])/1000000000.0);
+					System.out.println("Phase 2: " + (times[3] - times[2])/1000000000.0);
+					System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
+					System.out.println("Phase 4: " + (times[5] - times[4])/1000000000.0);
+				}
+				else if(ALNS) {
+					System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
+					System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
+					System.out.println("Phase 4: " + (times[5] - times[1])/1000000000.0);
 				}
 				else {
-					Phase4 phase4 = new Phase4(schedules, instance, seedInteger);
-					List<Schedule> newSchedules = phase4.runILP();
-					
-					//Turn this off if you don't want to do the swaps
-					Phase4_AddMissing addMissing = new Phase4_AddMissing(newSchedules, instance, seedInteger);
-					newSchedules = addMissing.getNewSchedules();
-					
-					for(Schedule schedule : newSchedules) {
-						//new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance, depot);
-						printSchedule(schedule, depot, numberOfDrivers, schedule.getC().getNr());
-					}
-					times[4] = System.nanoTime();
+					System.out.println("Total time elapsed: " + (times[4] - times[0])/1000000000.0);
+					System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
+					System.out.println("Phase 1: " + (times[2] - times[1])/1000000000.0);
+					System.out.println("Phase 2: " + (times[3] - times[2])/1000000000.0);
+					System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
 				}
-			} else {
-				System.out.println("Basic schedule cannot be made.");
-			}
-		}
-		
-		double[][] results = new double[seeds.length][instance.getContractGroups().size() + 7];
-		if (ALNS) {
-			Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
-			
-			for (ContractGroup group : instance.getContractGroups()) {
-				//new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
-			}
-			FileWriter writer = new FileWriter("ResultsALNS_" + depot + "_C" + paramCase + "_" + multiplierSoft + "_" + multiplierFair + ".txt");
-			for (int seedNr = 0; seedNr <seeds.length; seedNr++) {
-				long startALNS = System.nanoTime();
-				Phase5_ALNS alns= new Phase5_ALNS(iterations_phase5, instance, schedules, seeds[seedNr]); 
-				Solution solutionALNS = alns.executeBasic(schedules);
-				long endALNS = System.nanoTime();
-				double obj = solutionALNS.getObj();
-				double costs = solutionALNS.getCosts();
-				double fairScore = solutionALNS.getFairScore();
-				double softScore = solutionALNS.getSoftScore();
-				double overTime = solutionALNS.getOvertime();
-				double minus = solutionALNS.getMinusHours();
+				
 				System.out.println("----------------------------------------------------------");
-				System.out.println("Objective values: " + obj);
-				System.out.println("Contract + Overtime Costs: " + costs);
-				System.out.println("Penalties Attractiveness: " + softScore);
-				System.out.println("Penalties Fairness: " + fairScore);
-				System.out.println("Total Overtime: " + overTime);
-				System.out.println("Total Minus Hours: " + minus);
-				System.out.println("----------------------------------------------------------");
-				System.out.println("Violations Attractiveness: ");
-				solutionALNS.printSoftViol();
-				System.out.println("Violations Fairness: ");
-				solutionALNS.printFairPen();
-				results[seedNr][0] = obj;
-				results[seedNr][1] = costs;
-				results[seedNr][2] = softScore;
-				results[seedNr][3] = fairScore;
-				results[seedNr][4] = overTime;
-				results[seedNr][5] = minus;
-				results[seedNr][6] = (endALNS-startALNS)/1000000000.0;
-				for (ContractGroup group : instance.getContractGroups()) {
-					printSchedule(solutionALNS.getNewSchedule().get(group), depot, group.getNr(), seedNr, multiplierSoft, multiplierFair);
-				}
-				
-				for (ContractGroup group : instance.getContractGroups()) {
-					results[seedNr][6 + group.getNr()] = solutionALNS.getNewSchedule().get(group).getSchedule().length/7;
-				}
-				
-				for (int i = 0; i < results[0].length - instance.getContractGroups().size(); i++) {
-					writer.write(Double.toString(results[seedNr][i]) + ", ");
-				}
-				double[][] fairViolations = solutionALNS.getFeasCheck().getAllFairness(solutionALNS);
-				for (int i = 1; i <= instance.getContractGroups().size(); i++) {
-					if (i > 1) {
-						writer.write(System.getProperty("line.separator"));
-						for (int j = 0; j < results[0].length - instance.getContractGroups().size(); j++) {
-							writer.write(", ");
-						}
+				System.out.print("ObjVal"); System.out.print("\t"); System.out.print("Contract+Overtime"); System.out.print("\t"); System.out.print("Attractiveness");
+				System.out.print("\t"); System.out.print("Fairness"); System.out.print("\t"); System.out.print("Overtime"); System.out.print("\t"); System.out.println("Minus");
+				System.out.print("\t"); System.out.print("ContractGroupSizes(OrderOfContractNumber)"); System.out.print("\t"); System.out.println("RunningTime(sec.)");
+				for (int seedNr = 0; seedNr < seeds.length; seedNr++) {
+					for (int i = 0; i < 6 + instance.getContractGroups().size(); i++) {
+						System.out.print(results[seedNr][i]);
+						System.out.print("\t");
 					}
-					ContractGroup c = null;
-					for (ContractGroup group : instance.getContractGroups()) {
-						if (group.getNr() == i) {
-							c = group;
-							break;
-						}
-					}
-					writer.write(Double.toString(results[seedNr][6 + i]) + ", ");
-					int[] softViolations = solutionALNS.getFeasCheck().allViolations(solutionALNS.getNewSchedule().get(c).getSchedule(), c);
-					for (int violNr = 0; violNr < softViolations.length; violNr++) {
-						writer.write(Integer.toString(softViolations[violNr]) + ", ");
-					}
-					
-					for (int violNr = 0; violNr < fairViolations.length; violNr++) {
-						writer.write(Double.toString(fairViolations[violNr][c.getNr()-1]) + ", ");
-					}
+					System.out.println();
 				}
-				writer.write(System.getProperty("line.separator"));
-				
-//				for (ContractGroup group : instance.getContractGroups()) {
-//					new ScheduleVis(solutionALNS.getNewSchedule().get(group).getScheduleArray(), ""+group.getNr()+"after" , instance, depot);
-//				}
 			}
-			writer.close();
-			times[5] = System.nanoTime();
 		}
 		
-		System.out.println("----------------------------------------------------------");
-		
-		if(ALNS && phase123) {
-			System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
-			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
-			System.out.println("Phase 1: " + (times[2] - times[1])/1000000000.0);
-			System.out.println("Phase 2: " + (times[3] - times[2])/1000000000.0);
-			System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
-			System.out.println("Phase 4: " + (times[5] - times[4])/1000000000.0);
-		}
-		else if(ALNS) {
-			System.out.println("Total time elapsed: " + (times[5] - times[0])/1000000000.0);
-			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
-			System.out.println("Phase 4: " + (times[5] - times[1])/1000000000.0);
-		}
-		else {
-			System.out.println("Total time elapsed: " + (times[4] - times[0])/1000000000.0);
-			System.out.println("Initialisation: " + (times[1] - times[0])/1000000000.0);
-			System.out.println("Phase 1: " + (times[2] - times[1])/1000000000.0);
-			System.out.println("Phase 2: " + (times[3] - times[2])/1000000000.0);
-			System.out.println("Phase 3: " + (times[4] - times[3])/1000000000.0);
-		}
-		
-		System.out.println("----------------------------------------------------------");
-		System.out.print("ObjVal"); System.out.print("\t"); System.out.print("Contract+Overtime"); System.out.print("\t"); System.out.print("Attractiveness");
-		System.out.print("\t"); System.out.print("Fairness"); System.out.print("\t"); System.out.print("Overtime"); System.out.print("\t"); System.out.println("Minus");
-		System.out.print("\t"); System.out.print("ContractGroupSizes(OrderOfContractNumber)"); System.out.print("\t"); System.out.println("RunningTime(sec.)");
-		for (int seedNr = 0; seedNr < seeds.length; seedNr++) {
-			for (int i = 0; i < 6 + instance.getContractGroups().size(); i++) {
-				System.out.print(results[seedNr][i]);
-				System.out.print("\t");
-			}
-			System.out.println();
-		}
 	}
 
 	//Method that read the instance files and add the right information to the corresponding sets
