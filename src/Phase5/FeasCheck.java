@@ -311,7 +311,7 @@ public class FeasCheck {
 					nATVdays++; 
 				}
 			}
-			return (int) Math.floor((schedule.length/7)/52 * c.getATVPerYear() ) - nATVdays;
+			return (int) Math.floor((schedule.length/7)/52.0 * c.getATVPerYear() ) - nATVdays;
 		} else {
 			return 0;
 		}

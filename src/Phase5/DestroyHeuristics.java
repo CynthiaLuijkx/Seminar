@@ -731,17 +731,18 @@ public class DestroyHeuristics {
 		}
 		return null;
 	}
-	public void removeATV(Solution solution) {
+	public Solution removeATV(Solution solution) {
 		Set<TimeSlot> slots = new HashSet<>();
 		for(ContractGroup group: solution.getNewSchedule().keySet()) {
 				if(group.getATVPerYear()>0) {
 					for(int i =0; i < solution.getNewSchedule().get(group).getScheduleArray().length; i++) {
-						if(solution.getNewSchedule().get(group).getScheduleArray()[i] == 1) {
+						if(solution.getNewSchedule().get(group).getScheduleArray()[i] == 1 && (i%7 == 0 || i%7==6)) {
 							Request request = new Request(1, group, i);
 							solution.removeRequest(request, solution, slots, i);
 						}
 					}
 				}
 		}
+		return solution; 
 	}
 }

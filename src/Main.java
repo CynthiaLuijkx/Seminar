@@ -29,14 +29,14 @@ public class Main
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 111;
+		int paramCase = 421;
 		int multiplierSoft = 100;
 		int multiplierFair = 100;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
-		int tabuLength = 0;
+		int tabuLength = 5;
 		int iterations_phase5 = 10000;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
