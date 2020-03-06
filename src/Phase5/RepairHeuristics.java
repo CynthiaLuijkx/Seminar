@@ -30,70 +30,6 @@ public class RepairHeuristics {
 		this.fairnessCounts = new double[instance.getPenalties().getFairPenalties().length][instance.getContractGroups().size()] ;
 	}
 
-	//---------------------- Regret Repair --------------------------------------------------------------------------------------------------------
-
-	/**
-	 * This method executes a regret repair in which the best placement is executed for the request that has the highest regret.
-	 * @param forwardCheck
-	 * @param checkBestFirst
-	 * @param solution
-	 * @return
-	 */
-	public Solution regretRepair(int forwardCheck, int checkBestFirst, Solution solution) {
-
-		while(solution.getRequests().size()!= 0) {
-
-			ArrayList<Placement> allPlacements = new ArrayList<Placement>(); 
-			for(Request request: solution.getRequests()) {
-				allPlacements.addAll(request.getPlacements()); 
-			}
-
-			Collections.sort(allPlacements);
-			double bestCosts = Double.MAX_VALUE; 
-			Placement bestRegretPlacement = null; 
-			Solution tempSol = solution.clone();
-
-			for(int j = 0; j<checkBestFirst; j++) {
-				double regret = 0;
-				Placement firstPlaced = allPlacements.get(0); 
-				tempSol.addRequest(firstPlaced);
-
-				for(Placement placement: allPlacements) {
-					if(placement.getTimeslot().getDay() == firstPlaced.getTimeslot().getDay() && placement.getTimeslot().getGroup().equals(firstPlaced.getTimeslot().getGroup())) {
-						allPlacements.remove(placement); 
-					}
-				}
-
-				List<Placement> copyAllPlacements = copyPlacementList(allPlacements); 
-
-				for(int i= 0; i<forwardCheck; i++) {
-					Placement bestPlacement = Collections.max(copyAllPlacements); 
-					tempSol.addRequest(bestPlacement); //This method also deletes the request placed
-
-					for(Placement placement: allPlacements) {
-						if(placement.getTimeslot().getDay() == bestPlacement.getTimeslot().getDay() && placement.getTimeslot().getGroup().equals(bestPlacement.getTimeslot().getGroup())) {
-							copyAllPlacements.remove(placement); 
-						}
-					}
-
-					for(Request request: tempSol.getRequests()) {
-						updatePlacements(request, tempSol, bestPlacement.getTimeslot().getGroup(), bestPlacement.getTimeslot().getDay());
-					}
-					regret += bestPlacement.getCost(); 
-
-				}
-
-				if(regret<bestCosts) {
-					bestRegretPlacement = firstPlaced; 
-					bestCosts = regret; 
-				}
-
-			}
-			solution.addRequest(bestRegretPlacement);
-		}
-		return solution; 
-	}
-
 	/**
 	 * This method makes a deep copy of a placement list.
 	 * @param placements
@@ -117,7 +53,7 @@ public class RepairHeuristics {
 		this.fairnessCounts = solution.getFeasCounts();
 		List<Placement> placements = new ArrayList<Placement>(); 
 		for(Request request: solution.getRequests()) {
-			placements.addAll(setPlacements(request, solution, solution.getNewSchedule().keySet())); 
+			placements.addAll(setPlacements(request, solution, instance.getContractGroups())); 
 		}
 		return placements; 
 	}
@@ -129,7 +65,7 @@ public class RepairHeuristics {
 	 * @param groups
 	 * @return
 	 */
-	public List<Placement> setPlacements(Request request, Solution solution, Set<ContractGroup> groups){
+	public List<Placement> setPlacements(Request request, Solution solution, LinkedHashSet<ContractGroup> groups){
 		ArrayList<Placement> updatedPlacements = new ArrayList<Placement>();
 		
 		for (ContractGroup group : groups) {
@@ -213,7 +149,7 @@ public class RepairHeuristics {
 		return updatedPlacements; 
 	}
 
-	//---------------------- Regret Repair 2 ------------------------------------------------------------------------------------------------------
+	//---------------------- Regret Repair --------------------------------------------------------------------------------------------------------
 	/**
 	 * This method executes a regret repair in which the best placement is executed for the request that has the highest regret.
 	 * @param solution
@@ -221,11 +157,8 @@ public class RepairHeuristics {
 	 * @return
 	 */
 	public Solution regretRepair2(Solution solution, int q, Random random) {
-
 		q=q-1;
-
 		while(solution.getRequests().size()!=0) {
-
 			Request mostRegretRequest = null; 
 			double maxRegret = - Double.MAX_VALUE; 
 			for(Request request: solution.getRequests()) {
@@ -247,7 +180,6 @@ public class RepairHeuristics {
 						mostRegretRequest = request; 
 					} 
 				}
-
 			}
 
 			if(mostRegretRequest == null) {
@@ -278,9 +210,7 @@ public class RepairHeuristics {
 	 * @return
 	 */
 	public Solution greedyRepair(Solution solution, Random random){
-
 		while(solution.getRequests().size()!=0) { //until all requests are placed
-
 			Request bestRequest = null; 
 			double minCosts = Double.MAX_VALUE;
 			for(Request request: solution.getRequests()) {
@@ -368,6 +298,7 @@ public class RepairHeuristics {
 				curTotOvertime += overtime;
 			}
 		}
+		
 		int newTotOvertime = 0;
 		for (int j = 0; j < newOvertime.length; j++) {
 			int overtime = 0;

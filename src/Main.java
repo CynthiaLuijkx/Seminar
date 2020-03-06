@@ -28,10 +28,10 @@ public class Main
 
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 4210;
-		int multiplierSoft = 0;
-		int multiplierFair = 0;
+		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
+		int paramCase = 4211;
+		int multiplierSoft = 500;
+		int multiplierFair = 1000;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
@@ -94,7 +94,7 @@ public class Main
 		System.out.println("Instance " + depot + " initialised");
 
 		//Set based on bounds
-		int numberOfDrivers = instance.getLB()+16;
+		int numberOfDrivers = instance.getLB()+12;
 		instance.setNrDrivers(numberOfDrivers);
 		
 		//Set manually
@@ -316,16 +316,16 @@ public class Main
 	public static Instance readInstance(File dutiesFile, File contractGroupsFile, File reserveDutiesFile, Set<String> dutyTypes, 
 			int dailyRestMin, int restDayMin, double violationBound, int tabuLength, int multiplierSoft, int multiplierFair) throws FileNotFoundException {
 		//Initialize all sets/maps
-		Set<Duty> workingDays = new HashSet<>(); 
-		Set<Duty> saturday = new HashSet<>();
-		Set<Duty> sunday = new HashSet<>();
+		LinkedHashSet<Duty> workingDays = new LinkedHashSet<>(); 
+		LinkedHashSet<Duty> saturday = new LinkedHashSet<>();
+		LinkedHashSet<Duty> sunday = new LinkedHashSet<>();
 		HashMap<String, Set<Duty>> dutiesPerType = new HashMap<>();
 		HashMap<String, Set<Duty>> dutiesPerTypeW = new HashMap<>();
 		HashMap<String, Set<Duty>> dutiesPerTypeSat = new HashMap<>();
 		HashMap<String, Set<Duty>> dutiesPerTypeSun = new HashMap<>();
 		HashMap<Integer, Duty> fromDutyNrToDuty = new HashMap<>();
 		LinkedHashSet<ContractGroup> contractGroups = new LinkedHashSet<>();
-		Set<ReserveDutyType> reserveDutyTypes = new HashSet<>();
+		LinkedHashSet<ReserveDutyType> reserveDutyTypes = new LinkedHashSet<>();
 		HashMap<Integer, ReserveDutyType> fromRDutyNrToRDuty = new HashMap<>();
 		Set<Violation> violations11 = new HashSet<>();
 		Set<Violation> violations32 = new HashSet<>();
