@@ -28,20 +28,20 @@ public class Main
 
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
-		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 4211;
-		int multiplierSoft = 500;
-		int multiplierFair = 1000;
+		String depot = "Heinenoord"; //adjust to "Dirksland" or "Heinenoord"
+		int paramCase = 421;
+		int multiplierSoft = 0;
+		int multiplierFair = 0;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
 		int restDayMin = 36 * 60; //amount of rest days in minutes (at least 32 hours in a row in one week)
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
 		int tabuLength = 5;
-		int iterations_phase5 = 1000;
+		int iterations_phase5 = 10000;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
-		boolean phase123 = false;
-		boolean ALNS = true;
+		boolean phase123 = true;
+		boolean ALNS = false;
 		long[] seeds = new long[10];
 		seeds[0] = 150659;
 		seeds[1] = 332803;
@@ -94,7 +94,7 @@ public class Main
 		System.out.println("Instance " + depot + " initialised");
 
 		//Set based on bounds
-		int numberOfDrivers = instance.getLB()+12;
+		int numberOfDrivers = instance.getLB()+16;
 		instance.setNrDrivers(numberOfDrivers);
 		
 		//Set manually
