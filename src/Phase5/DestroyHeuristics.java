@@ -153,6 +153,22 @@ public class DestroyHeuristics {
  		}
 		return solution; 
 	}
+	
+	public Solution removeATV(Solution solution) {
+		Set<TimeSlot> slots = new HashSet<>();
+		for(ContractGroup group: solution.getNewSchedule().keySet()) {
+				if(group.getATVPerYear()>0) {
+					for(int i =0; i < solution.getNewSchedule().get(group).getScheduleArray().length; i++) {
+						if(solution.getNewSchedule().get(group).getScheduleArray()[i] == 1) {
+							Request request = new Request(1, group, i);
+							solution.removeRequest(request, solution, slots, i);
+						}
+					}
+				}
+		}
+		return solution; 
+	}
+	
 
 	//---------------------- Extreme Removal ------------------------------------------------------------------------------------------------------
 	/**

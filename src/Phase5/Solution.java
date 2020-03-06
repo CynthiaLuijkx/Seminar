@@ -114,6 +114,7 @@ public class Solution {
 			}
 			if(numberOfATVdays >= (int) Math.floor((currentSchedule.getScheduleArray().length/7)/52.0 *placement.getRequest().getGroup().getATVPerYear())){
 				this.requests.remove(placement.getRequest());
+			
 			}
 			else {
 

@@ -131,14 +131,18 @@ public class RepairHeuristics {
 	 */
 	public List<Placement> setPlacements(Request request, Solution solution, Set<ContractGroup> groups){
 		ArrayList<Placement> updatedPlacements = new ArrayList<Placement>();
-
+		
 		for (ContractGroup group : groups) {
+			int countRest = 0; 
+			int countFeas = 0; 
 			if (request.getDutyNumber() == 1 && group.getDutyTypes().contains("ATV")) {
 				request.deletePlacements(group);
 				Schedule schedule = solution.getNewSchedule().get(group); 
 				for(int i = 0; i < schedule.getScheduleArray().length; i++) {
 					if(solution.getNewSchedule().get(group).getScheduleArray()[i] == 2) {
+						countRest++; 
 						if(this.checkFeasibility(schedule, i, request)) {
+							countFeas++; 
 							double costOfPlacement = calculateCosts(schedule, i, request); 
 							Placement newPlacement = new Placement(request, new TimeSlot(group,i), costOfPlacement); 
 							request.addPlacement(newPlacement);
@@ -217,7 +221,9 @@ public class RepairHeuristics {
 	 * @return
 	 */
 	public Solution regretRepair2(Solution solution, int q, Random random) {
+
 		q=q-1;
+
 		while(solution.getRequests().size()!=0) {
 
 			Request mostRegretRequest = null; 
