@@ -263,25 +263,24 @@ public class DestroyHeuristics {
 		if(check[i] == 1) {
 			Request request = new Request(1, schedule.getC(), i);
 			//			System.out.println("atv:  " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
+			return this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check) && this.feasCheck.numDutiesFeasible(check) && this.feasCheck.checkATVWeekends(check); 
 		}
 		else if(instance.getFromRDutyNrToRDuty().containsKey(check[i])) {
 			ReserveDutyType reserveDuty = instance.getFromRDutyNrToRDuty().get(check[i]);
 			Request request = new Request(reserveDuty, schedule.getC(), i);
 			//			System.out.println("reserve: " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
+			return this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check) && this.feasCheck.numDutiesFeasible(check) && this.feasCheck.checkATVWeekends(check); 
 		}
 		else if(instance.getFromDutyNrToDuty().containsKey(check[i])) {
 			Duty duty = instance.getFromDutyNrToDuty().get(check[i]);
 			Request request = new Request(duty, schedule.getC(), i);
 			//			System.out.println("duty: " + this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
+			return this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check) && this.feasCheck.numDutiesFeasible(check) && this.feasCheck.checkATVWeekends(check); 
 		}
 		else {
 			Request request = new Request(2, schedule.getC(), i);
 			//			System.out.println("rest :  " +this.feasCheck.isFeasible7(check, i-7, i+7) + " " + this.feasCheck.isFeasible14(check, i-14, i+14) + " " +  this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) + " " +  this.feasCheck.checkMax2SplitDuties(check));
-			return this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
-
+			return this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check) && this.feasCheck.numDutiesFeasible(check) && this.feasCheck.checkATVWeekends(check); 
 		}
 	}
 

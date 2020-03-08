@@ -29,7 +29,7 @@ public class Main
 	public static void main(String[] args) throws FileNotFoundException, IloException, IOException {
 		// ---------------------------- Variable Input ------------------------------------------------------------
 		String depot = "Dirksland"; //adjust to "Dirksland" or "Heinenoord"
-		int paramCase = 4211;
+		int paramCase = 421;
 		int multiplierSoft = 500;
 		int multiplierFair = 1000;
 		int dailyRestMin = 11 * 60; //amount of daily rest in minutes
@@ -37,7 +37,7 @@ public class Main
 		int restDayMinCG = 32*60;
 		int restTwoWeek = 72 * 60;
 		int tabuLength = 5;
-		int iterations_phase5 = 1000;
+		int iterations_phase5 = 10000;
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
 		boolean phase123 = false;
@@ -94,7 +94,7 @@ public class Main
 		System.out.println("Instance " + depot + " initialised");
 
 		//Set based on bounds
-		int numberOfDrivers = instance.getLB()+12;
+		int numberOfDrivers = instance.getLB()+13;
 		instance.setNrDrivers(numberOfDrivers);
 		
 		//Set manually
@@ -181,7 +181,7 @@ public class Main
 					newSchedules = addMissing.getNewSchedules();
 					
 					for(Schedule schedule : newSchedules) {
-						//new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance, depot);
+						new ScheduleVis(schedule.getSchedule(), ""+schedule.getC().getNr() , instance, depot);
 						printSchedule(schedule, depot, numberOfDrivers, schedule.getC().getNr());
 					}
 					times[4] = System.nanoTime();
@@ -196,7 +196,7 @@ public class Main
 			Map<ContractGroup, Schedule> schedules = readSchedules(depot, numberOfDrivers, instance.getContractGroups());
 			
 			for (ContractGroup group : instance.getContractGroups()) {
-				//new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
+				new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
 			}
 			FileWriter writer = new FileWriter("ResultsALNS_" + depot + "_C" + paramCase + "_" + multiplierSoft + "_" + multiplierFair + ".txt");
 			for (int seedNr = 0; seedNr <seeds.length; seedNr++) {

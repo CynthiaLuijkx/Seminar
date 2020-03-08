@@ -13,7 +13,7 @@ public class Penalties {
 	private static double[] feasPenalties;
 	private static double[] softPenalties;
 	private static double[] fairPenalties; 
-	public final static double penaltyRequest = 10000;
+	public final static double penaltyRequest = 20000;
 	
 	public Penalties() throws FileNotFoundException {
 		feasPenalties = new double[2];

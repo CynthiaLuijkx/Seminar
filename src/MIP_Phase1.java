@@ -101,12 +101,15 @@ public class MIP_Phase1
 		initSoft5(); //Min consecutive similar duties
 		initSoft6(); //Min consecutive rest + ATV 
 		initSoft7(); //Early to late duty 
-		initSoft9(); //Maximum of 5 duties per calendar week on average
-		initSoft10(); //Penalize ATV days on weekends 
+//		initSoft9(); //Maximum of 5 duties per calendar week on average
+//		initSoft10(); //Penalize ATV days on weekends 
 		initSoft11(); //Penalize lone duties
 		initSoft12(); //Average of 2 split duties per week
 		initSoft13(); //Even spread of rest (no more than 3 per week)
 		initSoft14(); //Even spread of reserve duties between contract groups 
+		
+		initHard9();
+		initHard10();
 		
 		initObjective();
 		
@@ -798,6 +801,20 @@ public class MIP_Phase1
 			}
 		}
 	}
+	
+	public void initHard9() throws IloException { // Max 5 duties per calendar week
+		for (ContractGroup group : this.instance.getContractGroups()) { // For all contract groups
+			for (int w = 0; w < group.getTc()/7; w++) { // For each week
+				IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+				for (int d = 0; d < 7; d++) {
+					for (IloNumVar decVar : this.daysPerGroup.get(group).get(w * 7 + d)) {
+						constraint.addTerm(decVar, 1);
+					}
+				}
+				this.cplex.addLe(constraint, 5, group.groupNumberToString() + "Average5");
+			}
+		}
+	}
 
 	public void initSoft9() throws IloException { // Max 5 duties per calendar week on average
 		for (ContractGroup group : this.instance.getContractGroups()) {// For all contract groups
@@ -832,12 +849,26 @@ public class MIP_Phase1
 			}
 		}
 	}
+	
+	public void initHard10() throws IloException { // ATV days on Saturdays and Sundays 
+		IloLinearNumExpr constraint = this.cplex.linearNumExpr();
+		for (ContractGroup group : this.instance.getContractGroups()) {
+			if (group.getDutyTypes().contains("ATV")) {
+				for (int t = 0; t < group.getTc(); t++) {
+					if (t%7 == 0 || t%7 == 6) {
+						IloNumVar decVarATV = this.decVarOfThisType(this.daysPerGroup.get(group).get(t), "ATV");
+						constraint.addTerm(decVarATV, 1);
+					}
+				}
+			}
+		}
+		this.cplex.addEq(constraint, 0, "ATV_On_Weekends");
+	}
 
 	public void initSoft10() throws IloException { //Penalize ATV days on Saturdays and Sundays
 		IloLinearNumExpr constraint = this.cplex.linearNumExpr();
 		for(ContractGroup group : this.instance.getContractGroups()) {
 			if(group.getDutyTypes().contains("ATV")) {
-				
 				for(int t = 0; t < group.getTc(); t++) {
 					if(t%7 == 0 || t%7 == 6) { //If it's a Saturday or a Sunday
 						IloNumVar decVarATV = this.decVarOfThisType(this.daysPerGroup.get(group).get(t), "ATV");

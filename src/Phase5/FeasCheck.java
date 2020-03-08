@@ -280,6 +280,30 @@ public class FeasCheck {
 			return true;
 		}
 	}
+	
+	public boolean numDutiesFeasible(int[] schedule) {
+		for (int w = 0; w < schedule.length/7; w++) {
+			int count = 0;
+			for (int d = 0; d < 7; d++) {
+				if (schedule[w*7+d] != 2) {
+					count++;
+				}
+			}
+			if (count > 5) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public boolean checkATVWeekends(int[] schedule) {
+		for (int w = 0; w < schedule.length/7; w++) {
+			if (schedule[7*w] == 1 || schedule[7*w+6] == 1) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	public boolean checkSundays(int[] schedule) {
 		int count = 0;

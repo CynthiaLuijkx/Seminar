@@ -367,6 +367,6 @@ public class RepairHeuristics {
 	public boolean checkFeasibility(Schedule schedule, int i, Request request) {
 		int[] check = schedule.getScheduleArray().clone(); 
 		check[i] = request.getDutyNumber(); 
-		return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check); 
+		return  this.feasCheck.isFeasible7(check, i-7, i+7) && this.feasCheck.isFeasible14(check, i-14, i+14) && this.feasCheck.restTimeFeasible(check, i, request.getStartTime(), request.getEndTime()) && this.feasCheck.checkMax2SplitDuties(check) && this.feasCheck.checkSundays(check) && this.feasCheck.numDutiesFeasible(check) && this.feasCheck.checkATVWeekends(check); 
 	}
 }
