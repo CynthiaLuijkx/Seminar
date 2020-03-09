@@ -41,7 +41,7 @@ public class Main
 		double violationBound = 0.3;
 		double violationBound3Days = 0.3;
 		boolean phase123 = false;
-		boolean ALNS = true;
+		boolean ALNS = false;
 		long[] seeds = new long[10];
 		seeds[0] = 150659;
 		seeds[1] = 332803;
@@ -55,6 +55,8 @@ public class Main
 		seeds[9] = 218527;
 		long seedColGen = 1000;
 		long seedInteger = 1000;
+		boolean visualise = true;
+		int scheduleNr = 7;
 
 		// ---------------------------- Initialise instance -------------------------------------------------------
 		long[] times = new long[6];
@@ -273,6 +275,19 @@ public class Main
 			}
 			writer.close();
 			times[5] = System.nanoTime();
+		}
+		
+		if (visualise) {
+			String[] names = new String[instance.getContractGroups().size()];
+			for (int c = 0; c < instance.getContractGroups().size(); c++) {
+				names[c] = "Schedule_" + depot + "_" + c + "_" + scheduleNr + "_" + multiplierSoft + "_" + multiplierFair + ".txt";
+			}
+			
+			Map<ContractGroup, Schedule> schedules = readSchedules(names, instance.getContractGroups());
+			
+			for (ContractGroup group : instance.getContractGroups()) {
+				new ScheduleVis(schedules.get(group).getScheduleArray(), ""+ group.getNr() +"before", instance, depot);
+			}
 		}
 		
 		System.out.println("----------------------------------------------------------");
@@ -580,6 +595,31 @@ public class Main
 		}
 		
 		writer.close();
+	}
+	
+	public static Map<ContractGroup, Schedule> readSchedules(String[] names, Set<ContractGroup> groups) throws FileNotFoundException {
+		Map<ContractGroup, Schedule> schedules = new HashMap<>();
+		
+		for (int c = 1; c <= groups.size(); c++) {
+			sc = new Scanner(new File(names[c-1]));
+			int contractGroupNr = sc.nextInt();
+			int overtime = sc.nextInt();
+			int[] schedule = new int[sc.nextInt()];
+			for (int i = 0; i < schedule.length; i++) {
+				schedule[i] = sc.nextInt();
+			}
+			
+			ContractGroup group = null;
+			for (ContractGroup temp : groups) {
+				if (temp.getNr() == contractGroupNr) {
+					group = temp;
+				}
+			}
+			
+			schedules.put(group, new Schedule(group, schedule, overtime));
+		}
+		
+		return schedules;
 	}
 	
 	public static Map<ContractGroup, Schedule> readSchedules(String depot, int nDrivers, Set<ContractGroup> groups) throws FileNotFoundException {
